@@ -41,6 +41,7 @@ import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import kotlin.time.Duration.Companion.seconds
+import dev.abbasian.exoboost.R
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -61,63 +62,137 @@ fun ExoBoostPlayer(
 
     var isFullscreen by remember { mutableStateOf(false) }
     var controlsVisible by remember { mutableStateOf(true) }
+    var isPlayerInitialized by remember { mutableStateOf(false) }
+
+    var playerViewKey by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
-        playerManager.videoState.collect { state ->
-            viewModel.updateVideoState(state)
+        if (!isPlayerInitialized) {
+            try {
+                android.util.Log.d("ExoBoostPlayer", "Initializing player...")
+                playerManager.initializePlayer(config)
+                isPlayerInitialized = true
+                android.util.Log.d("ExoBoostPlayer", "Player initialized")
+            } catch (e: Exception) {
+                android.util.Log.e("ExoBoostPlayer", "Error initializing player", e)
+                onError?.invoke("Failed to initialize player: ${e.message}")
+            }
         }
     }
 
-    LaunchedEffect(Unit) {
-        playerManager.videoInfo.collect { info ->
-            viewModel.updateVideoInfo(info)
+    LaunchedEffect(isPlayerInitialized) {
+        if (isPlayerInitialized) {
+            playerManager.videoState.collect { state ->
+                android.util.Log.d("ExoBoostPlayer", "Video state: $state")
+                viewModel.updateVideoState(state)
+            }
         }
     }
 
-    LaunchedEffect(videoUrl) {
-        if (videoUrl.isNotEmpty()) {
-            viewModel.loadVideo(videoUrl, config)
+    LaunchedEffect(isPlayerInitialized) {
+        if (isPlayerInitialized) {
+            playerManager.videoInfo.collect { info ->
+                viewModel.updateVideoInfo(info)
+            }
+        }
+    }
+
+    LaunchedEffect(videoUrl, isPlayerInitialized) {
+        if (videoUrl.isNotEmpty() && videoUrl.isNotBlank() && isPlayerInitialized) {
+            try {
+                android.util.Log.d("ExoBoostPlayer", "Loading video: $videoUrl")
+                viewModel.loadVideo(videoUrl, config)
+
+                delay(100)
+                playerViewKey++
+            } catch (e: Exception) {
+                android.util.Log.e("ExoBoostPlayer", "Error loading video", e)
+                onError?.invoke("Failed to load video: ${e.message}")
+            }
         }
     }
 
     LaunchedEffect(uiState.videoState) {
-        if (uiState.videoState is VideoState.Ready) {
-            onPlayerReady?.invoke()
-        }
-    }
+        when (val state = uiState.videoState) {
+            is VideoState.Ready -> {
+                android.util.Log.d("ExoBoostPlayer", "Player ready")
+                onPlayerReady?.invoke()
+                playerViewKey++
+            }
 
-    LaunchedEffect(uiState.videoState) {
-        if (uiState.videoState is VideoState.Error) {
-            onError?.invoke((uiState.videoState as VideoState.Error).error.message)
+            is VideoState.Error -> {
+                android.util.Log.e("ExoBoostPlayer", "Player error: ${state.error.message}")
+                onError?.invoke(state.error.message)
+            }
+
+            else -> {}
         }
     }
 
     LaunchedEffect(controlsVisible, uiState.videoInfo.isPlaying) {
         if (controlsVisible && uiState.videoInfo.isPlaying) {
             delay(4.seconds)
-            controlsVisible = false
+            if (uiState.videoInfo.isPlaying) {
+                controlsVisible = false
+            }
         }
     }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
+            android.util.Log.d("ExoBoostPlayer", "Lifecycle event: $event")
             when (event) {
+                Lifecycle.Event.ON_START -> {
+                    // TODO: Don't auto-resume, let user control playback
+                }
+
                 Lifecycle.Event.ON_PAUSE -> {
-                    if (uiState.videoInfo.isPlaying) {
+                    if (activity?.isChangingConfigurations != true && uiState.videoInfo.isPlaying) {
                         viewModel.playPause()
                     }
                 }
-                Lifecycle.Event.ON_DESTROY -> {
-                    playerManager.release()
+
+                Lifecycle.Event.ON_RESUME -> {
+                    if (activity?.isChangingConfigurations == true) {
+                        playerViewKey++
+                    }
                 }
+
+                Lifecycle.Event.ON_STOP -> {
+                    if (activity?.isChangingConfigurations != true && uiState.videoInfo.isPlaying) {
+                        viewModel.playPause()
+                    }
+                }
+
+                Lifecycle.Event.ON_DESTROY -> {
+                    if (activity?.isChangingConfigurations != true) {
+                        try {
+                            playerManager.release()
+                            isPlayerInitialized = false
+                        } catch (e: Exception) {
+                            android.util.Log.e("ExoBoostPlayer", "Error releasing player", e)
+                        }
+                    }
+                }
+
                 else -> {}
             }
         }
 
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            playerManager.release()
+            try {
+                lifecycleOwner.lifecycle.removeObserver(observer)
+
+                if (activity?.isChangingConfigurations != true &&
+                    lifecycleOwner.lifecycle.currentState == Lifecycle.State.DESTROYED
+                ) {
+                    playerManager.release()
+                    isPlayerInitialized = false
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ExoBoostPlayer", "Error in dispose", e)
+            }
         }
     }
 
@@ -131,55 +206,128 @@ fun ExoBoostPlayer(
     ) {
         AndroidView(
             factory = { context ->
+                android.util.Log.d("ExoBoostPlayer", "Creating PlayerView")
                 PlayerView(context).apply {
-                    player = playerManager.getPlayer()
-                    useController = false
-                    setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
+                    try {
+                        useController = false
+                        setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                        setKeepContentOnPlayerReset(true)
+                        setUseArtwork(false)
+                        setDefaultArtwork(null)
+                        setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT)
+
+                        val currentPlayer = playerManager.getPlayer()
+                        if (currentPlayer != null) {
+                            player = currentPlayer
+                            android.util.Log.d("ExoBoostPlayer", "PlayerView connected to player")
+                        } else {
+                            android.util.Log.w(
+                                "ExoBoostPlayer",
+                                "No player available for PlayerView"
+                            )
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("ExoBoostPlayer", "Error setting up PlayerView", e)
+                    }
+                }
+            },
+            update = { view ->
+                try {
+                    val currentPlayer = playerManager.getPlayer()
+                    if (view.player != currentPlayer) {
+                        view.player = currentPlayer
+                        android.util.Log.d("ExoBoostPlayer", "PlayerView updated with new player")
+                    }
+
+                    view.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT)
+                } catch (e: Exception) {
+                    android.util.Log.e("ExoBoostPlayer", "Error updating PlayerView", e)
                 }
             },
             modifier = Modifier.fillMaxSize()
         )
 
-        if (config.enableGestures) {
+        if (config.enableGestures && isPlayerInitialized) {
             GestureHandler(
                 volume = uiState.volume,
                 brightness = uiState.brightness,
-                onVolumeChange = { volume -> viewModel.setVolume(volume) },
-                onBrightnessChange = { brightness -> viewModel.setBrightness(brightness) },
-                onSeek = { position -> viewModel.seekTo(position) },
+                onVolumeChange = { volume ->
+                    try {
+                        viewModel.setVolume(volume)
+                    } catch (e: Exception) {
+                        android.util.Log.e("ExoBoostPlayer", "Error setting volume", e)
+                    }
+                },
+                onBrightnessChange = { brightness ->
+                    try {
+                        viewModel.setBrightness(brightness)
+                    } catch (e: Exception) {
+                        android.util.Log.e("ExoBoostPlayer", "Error setting brightness", e)
+                    }
+                },
+                onSeek = { position ->
+                    try {
+                        viewModel.seekTo(position)
+                    } catch (e: Exception) {
+                        android.util.Log.e("ExoBoostPlayer", "Error seeking", e)
+                    }
+                },
                 currentPosition = uiState.videoInfo.currentPosition,
                 duration = uiState.videoInfo.duration,
                 modifier = Modifier.fillMaxSize()
             )
         }
 
-        if (config.showControls) {
+        if (config.showControls && isPlayerInitialized) {
             EnhancedPlayerControls(
                 videoState = uiState.videoState,
                 videoInfo = uiState.videoInfo,
                 showControls = controlsVisible,
                 onPlayPause = {
-                    viewModel.playPause()
-                    controlsVisible = true
+                    try {
+                        viewModel.playPause()
+                        controlsVisible = true
+                    } catch (e: Exception) {
+                        android.util.Log.e("ExoBoostPlayer", "Error in playPause", e)
+                    }
                 },
                 onSeek = { position ->
-                    viewModel.seekTo(position)
+                    try {
+                        viewModel.seekTo(position)
+                    } catch (e: Exception) {
+                        android.util.Log.e("ExoBoostPlayer", "Error seeking from controls", e)
+                    }
                 },
                 onRetry = {
-                    viewModel.retry()
-                    controlsVisible = true
+                    try {
+                        viewModel.retry()
+                        controlsVisible = true
+                    } catch (e: Exception) {
+                        android.util.Log.e("ExoBoostPlayer", "Error retrying", e)
+                    }
                 },
                 onFullscreen = {
-                    activity?.requestedOrientation = if (isFullscreen) {
-                        ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                    } else {
-                        ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                    try {
+                        val newOrientation = if (isFullscreen) {
+                            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                        } else {
+                            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                        }
+                        activity?.requestedOrientation = newOrientation
+                        isFullscreen = !isFullscreen
+
+                        android.util.Log.d(
+                            "ExoBoostPlayer",
+                            "Orientation changing to: $newOrientation"
+                        )
+
+                    } catch (e: Exception) {
+                        android.util.Log.e("ExoBoostPlayer", "Error changing orientation", e)
                     }
-                    isFullscreen = !isFullscreen
                 },
                 modifier = Modifier.fillMaxSize()
             )
@@ -188,11 +336,16 @@ fun ExoBoostPlayer(
         if (isFullscreen || onBack != null) {
             IconButton(
                 onClick = {
-                    if (isFullscreen) {
-                        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                        isFullscreen = false
-                    } else {
-                        onBack?.invoke()
+                    try {
+                        if (isFullscreen) {
+                            activity?.requestedOrientation =
+                                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                            isFullscreen = false
+                        } else {
+                            onBack?.invoke()
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("ExoBoostPlayer", "Error handling back button", e)
                     }
                 },
                 modifier = Modifier
@@ -204,7 +357,7 @@ fun ExoBoostPlayer(
             ) {
                 Icon(
                     Icons.Filled.ArrowBack,
-                    contentDescription = "بازگشت",
+                    contentDescription = context.getString(R.string.cd_back),
                     tint = Color.White
                 )
             }
