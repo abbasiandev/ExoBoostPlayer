@@ -1,5 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="Theme.ExoBoostPlayer" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/light_primary</item>
+        <item name="colorOnPrimary">@color/light_on_primary</item>
+        <item name="colorPrimaryContainer">@color/light_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/light_on_primary_container</item>
 
-    <style name="Theme.ExoBoostPlayer" parent="android:Theme.Material.Light.NoActionBar" />
+        <item name="colorSecondary">@color/light_secondary</item>
+        <item name="colorOnSecondary">@color/light_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/light_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/light_on_secondary_container</item>
+
+        <item name="colorTertiary">@color/light_tertiary</item>
+        <item name="colorOnTertiary">@color/light_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/light_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/light_on_tertiary_container</item>
+
+        <item name="colorError">@color/light_error</item>
+        <item name="colorOnError">@color/light_on_error</item>
+        <item name="colorErrorContainer">@color/light_error_container</item>
+        <item name="colorOnErrorContainer">@color/light_on_error_container</item>
+
+        <item name="android:colorBackground">@color/light_background</item>
+        <item name="colorOnBackground">@color/light_on_background</item>
+        <item name="colorSurface">@color/light_surface</item>
+        <item name="colorOnSurface">@color/light_on_surface</item>
+        <item name="colorSurfaceVariant">@color/light_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/light_on_surface_variant</item>
+    </style>
 </resources>
