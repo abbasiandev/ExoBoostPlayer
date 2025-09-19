@@ -26,35 +26,61 @@ class VideoPlayerViewModel(
     fun loadVideo(url: String, config: VideoPlayerConfig) {
         maxRetryCount = config.maxRetryCount
         viewModelScope.launch {
-            playVideoUseCase.execute(url, config)
+            try {
+                playVideoUseCase.execute(url, config)
+            } catch (e: Exception) {
+                android.util.Log.e("VideoPlayerViewModel", "Error loading video", e)
+                _uiState.value = _uiState.value.copy(
+                    videoState = VideoState.Error(
+                        dev.abbasian.exoboost.domain.model.PlayerError.UnknownError(
+                            "Failed to load video: ${e.message}",
+                            e
+                        )
+                    )
+                )
+            }
         }
     }
 
     fun playPause() {
         viewModelScope.launch {
-            if (_uiState.value.videoInfo.isPlaying) {
-                playVideoUseCase.pause()
-            } else {
-                playVideoUseCase.play()
+            try {
+                if (_uiState.value.videoInfo.isPlaying) {
+                    playVideoUseCase.pause()
+                } else {
+                    playVideoUseCase.play()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("VideoPlayerViewModel", "Error in playPause", e)
             }
         }
     }
 
     fun seekTo(position: Long) {
         viewModelScope.launch {
-            playVideoUseCase.seekTo(position)
+            try {
+                playVideoUseCase.seekTo(position)
+            } catch (e: Exception) {
+                android.util.Log.e("VideoPlayerViewModel", "Error seeking", e)
+            }
         }
     }
 
     fun setVolume(volume: Float) {
         viewModelScope.launch {
-            playVideoUseCase.setVolume(volume)
-            _uiState.value = _uiState.value.copy(volume = volume)
+            try {
+                val clampedVolume = volume.coerceIn(0f, 1f)
+                playVideoUseCase.setVolume(clampedVolume)
+                _uiState.value = _uiState.value.copy(volume = clampedVolume)
+            } catch (e: Exception) {
+                android.util.Log.e("VideoPlayerViewModel", "Error setting volume", e)
+            }
         }
     }
 
     fun setBrightness(brightness: Float) {
-        _uiState.value = _uiState.value.copy(brightness = brightness)
+        val clampedBrightness = brightness.coerceIn(0f, 1f)
+        _uiState.value = _uiState.value.copy(brightness = clampedBrightness)
     }
 
     fun showControls(show: Boolean) {
@@ -65,13 +91,21 @@ class VideoPlayerViewModel(
         if (retryCount < maxRetryCount) {
             retryCount++
             viewModelScope.launch {
-                retryVideoUseCase.execute()
+                try {
+                    retryVideoUseCase.execute()
+                } catch (e: Exception) {
+                    android.util.Log.e("VideoPlayerViewModel", "Error retrying", e)
+                }
             }
         }
     }
 
     fun updateVideoState(state: VideoState) {
         _uiState.value = _uiState.value.copy(videoState = state)
+
+        if (state is VideoState.Ready || state is VideoState.Playing) {
+            retryCount = 0
+        }
 
         if (state is VideoState.Error && retryCount < maxRetryCount) {
             retry()
@@ -80,6 +114,15 @@ class VideoPlayerViewModel(
 
     fun updateVideoInfo(info: VideoInfo) {
         _uiState.value = _uiState.value.copy(videoInfo = info)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        try {
+            playVideoUseCase.release()
+        } catch (e: Exception) {
+            android.util.Log.e("VideoPlayerViewModel", "Error releasing resources", e)
+        }
     }
 }
 
