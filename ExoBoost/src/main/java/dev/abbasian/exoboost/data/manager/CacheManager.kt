@@ -1,0 +1,48 @@
+package dev.abbasian.exoboost.data.manager
+
+import android.content.Context
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
+import java.io.File
+
+@UnstableApi
+class CacheManager(private val context: Context) {
+
+    private val cacheSize = 100L * 1024 * 1024 // 100MB
+    private val cacheDir = File(context.cacheDir, "video_cache")
+
+    private val _internalCache: Cache by lazy {
+        SimpleCache(
+            cacheDir,
+            LeastRecentlyUsedCacheEvictor(cacheSize),
+            StandaloneDatabaseProvider(context)
+        )
+    }
+
+    fun getCache(): Cache = _internalCache
+
+    fun clearCache() {
+        try {
+            _internalCache.keys.forEach { key ->
+                _internalCache.removeResource(key)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("CacheManager", "Error clearing cache", e)
+        }
+    }
+
+    fun getCacheSize(): Long {
+        return _internalCache.cacheSpace
+    }
+
+    fun release() {
+        try {
+            _internalCache.release()
+        } catch (e: Exception) {
+            android.util.Log.e("CacheManager", "Error releasing cache", e)
+        }
+    }
+}
