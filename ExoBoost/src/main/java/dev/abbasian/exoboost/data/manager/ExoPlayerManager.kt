@@ -50,6 +50,8 @@ class ExoPlayerManager(
     private var retryCount = 0
     private val isInitialized = AtomicBoolean(false)
     private val isReleased = AtomicBoolean(false)
+    private var isPrepared = AtomicBoolean(false)
+    private var isVideoReady = AtomicBoolean(false)
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private val positionUpdateRunnable = object : Runnable {
@@ -69,6 +71,8 @@ class ExoPlayerManager(
 
         try {
             isReleased.set(false)
+            isPrepared.set(false)
+            isVideoReady.set(false)
             currentConfig = config
             Log.d("ExoPlayerManager", "Initializing ExoPlayer...")
 
@@ -89,7 +93,7 @@ class ExoPlayerManager(
                         .setAllowVideoMixedMimeTypeAdaptiveness(true)
                         .setMaxVideoSizeSd()
                         .setMaxVideoBitrate(2000000)
-                        .setForceLowestBitrate(false) // Allow quality selection
+                        .setForceLowestBitrate(false)
                 )
             }
 
@@ -111,6 +115,7 @@ class ExoPlayerManager(
                     addAnalyticsListener(analyticsListener)
                     repeatMode = Player.REPEAT_MODE_OFF
                     setVideoScalingMode(C.VIDEO_SCALING_MODE_SCALE_TO_FIT)
+                    playWhenReady = false
                 }
 
             isInitialized.set(true)
@@ -141,13 +146,15 @@ class ExoPlayerManager(
             return
         }
 
-        if (currentUrl == url && exoPlayer?.playbackState != Player.STATE_IDLE) {
+        if (currentUrl == url && isPrepared.get()) {
             Log.d("ExoPlayerManager", "Video already loaded: $url")
             return
         }
 
         currentUrl = url
         retryCount = 0
+        isPrepared.set(false)
+        isVideoReady.set(false)
 
         if (!networkManager.isNetworkAvailable()) {
             _videoState.value = VideoState.Error(
@@ -169,7 +176,6 @@ class ExoPlayerManager(
                 clearMediaItems()
                 setMediaItem(mediaItem)
                 prepare()
-                playWhenReady = currentConfig.autoPlay
             }
 
             Log.d("ExoPlayerManager", "Video preparation started")
@@ -180,34 +186,134 @@ class ExoPlayerManager(
         }
     }
 
-    private fun handleLoadError(error: Throwable) {
-        val playerError = when (error) {
-            is SSLException -> PlayerError.SSLError(
-                context.getString(R.string.error_security_certificate_with_message) + error.message,
-                error.message,
-                error
-            )
+    fun isReadyForSurface(): Boolean {
+        return isInitialized.get() && isPrepared.get() && !isReleased.get()
+    }
 
-            is SocketTimeoutException -> PlayerError.NetworkError(
-                context.getString(R.string.error_timeout),
-                true,
-                error
-            )
+    fun onSurfaceAvailable() {
+        Log.d("ExoPlayerManager", "Surface available")
+        if (isReadyForSurface() && currentConfig.autoPlay) {
+            mainHandler.postDelayed({
+                if (!isReleased.get() && exoPlayer != null) {
+                    exoPlayer?.playWhenReady = true
+                }
+            }, 100)
+        }
+    }
 
-            is IOException -> PlayerError.NetworkError(
-                context.getString(R.string.error_network) + error.message,
-                true,
-                error
-            )
+    private val playerListener = object : Player.Listener {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (isReleased.get()) return
 
-            else -> PlayerError.UnknownError(
-                context.getString(R.string.error_network) + error.message,
-                error
-            )
+            val stateString = when (playbackState) {
+                Player.STATE_IDLE -> "IDLE"
+                Player.STATE_BUFFERING -> "BUFFERING"
+                Player.STATE_READY -> "READY"
+                Player.STATE_ENDED -> "ENDED"
+                else -> "UNKNOWN"
+            }
+
+            Log.d("ExoPlayerManager", "Playback state changed: $stateString")
+
+            when (playbackState) {
+                Player.STATE_IDLE -> {
+                    isPrepared.set(false)
+                    isVideoReady.set(false)
+                    _videoState.value = VideoState.Idle
+                }
+                Player.STATE_BUFFERING -> {
+                    _videoState.value = VideoState.Loading
+                }
+                Player.STATE_READY -> {
+                    retryCount = 0
+                    isPrepared.set(true)
+
+                    val hasVideo = exoPlayer?.videoFormat != null
+                    if (hasVideo && !isVideoReady.get()) {
+                        _videoState.value = VideoState.Loading
+                    } else {
+                        isVideoReady.set(true)
+                        _videoState.value = VideoState.Ready
+                    }
+                }
+                Player.STATE_ENDED -> {
+                    _videoState.value = VideoState.Ended
+                }
+            }
         }
 
-        _videoState.value = VideoState.Error(playerError)
-        Log.e("ExoPlayerManager", "Load error: ${playerError.message}", error)
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            if (isReleased.get()) return
+
+            Log.d("ExoPlayerManager", "Is playing changed: $isPlaying")
+
+            _videoState.value = if (isPlaying) {
+                VideoState.Playing
+            } else {
+                when (exoPlayer?.playbackState) {
+                    Player.STATE_ENDED -> VideoState.Ended
+                    Player.STATE_READY -> VideoState.Paused
+                    else -> VideoState.Paused
+                }
+            }
+            updateVideoInfo()
+        }
+
+        override fun onVideoSizeChanged(videoSize: VideoSize) {
+            if (isReleased.get()) return
+            Log.d("ExoPlayerManager", "Video size changed: ${videoSize.width}x${videoSize.height}")
+        }
+
+        override fun onRenderedFirstFrame() {
+            if (isReleased.get()) return
+            Log.d("ExoPlayerManager", "First frame rendered")
+
+            isVideoReady.set(true)
+
+            if (_videoState.value is VideoState.Loading && isPrepared.get()) {
+                _videoState.value = VideoState.Ready
+            }
+
+            if (currentConfig.autoPlay && exoPlayer?.playWhenReady == false && isPrepared.get()) {
+                mainHandler.postDelayed({
+                    if (!isReleased.get()) {
+                        exoPlayer?.playWhenReady = true
+                    }
+                }, 50)
+            }
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            if (isReleased.get()) return
+
+            Log.e(
+                "ExoPlayerManager",
+                "Player error: ${error.errorCodeName} - ${error.message}",
+                error
+            )
+
+            isPrepared.set(false)
+            isVideoReady.set(false)
+
+            val playerError = mapPlaybackException(error)
+            _videoState.value = VideoState.Error(playerError)
+
+            if (currentConfig.retryOnError && isRetryableError(playerError) &&
+                retryCount < currentConfig.maxRetryCount
+            ) {
+                mainHandler.postDelayed({
+                    if (!isReleased.get()) {
+                        retry()
+                    }
+                }, 2000)
+            }
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            if (isReleased.get()) return
+            Log.d("ExoPlayerManager", "Media item transition")
+            updateVideoInfo()
+        }
     }
 
     fun play() {
@@ -224,6 +330,7 @@ class ExoPlayerManager(
         if (isReleased.get() || !isInitialized.get()) return
         try {
             exoPlayer?.playWhenReady = false
+            exoPlayer?.pause()
             Log.d("ExoPlayerManager", "Pause requested")
         } catch (e: Exception) {
             Log.e("ExoPlayerManager", "Error pausing", e)
@@ -266,6 +373,8 @@ class ExoPlayerManager(
         }
 
         retryCount++
+        isPrepared.set(false)
+        isVideoReady.set(false)
 
         if (!networkManager.isNetworkAvailable()) {
             _videoState.value = VideoState.Error(
@@ -281,6 +390,7 @@ class ExoPlayerManager(
             exoPlayer?.let { player ->
                 player.stop()
                 player.prepare()
+                player.playWhenReady = false
             }
         } catch (e: Exception) {
             Log.e("ExoPlayerManager", "Error during retry", e)
@@ -308,6 +418,8 @@ class ExoPlayerManager(
 
             exoPlayer = null
             isInitialized.set(false)
+            isPrepared.set(false)
+            isVideoReady.set(false)
             currentUrl = ""
             retryCount = 0
             _videoState.value = VideoState.Idle
@@ -331,91 +443,6 @@ class ExoPlayerManager(
         mainHandler.removeCallbacks(positionUpdateRunnable)
     }
 
-    private val playerListener = object : Player.Listener {
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            if (isReleased.get()) return
-
-            val stateString = when (playbackState) {
-                Player.STATE_IDLE -> "IDLE"
-                Player.STATE_BUFFERING -> "BUFFERING"
-                Player.STATE_READY -> "READY"
-                Player.STATE_ENDED -> "ENDED"
-                else -> "UNKNOWN"
-            }
-
-            Log.d("ExoPlayerManager", "Playback state changed: $stateString")
-
-            _videoState.value = when (playbackState) {
-                Player.STATE_IDLE -> VideoState.Idle
-                Player.STATE_BUFFERING -> VideoState.Loading
-                Player.STATE_READY -> {
-                    retryCount = 0
-                    VideoState.Ready
-                }
-
-                Player.STATE_ENDED -> VideoState.Ended
-                else -> VideoState.Idle
-            }
-        }
-
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            if (isReleased.get()) return
-
-            Log.d("ExoPlayerManager", "Is playing changed: $isPlaying")
-
-            _videoState.value = if (isPlaying) {
-                VideoState.Playing
-            } else {
-                when (exoPlayer?.playbackState) {
-                    Player.STATE_ENDED -> VideoState.Ended
-                    Player.STATE_READY -> VideoState.Paused
-                    else -> VideoState.Paused
-                }
-            }
-            updateVideoInfo()
-        }
-
-        override fun onPlayerError(error: PlaybackException) {
-            if (isReleased.get()) return
-
-            Log.e(
-                "ExoPlayerManager",
-                "Player error: ${error.errorCodeName} - ${error.message}",
-                error
-            )
-
-            val playerError = mapPlaybackException(error)
-            _videoState.value = VideoState.Error(playerError)
-
-            if (currentConfig.retryOnError && isRetryableError(playerError) &&
-                retryCount < currentConfig.maxRetryCount
-            ) {
-
-                mainHandler.postDelayed({
-                    if (!isReleased.get()) {
-                        retry()
-                    }
-                }, 2000)
-            }
-        }
-
-        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            if (isReleased.get()) return
-            Log.d("ExoPlayerManager", "Media item transition")
-            updateVideoInfo()
-        }
-
-        override fun onVideoSizeChanged(videoSize: VideoSize) {
-            if (isReleased.get()) return
-            Log.d("ExoPlayerManager", "Video size changed: ${videoSize.width}x${videoSize.height}")
-        }
-
-        override fun onRenderedFirstFrame() {
-            if (isReleased.get()) return
-            Log.d("ExoPlayerManager", "First frame rendered")
-        }
-    }
-
     private val analyticsListener = object : AnalyticsListener {
         override fun onLoadError(
             eventTime: AnalyticsListener.EventTime,
@@ -428,6 +455,36 @@ class ExoPlayerManager(
                 handleLoadError(error)
             }
         }
+    }
+
+    private fun handleLoadError(error: Throwable) {
+        val playerError = when (error) {
+            is SSLException -> PlayerError.SSLError(
+                context.getString(R.string.error_security_certificate_with_message) + error.message,
+                error.message,
+                error
+            )
+
+            is SocketTimeoutException -> PlayerError.NetworkError(
+                context.getString(R.string.error_timeout),
+                true,
+                error
+            )
+
+            is IOException -> PlayerError.NetworkError(
+                context.getString(R.string.error_network) + error.message,
+                true,
+                error
+            )
+
+            else -> PlayerError.UnknownError(
+                context.getString(R.string.error_network) + error.message,
+                error
+            )
+        }
+
+        _videoState.value = VideoState.Error(playerError)
+        Log.e("ExoPlayerManager", "Load error: ${playerError.message}", error)
     }
 
     private fun mapPlaybackException(error: PlaybackException): PlayerError {
@@ -497,7 +554,7 @@ class ExoPlayerManager(
         return when (error) {
             is PlayerError.NetworkError -> error.isRetryable
             is PlayerError.LiveStreamError -> error.httpCode in listOf(403, 404, 500, 502, 503, 504)
-            is PlayerError.SSLError -> false // ssl errors
+            is PlayerError.SSLError -> false
             else -> false
         }
     }
