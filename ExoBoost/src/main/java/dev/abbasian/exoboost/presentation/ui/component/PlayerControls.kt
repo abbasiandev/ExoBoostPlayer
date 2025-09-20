@@ -1,15 +1,30 @@
 package dev.abbasian.exoboost.presentation.ui.component
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,9 +32,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import dev.abbasian.exoboost.R
 import dev.abbasian.exoboost.domain.model.VideoInfo
 import dev.abbasian.exoboost.domain.model.VideoState
-import dev.abbasian.exoboost.R
 
 @Composable
 fun EnhancedPlayerControls(
@@ -37,8 +52,8 @@ fun EnhancedPlayerControls(
 
     AnimatedVisibility(
         visible = showControls || videoState is VideoState.Error || videoState is VideoState.Loading,
-        enter = fadeIn(animationSpec = tween(300)),
-        exit = fadeOut(animationSpec = tween(300)),
+        enter = fadeIn(animationSpec = tween(400)) + scaleIn(initialScale = 0.8f),
+        exit = fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.8f),
         modifier = modifier
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -49,20 +64,18 @@ fun EnhancedPlayerControls(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.Black.copy(alpha = 0.4f),
+                                Color.Black.copy(alpha = 0.6f),
                                 Color.Transparent,
                                 Color.Transparent,
                                 Color.Black.copy(alpha = 0.8f)
-                            ),
-                            startY = 0f,
-                            endY = Float.POSITIVE_INFINITY
+                            )
                         )
                     )
             )
 
             when (videoState) {
                 is VideoState.Loading -> {
-                    EnhancedLoadingIndicator(
+                    GlassyLoadingIndicator(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
@@ -75,60 +88,83 @@ fun EnhancedPlayerControls(
                 }
                 else -> {
                     // main play/pause button
-                    FloatingActionButton(
-                        onClick = onPlayPause,
+                    Box(
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .size(64.dp),
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
-                        contentColor = Color.White
+                            .size(80.dp)
+                            .clip(RoundedCornerShape(40.dp))
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.15f),
+                                        Color.White.copy(alpha = 0.05f)
+                                    )
+                                )
+                            )
+                            .border(
+                                width = 1.dp,
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.3f),
+                                        Color.White.copy(alpha = 0.1f)
+                                    )
+                                ),
+                                shape = RoundedCornerShape(40.dp)
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = when {
-                                videoInfo.isPlaying -> Icons.Filled.Pause
-                                videoState is VideoState.Ended -> Icons.Filled.Replay
-                                else -> Icons.Filled.PlayArrow
-                            },
-                            contentDescription = null,
-                            modifier = Modifier.size(32.dp)
-                        )
+                        IconButton(
+                            onClick = onPlayPause,
+                            modifier = Modifier.size(64.dp)
+                        ) {
+                            Icon(
+                                imageVector = when {
+                                    videoInfo.isPlaying -> Icons.Filled.Pause
+                                    videoState is VideoState.Ended -> Icons.Filled.Replay
+                                    else -> Icons.Filled.PlayArrow
+                                },
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
                     }
 
                     // top controls
                     Row(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            .padding(16.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.1f),
+                                        Color.White.copy(alpha = 0.05f)
+                                    )
+                                )
+                            )
+                            .border(
+                                width = 0.5.dp,
+                                color = Color.White.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         onSettings?.let { settings ->
-                            IconButton(
+                            GlassyIconButton(
                                 onClick = settings,
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .background(Color.Black.copy(alpha = 0.5f))
-                            ) {
-                                Icon(
-                                    Icons.Filled.Settings,
-                                    contentDescription = context.getString(R.string.cd_setting),
-                                    tint = Color.White
-                                )
-                            }
+                                icon = Icons.Filled.Settings,
+                                contentDescription = context.getString(R.string.cd_setting)
+                            )
                         }
 
                         onFullscreen?.let { fullscreen ->
-                            IconButton(
+                            GlassyIconButton(
                                 onClick = fullscreen,
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .background(Color.Black.copy(alpha = 0.5f))
-                            ) {
-                                Icon(
-                                    Icons.Filled.Fullscreen,
-                                    contentDescription = context.getString(R.string.cd_fullscreen),
-                                    tint = Color.White
-                                )
-                            }
+                                icon = Icons.Filled.Fullscreen,
+                                contentDescription = context.getString(R.string.cd_fullscreen)
+                            )
                         }
                     }
 
@@ -138,8 +174,29 @@ fun EnhancedPlayerControls(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .fillMaxWidth()
+                                .padding(16.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    brush = Brush.radialGradient(
+                                        colors = listOf(
+                                            Color.White.copy(alpha = 0.05f),
+                                            Color.Transparent
+                                        )
+                                    )
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            Color.White.copy(alpha = 0.2f),
+                                            Color.White.copy(alpha = 0.1f)
+                                        )
+                                    ),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(16.dp)
                         ) {
-                            EnhancedSeekBar(
+                            GlassySeekBar(
                                 currentPosition = videoInfo.currentPosition,
                                 bufferedPosition = videoInfo.bufferedPosition,
                                 duration = videoInfo.duration,
@@ -152,40 +209,6 @@ fun EnhancedPlayerControls(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun EnhancedLoadingIndicator(
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Black.copy(alpha = 0.7f)
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(48.dp),
-                color = MaterialTheme.colorScheme.primary,
-                strokeWidth = 4.dp
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = context.getString(R.string.loading),
-                color = Color.White,
-                style = MaterialTheme.typography.bodyMedium
-            )
         }
     }
 }
