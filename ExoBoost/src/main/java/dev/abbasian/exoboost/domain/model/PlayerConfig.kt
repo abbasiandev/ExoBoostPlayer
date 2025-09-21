@@ -7,7 +7,11 @@ data class VideoPlayerConfig(
     val enableGestures: Boolean = true,
     val retryOnError: Boolean = true,
     val maxRetryCount: Int = 3,
-    val bufferDurations: BufferDurations = BufferDurations()
+    val bufferDurations: BufferDurations = BufferDurations(),
+    val playbackSpeedOptions: List<Float> = listOf(0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f),
+    val defaultPlaybackSpeed: Float = 1.0f,
+    val enableSpeedControl: Boolean = true,
+    val enableQualitySelection: Boolean = true
 ) {
     data class BufferDurations(
         val minBufferMs: Int = 15000,
