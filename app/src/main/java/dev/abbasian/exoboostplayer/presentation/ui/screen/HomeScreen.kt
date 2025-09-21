@@ -23,6 +23,16 @@ fun HomeScreen(
             description = "ویدیوی تست کیفیت HD"
         ),
         VideoItem(
+            title = "HLS Big Buck Bunny",
+            url = "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8",
+            description = "Public HLS stream from Apple for testing"
+        ),
+        VideoItem(
+            title = "DASH Stream",
+            url = "https://bitmovin-a.akamaihd.net/content/sintel/sintel.mpd",
+            description = "DASH adaptive stream"
+        ),
+        VideoItem(
             title = "Elephant Dream (MP4)",
             url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
             description = "انیمیشن کوتاه با کیفیت بالا"
@@ -48,7 +58,7 @@ fun HomeScreen(
         TopAppBar(
             title = {
                 Text(
-                    "Beautiful Video Player",
+                    "ExoBoost Library Player",
                     fontWeight = FontWeight.Bold
                 )
             }
