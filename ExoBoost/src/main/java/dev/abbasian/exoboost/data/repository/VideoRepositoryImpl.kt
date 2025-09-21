@@ -6,6 +6,7 @@ import dev.abbasian.exoboost.data.manager.CacheManager
 import dev.abbasian.exoboost.data.manager.ExoPlayerManager
 import dev.abbasian.exoboost.domain.model.VideoInfo
 import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.domain.model.VideoState
 import dev.abbasian.exoboost.domain.repository.VideoRepository
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +32,18 @@ class VideoRepositoryImpl(
 
     override suspend fun pause() {
         playerManager.pause()
+    }
+
+    override suspend fun setPlaybackSpeed(speed: Float) {
+        playerManager.setPlaybackSpeed(speed)
+    }
+
+    override suspend fun selectQuality(quality: VideoQuality) {
+        playerManager.selectQuality(quality)
+    }
+
+    override suspend fun getAvailableQualities(): List<VideoQuality> {
+        return playerManager.getAvailableQualities()
     }
 
     override suspend fun seekTo(position: Long) {
