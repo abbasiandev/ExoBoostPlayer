@@ -12,6 +12,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.HttpDataSource // Added import
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
@@ -23,6 +24,7 @@ import dev.abbasian.exoboost.R
 import dev.abbasian.exoboost.domain.model.PlayerError
 import dev.abbasian.exoboost.domain.model.VideoInfo
 import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.domain.model.VideoState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -85,17 +87,7 @@ class ExoPlayerManager(
                 )
                 .build()
 
-            val trackSelector = DefaultTrackSelector(context).apply {
-                setParameters(
-                    buildUponParameters()
-                        .setForceHighestSupportedBitrate(false)
-                        .setAllowAudioMixedMimeTypeAdaptiveness(true)
-                        .setAllowVideoMixedMimeTypeAdaptiveness(true)
-                        .setMaxVideoSizeSd()
-                        .setMaxVideoBitrate(2000000)
-                        .setForceLowestBitrate(false)
-                )
-            }
+            val trackSelector = setupTrackSelector()
 
             exoPlayer?.let { player ->
                 player.removeListener(playerListener)
@@ -286,9 +278,21 @@ class ExoPlayerManager(
         override fun onPlayerError(error: PlaybackException) {
             if (isReleased.get()) return
 
+            var logMessage = "Player error: ${error.errorCodeName} (${error.errorCode}) - ${error.message}"
+
+            val cause = error.cause
+            if (cause is HttpDataSource.InvalidResponseCodeException) {
+                logMessage += "\n HTTP Status Code: ${cause.responseCode}"
+
+            } else if (cause is IOException) {
+                logMessage += "\n IO Cause: ${cause.javaClass.simpleName} - ${cause.message}"
+            } else if (cause != null) {
+                logMessage += "\n Cause: ${cause.javaClass.simpleName} - ${cause.message}"
+            }
+
             Log.e(
                 "ExoPlayerManager",
-                "Player error: ${error.errorCodeName} - ${error.message}",
+                logMessage,
                 error
             )
 
@@ -561,14 +565,151 @@ class ExoPlayerManager(
 
     private fun updateVideoInfo() {
         exoPlayer?.let { player ->
+            val availableQualities = getAvailableQualities()
+            val currentQuality = getCurrentSelectedQuality(availableQualities)
+
             _videoInfo.value = VideoInfo(
                 currentPosition = player.currentPosition.coerceAtLeast(0L),
                 duration = if (player.duration != C.TIME_UNSET) player.duration else 0L,
                 volume = player.volume,
                 isPlaying = player.isPlaying,
                 bufferedPosition = player.bufferedPosition.coerceAtLeast(0L),
-                playbackSpeed = player.playbackParameters.speed
+                playbackSpeed = player.playbackParameters.speed,
+                availableQualities = availableQualities,
+                currentQuality = currentQuality
             )
         }
     }
+
+    fun setPlaybackSpeed(speed: Float) {
+        if (isReleased.get() || !isInitialized.get()) return
+        try {
+            val clampedSpeed = speed.coerceIn(0.25f, 3.0f)
+            exoPlayer?.setPlaybackSpeed(clampedSpeed)
+            Log.d("ExoPlayerManager", "Playback speed set to: $clampedSpeed")
+            updateVideoInfo()
+        } catch (e: Exception) {
+            Log.e("ExoPlayerManager", "Error setting playback speed", e)
+        }
+    }
+
+    fun getAvailableQualities(): List<VideoQuality> {
+        if (isReleased.get() || !isInitialized.get()) return emptyList()
+
+        return try {
+            val trackSelector = exoPlayer?.trackSelector as? DefaultTrackSelector
+            val trackSelectionParameters = trackSelector?.parameters
+            val mappedTrackInfo = trackSelector?.currentMappedTrackInfo
+
+            mappedTrackInfo?.let { trackInfo ->
+                val qualities = mutableListOf<VideoQuality>()
+
+                qualities.add(VideoQuality(
+                    trackGroup = -1,
+                    trackIndex = -1,
+                    width = 0,
+                    height = 0,
+                    bitrate = 0,
+                    label = "Auto",
+                    isSelected = trackSelectionParameters?.maxVideoWidth == Int.MAX_VALUE
+                ))
+
+                for (rendererIndex in 0 until trackInfo.rendererCount) {
+                    if (trackInfo.getRendererType(rendererIndex) == C.TRACK_TYPE_VIDEO) {
+                        val trackGroups = trackInfo.getTrackGroups(rendererIndex)
+
+                        for (groupIndex in 0 until trackGroups.length) {
+                            val trackGroup = trackGroups[groupIndex]
+
+                            for (trackIndex in 0 until trackGroup.length) {
+                                val format = trackGroup.getFormat(trackIndex)
+
+                                if (format.width > 0 && format.height > 0) {
+                                    qualities.add(VideoQuality(
+                                        trackGroup = groupIndex,
+                                        trackIndex = trackIndex,
+                                        width = format.width,
+                                        height = format.height,
+                                        bitrate = format.bitrate,
+                                        label = "${format.height}p",
+                                        isSelected = false
+                                    ))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                qualities.distinctBy { it.height }.sortedByDescending { it.height }
+            } ?: emptyList()
+        } catch (e: Exception) {
+            Log.e("ExoPlayerManager", "Error getting available qualities", e)
+            emptyList()
+        }
+    }
+
+    fun selectQuality(quality: VideoQuality) {
+        if (isReleased.get() || !isInitialized.get()) return
+
+        try {
+            val trackSelector = exoPlayer?.trackSelector as? DefaultTrackSelector ?: return
+
+            val parametersBuilder = trackSelector.parameters.buildUpon()
+
+            if (quality.trackGroup == -1) {
+                parametersBuilder
+                    .setMaxVideoSizeSd()
+                    .setMaxVideoBitrate(Int.MAX_VALUE)
+                    .clearVideoSizeConstraints()
+            } else {
+                parametersBuilder
+                    .setMaxVideoSize(quality.width, quality.height)
+                    .setMinVideoSize(quality.width, quality.height)
+                    .setMaxVideoBitrate(quality.bitrate + 100000) // Add buffer
+            }
+
+            trackSelector.setParameters(parametersBuilder.build())
+            Log.d("ExoPlayerManager", "Quality selected: ${quality.getQualityLabel()}")
+
+            mainHandler.postDelayed({
+                updateVideoInfo()
+            }, 1000)
+
+        } catch (e: Exception) {
+            Log.e("ExoPlayerManager", "Error selecting quality", e)
+        }
+    }
+
+    private fun getCurrentSelectedQuality(availableQualities: List<VideoQuality>): VideoQuality? {
+        return try {
+            val trackSelector = exoPlayer?.trackSelector as? DefaultTrackSelector
+            val params = trackSelector?.parameters
+
+            if (params?.maxVideoWidth == Int.MAX_VALUE) {
+                availableQualities.find { it.label == "Auto" }
+            } else {
+                val currentFormat = exoPlayer?.videoFormat
+                availableQualities.find {
+                    it.height == currentFormat?.height && it.width == currentFormat?.width
+                }
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun setupTrackSelector(): DefaultTrackSelector {
+        return DefaultTrackSelector(context).apply {
+            setParameters(
+                buildUponParameters()
+                    .setForceHighestSupportedBitrate(false)
+                    .setAllowAudioMixedMimeTypeAdaptiveness(true)
+                    .setAllowVideoMixedMimeTypeAdaptiveness(true)
+                    .setTunnelingEnabled(false)
+                    .setPreferredAudioLanguages("en", "fa", "ar")
+                    .setRendererDisabled(C.TRACK_TYPE_TEXT, false)
+            )
+        }
+    }
+
 }
