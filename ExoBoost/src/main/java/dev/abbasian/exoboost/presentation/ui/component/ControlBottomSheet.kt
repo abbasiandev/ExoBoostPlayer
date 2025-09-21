@@ -29,10 +29,28 @@ fun SpeedControlBottomSheet(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
+
+    val glassColor = if (isDarkTheme) Color.White else Color.Black
+    val textColor = if (isDarkTheme) Color.White else Color.Black
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .background(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        glassColor.copy(alpha = 0.1f),
+                        glassColor.copy(alpha = 0.05f)
+                    )
+                ),
+                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+            )
+            .border(
+                width = 0.5.dp,
+                color = glassColor.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+            )
             .padding(16.dp)
             .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
     ) {
@@ -54,7 +72,8 @@ fun SpeedControlBottomSheet(
             Text(
                 text = context.getString(R.string.playback_speed),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -78,22 +97,34 @@ fun SpeedControlBottomSheet(
         Spacer(modifier = Modifier.height(16.dp))
 
         // current speed indicator
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                        )
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .border(
+                    width = 0.5.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(16.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = context.getString(R.string.current_speed),
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "${currentSpeed}x",
@@ -112,24 +143,27 @@ private fun SpeedChip(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
+    val glassColor = if (isDarkTheme) Color.White else Color.Black
+
     val backgroundColor = if (isSelected) {
-        Brush.linearGradient(
+        Brush.radialGradient(
             colors = listOf(
-                MaterialTheme.colorScheme.primary,
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
             )
         )
     } else {
-        Brush.linearGradient(
+        Brush.radialGradient(
             colors = listOf(
-                Color.White.copy(alpha = 0.1f),
-                Color.White.copy(alpha = 0.05f)
+                glassColor.copy(alpha = 0.1f),
+                glassColor.copy(alpha = 0.05f)
             )
         )
     }
 
     val textColor = if (isSelected) {
-        MaterialTheme.colorScheme.onPrimary
+        MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.onSurface
     }
@@ -139,8 +173,12 @@ private fun SpeedChip(
             .clip(RoundedCornerShape(20.dp))
             .background(backgroundColor)
             .border(
-                width = if (isSelected) 0.dp else 1.dp,
-                color = Color.White.copy(alpha = 0.2f),
+                width = 0.5.dp,
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                } else {
+                    glassColor.copy(alpha = 0.15f)
+                },
                 shape = RoundedCornerShape(20.dp)
             )
             .clickable { onClick() }
