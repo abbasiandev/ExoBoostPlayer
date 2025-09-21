@@ -1,6 +1,7 @@
 package dev.abbasian.exoboostplayer.presentation
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
 import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostPlayer
+import dev.abbasian.exoboost.util.MediaUtil
 import dev.abbasian.exoboostplayer.presentation.ui.screen.HomeScreen
 import dev.abbasian.exoboostplayer.presentation.ui.theme.ExoBoostPlayerTheme
 import dev.abbasian.exoboostplayer.presentation.viewmodel.MainViewModel
@@ -57,18 +59,27 @@ class MainActivity : ComponentActivity() {
                 ExoBoostPlayer(
                     videoUrl = uiState.selectedVideo!!.url,
                     config = VideoPlayerConfig(
-                        enableCache = true,
                         autoPlay = true,
                         showControls = true,
                         enableGestures = true,
-                        retryOnError = true,
-                        maxRetryCount = 3
+                        enableSpeedControl = true,
+                        enableQualitySelection = MediaUtil.isAdaptiveStream(uiState.selectedVideo!!.url),
+                        playbackSpeedOptions = listOf(0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f),
+                        defaultPlaybackSpeed = 1.0f,
+                        maxRetryCount = 5,
+                        retryOnError = true
                     ),
                     onPlayerReady = {
                         // Player is ready
                     },
                     onError = { error ->
                         mainViewModel.showError(error)
+                    },
+                    onSpeedChanged = { speed ->
+                        Log.d("MultiFormatPlayer", "Speed: ${speed}x")
+                    },
+                    onQualityChanged = { quality ->
+                        Log.d("MultiFormatPlayer", "Quality: ${quality.getQualityLabel()}")
                     },
                     modifier = Modifier.fillMaxSize()
                 )
