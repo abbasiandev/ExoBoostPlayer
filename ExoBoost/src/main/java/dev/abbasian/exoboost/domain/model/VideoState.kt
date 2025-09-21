@@ -15,8 +15,10 @@ data class VideoInfo(
     val duration: Long = 0L,
     val bufferedPosition: Long = 0L,
     val volume: Float = 1f,
-    val playbackSpeed: Float = 1f,
+    val playbackSpeed: Float = 1.0f,
     val isPlaying: Boolean = false,
     val hasVideo: Boolean = true,
-    val hasAudio: Boolean = true
+    val hasAudio: Boolean = true,
+    val availableQualities: List<VideoQuality> = emptyList(),
+    val currentQuality: VideoQuality? = null
 )
