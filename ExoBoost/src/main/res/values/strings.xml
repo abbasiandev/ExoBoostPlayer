@@ -27,6 +27,11 @@
     <string name="cd_back">Back</string>
     <string name="cd_setting">Setting</string>
     <string name="cd_fullscreen">Full Screen</string>
+    <string name="cd_speed_control">Speed Control</string>
+    <string name="cd_quality_selection">Quality Selection</string>
 
     <string name="loading">Loading...</string>
+    <string name="playback_speed">Playback Speed</string>
+    <string name="current_speed">Current Speed</string>
+    <string name="video_quality">Video Quality</string>
 </resources>
