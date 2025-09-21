@@ -1,0 +1,46 @@
+package dev.abbasian.exoboost.presentation.ui.component
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+
+@Composable
+fun GlassyContainer(
+    modifier: Modifier = Modifier,
+    config: VideoPlayerConfig.GlassyUIConfig = VideoPlayerConfig.GlassyUIConfig(),
+    shape: Shape = RoundedCornerShape(16.dp),
+    contentPadding: Dp = 16.dp,
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = config.backgroundOpacity),
+                        Color.White.copy(alpha = config.backgroundOpacity * 0.5f)
+                    )
+                )
+            )
+            .border(
+                width = 0.5.dp,
+                color = Color.White.copy(alpha = config.borderOpacity),
+                shape = shape
+            )
+            .padding(contentPadding)
+    ) {
+        content()
+    }
+}
