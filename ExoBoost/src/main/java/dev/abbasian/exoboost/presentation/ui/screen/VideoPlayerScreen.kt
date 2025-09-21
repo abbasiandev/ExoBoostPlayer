@@ -37,6 +37,7 @@ import androidx.media3.ui.PlayerView
 import dev.abbasian.exoboost.R
 import dev.abbasian.exoboost.data.manager.ExoPlayerManager
 import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.domain.model.VideoState
 import dev.abbasian.exoboost.presentation.ui.component.EnhancedPlayerControls
 import dev.abbasian.exoboost.presentation.ui.component.GestureHandler
@@ -56,6 +57,8 @@ fun ExoBoostPlayer(
     onPlayerReady: (() -> Unit)? = null,
     onError: ((String) -> Unit)? = null,
     onBack: (() -> Unit)? = null,
+    onSpeedChanged: ((Float) -> Unit)? = null,
+    onQualityChanged: ((VideoQuality) -> Unit)? = null,
     viewModel: VideoPlayerViewModel = koinViewModel(),
     playerManager: ExoPlayerManager = koinInject()
 ) {
@@ -283,6 +286,7 @@ fun ExoBoostPlayer(
                 videoState = uiState.videoState,
                 videoInfo = uiState.videoInfo,
                 showControls = controlsVisible,
+                config = config,
                 onPlayPause = {
                     try {
                         viewModel.playPause()
@@ -304,6 +308,22 @@ fun ExoBoostPlayer(
                         controlsVisible = true
                     } catch (e: Exception) {
                         Log.e("ExoBoostPlayer", "Error retrying", e)
+                    }
+                },
+                onSpeedSelected = { speed ->
+                    try {
+                        viewModel.setPlaybackSpeed(speed)
+                        onSpeedChanged?.invoke(speed)
+                    } catch (e: Exception) {
+                        Log.e("ExoBoostPlayer", "Error setting speed", e)
+                    }
+                },
+                onQualitySelected = { quality ->
+                    try {
+                        viewModel.selectQuality(quality)
+                        onQualityChanged?.invoke(quality)
+                    } catch (e: Exception) {
+                        Log.e("ExoBoostPlayer", "Error selecting quality", e)
                     }
                 },
                 onFullscreen = {

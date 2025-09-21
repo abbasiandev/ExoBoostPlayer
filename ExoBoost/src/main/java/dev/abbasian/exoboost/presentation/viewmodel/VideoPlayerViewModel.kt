@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dev.abbasian.exoboost.domain.model.PlayerError
 import dev.abbasian.exoboost.domain.model.VideoInfo
 import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.domain.model.VideoState
 import dev.abbasian.exoboost.domain.usecase.CacheVideoUseCase
 import dev.abbasian.exoboost.domain.usecase.PlayVideoUseCase
@@ -79,6 +80,26 @@ class VideoPlayerViewModel(
                 }
             } catch (e: Exception) {
                 Log.e("VideoPlayerViewModel", "Error in playPause", e)
+            }
+        }
+    }
+
+    fun setPlaybackSpeed(speed: Float) {
+        viewModelScope.launch {
+            try {
+                playVideoUseCase.setPlaybackSpeed(speed)
+            } catch (e: Exception) {
+                Log.e("VideoPlayerViewModel", "Error setting playback speed", e)
+            }
+        }
+    }
+
+    fun selectQuality(quality: VideoQuality) {
+        viewModelScope.launch {
+            try {
+                playVideoUseCase.selectQuality(quality)
+            } catch (e: Exception) {
+                Log.e("VideoPlayerViewModel", "Error selecting quality", e)
             }
         }
     }
