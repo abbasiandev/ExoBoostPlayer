@@ -27,15 +27,18 @@ data class VideoPlayerConfig(
         val enableVisualization: Boolean = true,
         val visualizationType: VisualizationType = VisualizationType.SPECTRUM,
         val sensitivity: Float = 1.0f,
-        val colorScheme: VisualizationColorScheme = VisualizationColorScheme.DYNAMIC
+        val colorScheme: VisualizationColorScheme = VisualizationColorScheme.DYNAMIC,
+        val smoothingFactor: Float = 1.0f
     )
 
     data class GlassyUIConfig(
+        val blurRadius: Float? = null,
         val backgroundBlur: Float = 20f,
         val backgroundOpacity: Float = 0.1f,
         val borderOpacity: Float = 0.3f,
         val shadowEnabled: Boolean = true,
-        val animationDuration: Int = 300
+        val animationDuration: Int = 300,
+        val cornerRadius: Float? = null
     )
 }
 
