@@ -28,6 +28,31 @@ fun HomeScreen(
             description = "قطعه پیانو کلاسیک برای تست"
         ),
         MediaItem(
+            title = "Ambient Rain & Piano",
+            url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            description = "آهنگ آرام پیانو با صدای باران"
+        ),
+        MediaItem(
+            title = "Peaceful Guitar Melody",
+            url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+            description = "ملودی آرام گیتار برای استراحت"
+        ),
+        MediaItem(
+            title = "Soft Electronic Ambient",
+            url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+            description = "موسیقی الکترونیک آرام"
+        ),
+        MediaItem(
+            title = "Nature Sounds & Flute",
+            url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3",
+            description = "صداهای طبیعت با فلوت"
+        ),
+        MediaItem(
+            title = "Meditation Piano",
+            url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
+            description = "پیانو مدیتیشن و آرامش"
+        ),
+        MediaItem(
             title = "HLS Big Buck Bunny",
             url = "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8",
             description = "Public HLS stream from Apple for testing"
