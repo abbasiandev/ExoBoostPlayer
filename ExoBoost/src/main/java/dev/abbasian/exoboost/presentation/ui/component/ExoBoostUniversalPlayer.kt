@@ -25,7 +25,9 @@ fun ExoBoostUniversalPlayer(
     config: VideoPlayerConfig = VideoPlayerConfig(),
     onPlayerReady: (() -> Unit)? = null,
     onError: ((String) -> Unit)? = null,
-    onBack: (() -> Unit)? = null
+    onBack: (() -> Unit)? = null,
+    trackTitle: String = "Audio Track",
+    artistName: String = "Unknown Artist"
 ) {
     val mediaType = remember(mediaUrl, mimeType) {
         MediaUtil.getMediaType(mediaUrl, mimeType)
@@ -62,6 +64,8 @@ fun ExoBoostUniversalPlayer(
                     onPlayerReady = onPlayerReady,
                     onError = onError,
                     onBack = onBack,
+                    trackTitle = trackTitle,
+                    artistName = artistName,
                     modifier = Modifier.fillMaxSize()
                 )
             }
