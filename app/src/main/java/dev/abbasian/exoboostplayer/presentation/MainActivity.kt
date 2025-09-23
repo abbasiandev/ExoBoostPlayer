@@ -22,8 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
 import dev.abbasian.exoboost.presentation.ui.component.ExoBoostUniversalPlayer
-import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostPlayer
-import dev.abbasian.exoboost.util.MediaUtil
 import dev.abbasian.exoboostplayer.presentation.ui.screen.HomeScreen
 import dev.abbasian.exoboostplayer.presentation.ui.theme.ExoBoostPlayerTheme
 import dev.abbasian.exoboostplayer.presentation.viewmodel.MainViewModel
@@ -64,29 +62,40 @@ class MainActivity : ComponentActivity() {
                         showControls = true,
                         enableGestures = true,
                         enableSpeedControl = true,
-                        enableQualitySelection = MediaUtil.isAdaptiveStream(uiState.selectedMedia!!.url),
+                        // Enhanced audio visualization settings
+                        audioVisualization = VideoPlayerConfig.AudioVisualizationConfig(
+                            enableVisualization = true,
+                            visualizationType = dev.abbasian.exoboost.domain.model.VisualizationType.SPECTRUM,
+                            colorScheme = dev.abbasian.exoboost.domain.model.VisualizationColorScheme.DYNAMIC,
+                            sensitivity = 0.8f,
+                            smoothingFactor = 0.7f
+                        ),
+                        // Enhanced glassy UI for modern look
+                        glassyUI = VideoPlayerConfig.GlassyUIConfig(
+                            blurRadius = 20f,
+                            backgroundOpacity = 0.15f,
+                            borderOpacity = 0.3f,
+                            cornerRadius = 16f
+                        ),
+                        enableQualitySelection = dev.abbasian.exoboost.util.MediaUtil.isAdaptiveStream(uiState.selectedMedia!!.url),
                         playbackSpeedOptions = listOf(0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f),
                         defaultPlaybackSpeed = 1.0f,
                         maxRetryCount = 5,
                         retryOnError = true
                     ),
+                    // Extract track info from media object if available
+                    trackTitle = uiState.selectedMedia!!.title ?: "Unknown Track",
+                    artistName = uiState.selectedMedia!!.artist ?: "Unknown Artist",
                     onPlayerReady = {
-                        // Player is ready
+                        Log.d("MainActivity", "Player is ready")
                     },
                     onError = { error ->
                         mainViewModel.showError(error)
                     },
+                    onBack = {
+                        mainViewModel.goBack()
+                    }
                 )
-
-                // Back button
-                FilledTonalButton(
-                    onClick = { mainViewModel.goBack() },
-                    modifier = Modifier
-                        .align(Alignment.Companion.TopStart)
-                        .padding(16.dp)
-                ) {
-                    Text("بازگشت")
-                }
 
                 // Error display
                 uiState.errorMessage?.let { error ->
