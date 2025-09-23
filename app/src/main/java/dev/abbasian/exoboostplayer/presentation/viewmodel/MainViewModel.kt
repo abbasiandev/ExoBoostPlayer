@@ -10,9 +10,9 @@ class MainViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
-    fun selectVideo(videoItem: VideoItem) {
+    fun selectMedia(mediaItem: MediaItem) {
         _uiState.value = _uiState.value.copy(
-            selectedVideo = videoItem,
+            selectedMedia = mediaItem,
             showPlayer = true
         )
     }
@@ -34,12 +34,12 @@ class MainViewModel : ViewModel() {
 }
 
 data class MainUiState(
-    val selectedVideo: VideoItem? = null,
+    val selectedMedia: MediaItem? = null,
     val showPlayer: Boolean = false,
     val errorMessage: String? = null
 )
 
-data class VideoItem(
+data class MediaItem(
     val title: String,
     val url: String,
     val description: String

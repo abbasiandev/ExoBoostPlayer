@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.presentation.ui.component.ExoBoostUniversalPlayer
 import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostPlayer
 import dev.abbasian.exoboost.util.MediaUtil
 import dev.abbasian.exoboostplayer.presentation.ui.screen.HomeScreen
@@ -49,21 +50,21 @@ class MainActivity : ComponentActivity() {
     private fun VideoPlayerApp() {
         val uiState by mainViewModel.uiState.collectAsState()
 
-        if (uiState.showPlayer && uiState.selectedVideo != null) {
-            // Full-screen video player
+        if (uiState.showPlayer && uiState.selectedMedia != null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .systemBarsPadding()
             ) {
-                ExoBoostPlayer(
-                    videoUrl = uiState.selectedVideo!!.url,
+                ExoBoostUniversalPlayer(
+                    mediaUrl = uiState.selectedMedia!!.url,
+                    modifier = Modifier.fillMaxSize(),
                     config = VideoPlayerConfig(
                         autoPlay = true,
                         showControls = true,
                         enableGestures = true,
                         enableSpeedControl = true,
-                        enableQualitySelection = MediaUtil.isAdaptiveStream(uiState.selectedVideo!!.url),
+                        enableQualitySelection = MediaUtil.isAdaptiveStream(uiState.selectedMedia!!.url),
                         playbackSpeedOptions = listOf(0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f),
                         defaultPlaybackSpeed = 1.0f,
                         maxRetryCount = 5,
@@ -75,13 +76,6 @@ class MainActivity : ComponentActivity() {
                     onError = { error ->
                         mainViewModel.showError(error)
                     },
-                    onSpeedChanged = { speed ->
-                        Log.d("MultiFormatPlayer", "Speed: ${speed}x")
-                    },
-                    onQualityChanged = { quality ->
-                        Log.d("MultiFormatPlayer", "Quality: ${quality.getQualityLabel()}")
-                    },
-                    modifier = Modifier.fillMaxSize()
                 )
 
                 // Back button
@@ -113,8 +107,8 @@ class MainActivity : ComponentActivity() {
         } else {
             // Home screen with video selection
             HomeScreen(
-                onVideoSelected = { video ->
-                    mainViewModel.selectVideo(video)
+                onMediaSelected = { media ->
+                    mainViewModel.selectMedia(media)
                 }
             )
         }

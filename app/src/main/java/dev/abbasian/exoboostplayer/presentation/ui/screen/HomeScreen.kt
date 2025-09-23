@@ -8,41 +8,46 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import dev.abbasian.exoboostplayer.presentation.viewmodel.VideoItem
+import dev.abbasian.exoboostplayer.presentation.viewmodel.MediaItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onVideoSelected: (VideoItem) -> Unit,
+    onMediaSelected: (MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val sampleVideos = listOf(
-        VideoItem(
+        MediaItem(
             title = "Big Buck Bunny (MP4)",
             url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
             description = "ویدیوی تست کیفیت HD"
         ),
-        VideoItem(
+        MediaItem(
+            title = "Classical Piano (MP3)",
+            url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+            description = "قطعه پیانو کلاسیک برای تست"
+        ),
+        MediaItem(
             title = "HLS Big Buck Bunny",
             url = "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8",
             description = "Public HLS stream from Apple for testing"
         ),
-        VideoItem(
+        MediaItem(
             title = "DASH Stream",
             url = "https://bitmovin-a.akamaihd.net/content/sintel/sintel.mpd",
             description = "DASH adaptive stream"
         ),
-        VideoItem(
+        MediaItem(
             title = "Elephant Dream (MP4)",
             url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
             description = "انیمیشن کوتاه با کیفیت بالا"
         ),
-        VideoItem(
+        MediaItem(
             title = "Tears of Steel (MP4)",
             url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
             description = "فیلم کوتاه علمی-تخیلی"
         ),
-        VideoItem(
+        MediaItem(
             title = "Sintel (MP4)",
             url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
             description = "انیمیشن فانتزی کوتاه"
@@ -75,10 +80,10 @@ fun HomeScreen(
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(sampleVideos) { video ->
-                VideoItemCard(
-                    video = video,
-                    onClick = { onVideoSelected(video) }
+            items(sampleVideos) { media ->
+                MediaItemCard(
+                    media = media,
+                    onClick = { onMediaSelected(media) }
                 )
             }
 
@@ -90,8 +95,8 @@ fun HomeScreen(
 }
 
 @Composable
-private fun VideoItemCard(
-    video: VideoItem,
+private fun MediaItemCard(
+    media: MediaItem,
     onClick: () -> Unit
 ) {
     Card(
@@ -102,20 +107,20 @@ private fun VideoItemCard(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = video.title,
+                text = media.title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
 
             Text(
-                text = video.description,
+                text = media.description,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
             )
 
             Text(
-                text = video.url,
+                text = media.url,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(top = 8.dp)
