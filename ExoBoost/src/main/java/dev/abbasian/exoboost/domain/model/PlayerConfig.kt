@@ -11,7 +11,10 @@ data class VideoPlayerConfig(
     val playbackSpeedOptions: List<Float> = listOf(0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f),
     val defaultPlaybackSpeed: Float = 1.0f,
     val enableSpeedControl: Boolean = true,
-    val enableQualitySelection: Boolean = true
+    val enableQualitySelection: Boolean = true,
+
+    val audioVisualization: AudioVisualizationConfig = AudioVisualizationConfig(),
+    val glassyUI: GlassyUIConfig = GlassyUIConfig()
 ) {
     data class BufferDurations(
         val minBufferMs: Int = 15000,
@@ -19,4 +22,27 @@ data class VideoPlayerConfig(
         val bufferForPlaybackMs: Int = 2500,
         val bufferForPlaybackAfterRebufferMs: Int = 5000
     )
+
+    data class AudioVisualizationConfig(
+        val enableVisualization: Boolean = true,
+        val visualizationType: VisualizationType = VisualizationType.SPECTRUM,
+        val sensitivity: Float = 1.0f,
+        val colorScheme: VisualizationColorScheme = VisualizationColorScheme.DYNAMIC
+    )
+
+    data class GlassyUIConfig(
+        val backgroundBlur: Float = 20f,
+        val backgroundOpacity: Float = 0.1f,
+        val borderOpacity: Float = 0.3f,
+        val shadowEnabled: Boolean = true,
+        val animationDuration: Int = 300
+    )
+}
+
+enum class VisualizationType {
+    SPECTRUM, WAVEFORM, CIRCULAR, BARS, PARTICLE_SYSTEM
+}
+
+enum class VisualizationColorScheme {
+    DYNAMIC, MONOCHROME, RAINBOW, MATERIAL_YOU
 }
