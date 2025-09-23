@@ -42,5 +42,6 @@ data class MainUiState(
 data class MediaItem(
     val title: String,
     val url: String,
-    val description: String
+    val description: String,
+    val artist: String? = null,
 )
