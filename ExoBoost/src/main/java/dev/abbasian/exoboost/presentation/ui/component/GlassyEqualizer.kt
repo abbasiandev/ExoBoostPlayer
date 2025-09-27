@@ -30,10 +30,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,16 +47,21 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.data.store.EqualizerPreferencesManager
+import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 @Composable
 fun GlassyEqualizer(
     modifier: Modifier = Modifier,
-    config: VideoPlayerConfig.GlassyUIConfig = VideoPlayerConfig.GlassyUIConfig(),
+    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig(),
     barCount: Int = 8,
     isPlaying: Boolean = true,
-    onEqualizerChange: ((List<Float>) -> Unit)? = null
+    onEqualizerChange: ((List<Float>) -> Unit)? = null,
+    preferencesManager: EqualizerPreferencesManager = koinInject()
 ) {
+    val scope = rememberCoroutineScope()
     val frequencyLabels = listOf("60Hz", "170Hz", "310Hz", "600Hz", "1kHz", "3kHz", "6kHz", "12kHz")
 
     val equalizerValues = remember {
@@ -62,9 +70,23 @@ fun GlassyEqualizer(
         }
     }
 
-    val customPresets = remember { mutableStateListOf<CustomPreset>() }
+    val customPresets by preferencesManager.customPresets.collectAsState(initial = emptyList())
+    val currentPresetName by preferencesManager.currentPresetName.collectAsState(initial = "")
+    val storedValues by preferencesManager.currentValues.collectAsState(initial = List(8) { 0.5f })
+
     var showCustomPresetDialog by remember { mutableStateOf(false) }
     var selectedPresetForEdit by remember { mutableStateOf<CustomPreset?>(null) }
+
+    LaunchedEffect(storedValues) {
+        if (storedValues.isNotEmpty()) {
+            storedValues.forEachIndexed { index, value ->
+                if (index < equalizerValues.size) {
+                    equalizerValues[index] = value
+                }
+            }
+            onEqualizerChange?.invoke(storedValues)
+        }
+    }
 
     GlassyContainer(
         config = config.copy(
@@ -87,10 +109,30 @@ fun GlassyEqualizer(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
+                if (currentPresetName.isNotEmpty()) {
+                    Text(
+                        text = "Current: $currentPresetName",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 11.sp
+                    )
+                }
+            }
 
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                GlassyActionButton(
+                    text = "Custom",
+                    onClick = {
+                        scope.launch {
+                            preferencesManager.saveCurrentPresetName("")
+                        }
+                        showCustomPresetDialog = true
+                    }
+                )
                 GlassyActionButton(
                     text = "Save Preset",
-                    onClick = { showCustomPresetDialog = true }
+                    onClick = {
+                        showCustomPresetDialog = true
+                    }
                 )
             }
 
@@ -216,7 +258,17 @@ fun GlassyEqualizer(
                                 showCustomPresetDialog = true
                             },
                             onDelete = {
-                                customPresets.remove(preset)
+                                scope.launch {
+                                    val updatedPresets = customPresets.toMutableList().apply {
+                                        remove(preset)
+                                    }
+                                    val newPresetName = if (currentPresetName == preset.name) "" else currentPresetName
+                                    preferencesManager.saveEqualizerState(
+                                        presetName = newPresetName,
+                                        values = equalizerValues.toList(),
+                                        customPresets = updatedPresets
+                                    )
+                                }
                             }
                         )
                     }
@@ -230,14 +282,25 @@ fun GlassyEqualizer(
             currentValues = equalizerValues.toList(),
             existingPreset = selectedPresetForEdit,
             onSave = { name, values ->
-                if (selectedPresetForEdit != null) {
-                    val index = customPresets.indexOf(selectedPresetForEdit)
-                    if (index >= 0) {
-                        customPresets[index] = CustomPreset(name, values)
+                scope.launch {
+                    val updatedPresets = customPresets.toMutableList()
+
+                    if (selectedPresetForEdit != null) {
+                        val index = updatedPresets.indexOfFirst { it.name == selectedPresetForEdit!!.name }
+                        if (index >= 0) {
+                            updatedPresets[index] = CustomPreset(name, values)
+                        }
+                    } else {
+                        updatedPresets.add(CustomPreset(name, values))
                     }
-                } else {
-                    customPresets.add(CustomPreset(name, values))
+
+                    preferencesManager.saveEqualizerState(
+                        presetName = name,
+                        values = values,
+                        customPresets = updatedPresets
+                    )
                 }
+
                 showCustomPresetDialog = false
                 selectedPresetForEdit = null
             },
