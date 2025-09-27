@@ -21,6 +21,25 @@ internal class EnhancedAudioVisualization {
     private var peakValues = FloatArray(64) { 0f }
     private val random = Random.Default
 
+    companion object {
+        private var REAL_AUDIO_SUPPORTED: Boolean? = null
+
+        private fun isRealAudioSupported(): Boolean {
+            if (REAL_AUDIO_SUPPORTED != null) return REAL_AUDIO_SUPPORTED!!
+
+            return try {
+                val testVisualizer = Visualizer(0)
+                testVisualizer.release()
+                REAL_AUDIO_SUPPORTED = true
+                true
+            } catch (e: Exception) {
+                Log.i("AudioVisualizer", "Device does not support real audio visualization")
+                REAL_AUDIO_SUPPORTED = false
+                false
+            }
+        }
+    }
+
     private fun setupRealAudioVisualizer(audioSessionId: Int): Boolean {
         return try {
             visualizer?.release()
@@ -133,17 +152,19 @@ internal class EnhancedAudioVisualization {
             return
         }
 
-        val hasRealAudio = setupRealAudioVisualizer(audioSessionId)
+        val useRealAudio = isRealAudioSupported() && audioSessionId > 0
 
-        if (!hasRealAudio) {
-            val dataSize = getDataSize(visualizationType)
-            generateReactiveVisualizationData(
-                dataSize = dataSize,
-                visualizationType = visualizationType,
-                sensitivity = sensitivity,
-                smoothingFactor = smoothingFactor
-            )
+        if (useRealAudio) {
+            setupRealAudioVisualizer(audioSessionId)
         }
+
+        val dataSize = getDataSize(visualizationType)
+        generateReactiveVisualizationData(
+            dataSize = dataSize,
+            visualizationType = visualizationType,
+            sensitivity = sensitivity,
+            smoothingFactor = smoothingFactor
+        )
 
         hasData = true
     }
