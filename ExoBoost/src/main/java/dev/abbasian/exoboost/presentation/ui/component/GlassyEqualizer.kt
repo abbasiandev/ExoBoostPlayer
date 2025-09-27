@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,8 +19,15 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -54,6 +62,10 @@ fun GlassyEqualizer(
         }
     }
 
+    val customPresets = remember { mutableStateListOf<CustomPreset>() }
+    var showCustomPresetDialog by remember { mutableStateOf(false) }
+    var selectedPresetForEdit by remember { mutableStateOf<CustomPreset?>(null) }
+
     GlassyContainer(
         config = config.copy(
             backgroundOpacity = config.backgroundOpacity * 0.8f
@@ -64,13 +76,23 @@ fun GlassyEqualizer(
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "Equalizer",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Equalizer",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                GlassyActionButton(
+                    text = "Save Preset",
+                    onClick = { showCustomPresetDialog = true }
+                )
+            }
 
             Row(
                 modifier = Modifier
@@ -137,7 +159,14 @@ fun GlassyEqualizer(
                 }
             }
 
-            // presets
+            // default presets
+            Text(
+                text = "Default Presets",
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -157,7 +186,66 @@ fun GlassyEqualizer(
                     )
                 }
             }
+
+            if (customPresets.isNotEmpty()) {
+                Text(
+                    text = "Custom Presets",
+                    color = Color.White.copy(alpha = 0.8f),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
+                ) {
+                    items(customPresets) { preset ->
+                        CustomPresetItem(
+                            preset = preset,
+                            onApply = {
+                                preset.values.forEachIndexed { index, value ->
+                                    if (index < equalizerValues.size) {
+                                        equalizerValues[index] = value
+                                    }
+                                }
+                                onEqualizerChange?.invoke(equalizerValues.toList())
+                            },
+                            onEdit = {
+                                selectedPresetForEdit = preset
+                                showCustomPresetDialog = true
+                            },
+                            onDelete = {
+                                customPresets.remove(preset)
+                            }
+                        )
+                    }
+                }
+            }
         }
+    }
+
+    if (showCustomPresetDialog) {
+        CustomPresetDialog(
+            currentValues = equalizerValues.toList(),
+            existingPreset = selectedPresetForEdit,
+            onSave = { name, values ->
+                if (selectedPresetForEdit != null) {
+                    val index = customPresets.indexOf(selectedPresetForEdit)
+                    if (index >= 0) {
+                        customPresets[index] = CustomPreset(name, values)
+                    }
+                } else {
+                    customPresets.add(CustomPreset(name, values))
+                }
+                showCustomPresetDialog = false
+                selectedPresetForEdit = null
+            },
+            onDismiss = {
+                showCustomPresetDialog = false
+                selectedPresetForEdit = null
+            }
+        )
     }
 }
 
@@ -270,10 +358,129 @@ private fun VerticalSlider(
     }
 }
 
+private fun getPresetValues(preset: String): List<Float> {
+    return when (preset) {
+        "Flat" -> listOf(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f)
+        "Rock" -> listOf(0.6f, 0.5f, 0.4f, 0.4f, 0.5f, 0.7f, 0.8f, 0.8f)
+        "Pop" -> listOf(0.4f, 0.6f, 0.7f, 0.7f, 0.5f, 0.4f, 0.5f, 0.6f)
+        "Jazz" -> listOf(0.7f, 0.6f, 0.5f, 0.4f, 0.4f, 0.5f, 0.6f, 0.7f)
+        else -> listOf(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f)
+    }
+}
+
+@Composable
+private fun CustomPresetItem(
+    preset: CustomPreset,
+    onApply: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showMenu by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        GlassyPresetButton(
+            text = preset.name,
+            onClick = onApply,
+            onLongClick = { showMenu = true }
+        )
+
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false },
+            modifier = Modifier.background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Black.copy(alpha = 0.9f),
+                        Color.Black.copy(alpha = 0.8f)
+                    )
+                ),
+                shape = RoundedCornerShape(8.dp)
+            )
+        ) {
+            DropdownMenuItem(
+                text = { Text("Edit", color = Color.White) },
+                onClick = {
+                    showMenu = false
+                    onEdit()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Delete", color = Color.Red.copy(alpha = 0.8f)) },
+                onClick = {
+                    showMenu = false
+                    onDelete()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun CustomPresetDialog(
+    currentValues: List<Float>,
+    existingPreset: CustomPreset?,
+    onSave: (String, List<Float>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var presetName by remember {
+        mutableStateOf(existingPreset?.name ?: "")
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = if (existingPreset != null) "Edit Preset" else "Save Preset",
+                color = Color.White
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(
+                    text = "Enter a name for this equalizer preset:",
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+
+                OutlinedTextField(
+                    value = presetName,
+                    onValueChange = { presetName = it },
+                    placeholder = { Text("Preset name", color = Color.White.copy(alpha = 0.5f)) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = Color.White.copy(alpha = 0.7f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.3f)
+                    ),
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            GlassyActionButton(
+                text = "Save",
+                onClick = {
+                    if (presetName.isNotBlank()) {
+                        onSave(presetName, currentValues)
+                    }
+                }
+            )
+        },
+        dismissButton = {
+            GlassyActionButton(
+                text = "Cancel",
+                onClick = onDismiss
+            )
+        },
+        containerColor = Color.Black.copy(alpha = 0.9f)
+    )
+}
+
 @Composable
 private fun GlassyPresetButton(
     text: String,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -292,6 +499,52 @@ private fun GlassyPresetButton(
                 color = Color.White.copy(alpha = 0.3f),
                 shape = RoundedCornerShape(12.dp)
             )
+            .then(
+                if (onLongClick != null) {
+                    Modifier.pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = { onClick() },
+                            onLongPress = { onLongClick() }
+                        )
+                    }
+                } else {
+                    Modifier.clickable { onClick() }
+                }
+            )
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = Color.White.copy(alpha = 0.9f),
+            fontSize = 12.sp,
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+private fun GlassyActionButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0.2f),
+                        Color.White.copy(alpha = 0.1f)
+                    )
+                ),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .border(
+                width = 0.5.dp,
+                color = Color.White.copy(alpha = 0.4f),
+                shape = RoundedCornerShape(8.dp)
+            )
             .clickable { onClick() }
             .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
@@ -299,17 +552,13 @@ private fun GlassyPresetButton(
         Text(
             text = text,
             color = Color.White.copy(alpha = 0.9f),
-            fontSize = 12.sp
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium
         )
     }
 }
 
-private fun getPresetValues(preset: String): List<Float> {
-    return when (preset) {
-        "Flat" -> listOf(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f)
-        "Rock" -> listOf(0.6f, 0.5f, 0.4f, 0.4f, 0.5f, 0.7f, 0.8f, 0.8f)
-        "Pop" -> listOf(0.4f, 0.6f, 0.7f, 0.7f, 0.5f, 0.4f, 0.5f, 0.6f)
-        "Jazz" -> listOf(0.7f, 0.6f, 0.5f, 0.4f, 0.4f, 0.5f, 0.6f, 0.7f)
-        else -> listOf(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f)
-    }
-}
+data class CustomPreset(
+    val name: String,
+    val values: List<Float>
+)
