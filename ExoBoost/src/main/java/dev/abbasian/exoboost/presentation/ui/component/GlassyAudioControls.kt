@@ -34,7 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 
 @Composable
 fun GlassyAudioControls(
@@ -45,7 +45,7 @@ fun GlassyAudioControls(
     duration: Long,
     bufferedPosition: Long = 0L,
     modifier: Modifier = Modifier,
-    config: VideoPlayerConfig.GlassyUIConfig = VideoPlayerConfig.GlassyUIConfig(),
+    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig(),
     onVolumeChange: ((Float) -> Unit)? = null,
     volume: Float = 1f,
     trackTitle: String? = null,

@@ -1,14 +1,14 @@
 package dev.abbasian.exoboost.domain.usecase
 
-import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.VideoQuality
-import dev.abbasian.exoboost.domain.repository.VideoRepository
+import dev.abbasian.exoboost.domain.repository.MediaRepository
 
 class PlayVideoUseCase(
-    private val repository: VideoRepository
+    private val repository: MediaRepository
 ) {
-    suspend fun execute(url: String, config: VideoPlayerConfig) {
-        repository.loadVideo(url, config)
+    suspend fun execute(url: String, config: MediaPlayerConfig) {
+        repository.loadMedia(url, config)
     }
 
     suspend fun play() = repository.play()

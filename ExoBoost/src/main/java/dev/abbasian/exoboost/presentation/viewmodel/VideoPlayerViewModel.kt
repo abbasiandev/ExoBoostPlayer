@@ -3,11 +3,11 @@ package dev.abbasian.exoboost.presentation.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.abbasian.exoboost.domain.model.MediaInfo
+import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.PlayerError
-import dev.abbasian.exoboost.domain.model.VideoInfo
-import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
 import dev.abbasian.exoboost.domain.model.VideoQuality
-import dev.abbasian.exoboost.domain.model.VideoState
+import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.usecase.CacheVideoUseCase
 import dev.abbasian.exoboost.domain.usecase.PlayVideoUseCase
 import dev.abbasian.exoboost.domain.usecase.RetryVideoUseCase
@@ -23,19 +23,19 @@ class VideoPlayerViewModel(
     private val retryVideoUseCase: RetryVideoUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(VideoPlayerUiState())
-    val uiState: StateFlow<VideoPlayerUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(MediaPlayerUiState())
+    val uiState: StateFlow<MediaPlayerUiState> = _uiState.asStateFlow()
 
     private var retryCount = 0
     private var maxRetryCount = 3
     private var currentJob: Job? = null
-    private var isVideoLoaded = false
+    private var isMediaLoaded = false
 
-    fun loadVideo(url: String, config: VideoPlayerConfig) {
+    fun loadMedia(url: String, config: MediaPlayerConfig) {
         maxRetryCount = config.maxRetryCount
 
-        if (isVideoLoaded && _uiState.value.currentUrl == url &&
-            _uiState.value.videoState !is VideoState.Error) {
+        if (isMediaLoaded && _uiState.value.currentUrl == url &&
+            _uiState.value.mediaState !is MediaState.Error) {
             Log.d("VideoPlayerViewModel", "Video already loaded: $url")
             return
         }
@@ -45,20 +45,20 @@ class VideoPlayerViewModel(
         currentJob = viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(
-                    videoState = VideoState.Loading,
+                    mediaState = MediaState.Loading,
                     currentUrl = url,
                     isLoading = true
                 )
 
                 playVideoUseCase.execute(url, config)
-                isVideoLoaded = true
+                isMediaLoaded = true
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Log.e("VideoPlayerViewModel", "Error loading video", e)
-                isVideoLoaded = false
+                isMediaLoaded = false
                 _uiState.value = _uiState.value.copy(
-                    videoState = VideoState.Error(
+                    mediaState = MediaState.Error(
                         PlayerError.UnknownError(
                             "Failed to load video: ${e.message}",
                             e
@@ -73,7 +73,7 @@ class VideoPlayerViewModel(
     fun playPause() {
         viewModelScope.launch {
             try {
-                if (_uiState.value.videoInfo.isPlaying) {
+                if (_uiState.value.mediaInfo.isPlaying) {
                     playVideoUseCase.pause()
                 } else {
                     playVideoUseCase.play()
@@ -141,7 +141,7 @@ class VideoPlayerViewModel(
             viewModelScope.launch {
                 try {
                     _uiState.value = _uiState.value.copy(
-                        videoState = VideoState.Loading,
+                        mediaState = MediaState.Loading,
                         isLoading = true
                     )
                     retryVideoUseCase.execute()
@@ -152,7 +152,7 @@ class VideoPlayerViewModel(
             }
         } else {
             _uiState.value = _uiState.value.copy(
-                videoState = VideoState.Error(
+                mediaState = MediaState.Error(
                     PlayerError.UnknownError("Maximum retry attempts reached")
                 ),
                 isLoading = false
@@ -160,18 +160,18 @@ class VideoPlayerViewModel(
         }
     }
 
-    fun updateVideoState(state: VideoState) {
+    fun updateMediaState(state: MediaState) {
         _uiState.value = _uiState.value.copy(
-            videoState = state,
-            isLoading = state is VideoState.Loading
+            mediaState = state,
+            isLoading = state is MediaState.Loading
         )
 
-        if (state is VideoState.Ready || state is VideoState.Playing) {
+        if (state is MediaState.Ready || state is MediaState.Playing) {
             retryCount = 0
-            isVideoLoaded = true
+            isMediaLoaded = true
         }
 
-        if (state is VideoState.Error && retryCount < maxRetryCount) {
+        if (state is MediaState.Error && retryCount < maxRetryCount) {
             when (state.error) {
                 is PlayerError.NetworkError -> {
                     if (state.error.isRetryable) {
@@ -182,21 +182,21 @@ class VideoPlayerViewModel(
                     }
                 }
                 else -> {
-                    isVideoLoaded = false
+                    isMediaLoaded = false
                 }
             }
         }
     }
 
-    fun updateVideoInfo(info: VideoInfo) {
-        _uiState.value = _uiState.value.copy(videoInfo = info)
+    fun updateMediaInfo(info: MediaInfo) {
+        _uiState.value = _uiState.value.copy(mediaInfo = info)
     }
 
     fun resetPlayer() {
         currentJob?.cancel()
         retryCount = 0
-        isVideoLoaded = false
-        _uiState.value = VideoPlayerUiState()
+        isMediaLoaded = false
+        _uiState.value = MediaPlayerUiState()
     }
 
     override fun onCleared() {
@@ -210,9 +210,9 @@ class VideoPlayerViewModel(
     }
 }
 
-data class VideoPlayerUiState(
-    val videoState: VideoState = VideoState.Idle,
-    val videoInfo: VideoInfo = VideoInfo(),
+data class MediaPlayerUiState(
+    val mediaState: MediaState = MediaState.Idle,
+    val mediaInfo: MediaInfo = MediaInfo(),
     val showControls: Boolean = true,
     val volume: Float = 1f,
     val brightness: Float = 0.5f,

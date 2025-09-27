@@ -4,26 +4,26 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import dev.abbasian.exoboost.data.manager.CacheManager
 import dev.abbasian.exoboost.data.manager.ExoPlayerManager
-import dev.abbasian.exoboost.domain.model.VideoInfo
-import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaInfo
+import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.VideoQuality
-import dev.abbasian.exoboost.domain.model.VideoState
-import dev.abbasian.exoboost.domain.repository.VideoRepository
+import dev.abbasian.exoboost.domain.model.MediaState
+import dev.abbasian.exoboost.domain.repository.MediaRepository
 import kotlinx.coroutines.flow.Flow
 
 @OptIn(UnstableApi::class)
-class VideoRepositoryImpl(
+class MediaRepositoryImpl(
     private val playerManager: ExoPlayerManager,
     private val cacheManager: CacheManager
-) : VideoRepository {
+) : MediaRepository {
 
-    override fun getVideoState(): Flow<VideoState> = playerManager.videoState
+    override fun getMediaState(): Flow<MediaState> = playerManager.mediaState
 
-    override fun getVideoInfo(): Flow<VideoInfo> = playerManager.videoInfo
+    override fun getMediaInfo(): Flow<MediaInfo> = playerManager.mediaInfo
 
-    override suspend fun loadVideo(url: String, config: VideoPlayerConfig) {
+    override suspend fun loadMedia(url: String, config: MediaPlayerConfig) {
         playerManager.initializePlayer(config)
-        playerManager.loadVideo(url)
+        playerManager.loadMedia(url)
     }
 
     override suspend fun play() {

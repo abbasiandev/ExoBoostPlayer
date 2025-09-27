@@ -23,12 +23,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.abbasian.exoboost.R
-import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 
 @Composable
 fun SpeedControlBottomSheet(
@@ -36,7 +35,7 @@ fun SpeedControlBottomSheet(
     availableSpeeds: List<Float>,
     onSpeedSelected: (Float) -> Unit,
     onDismiss: () -> Unit,
-    config: VideoPlayerConfig.GlassyUIConfig = VideoPlayerConfig.GlassyUIConfig()
+    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig()
 ) {
     val context = LocalContext.current
 
@@ -122,7 +121,7 @@ private fun SpeedChip(
     speed: Float,
     isSelected: Boolean,
     onClick: () -> Unit,
-    config: VideoPlayerConfig.GlassyUIConfig = VideoPlayerConfig.GlassyUIConfig()
+    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig()
 ) {
     val chipConfig = if (isSelected) {
         config.copy(

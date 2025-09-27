@@ -29,7 +29,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.util.formatTime
 
 @Composable
@@ -41,7 +41,7 @@ fun GlassySeekBar(
     onSeekStart: () -> Unit = {},
     onSeekEnd: () -> Unit = {},
     modifier: Modifier = Modifier,
-    config: VideoPlayerConfig.GlassyUIConfig = VideoPlayerConfig.GlassyUIConfig()
+    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig()
 ) {
     var isSeeking by remember { mutableStateOf(false) }
     var sliderPosition by remember { mutableFloatStateOf(0f) }

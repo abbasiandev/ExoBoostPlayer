@@ -1,16 +1,16 @@
 package dev.abbasian.exoboost.domain.model
 
-sealed class VideoState {
-    object Idle : VideoState()
-    object Loading : VideoState()
-    object Ready : VideoState()
-    object Playing : VideoState()
-    object Paused : VideoState()
-    object Ended : VideoState()
-    data class Error(val error: PlayerError) : VideoState()
+sealed class MediaState {
+    object Idle : MediaState()
+    object Loading : MediaState()
+    object Ready : MediaState()
+    object Playing : MediaState()
+    object Paused : MediaState()
+    object Ended : MediaState()
+    data class Error(val error: PlayerError) : MediaState()
 }
 
-data class VideoInfo(
+data class MediaInfo(
     val currentPosition: Long = 0L,
     val duration: Long = 0L,
     val bufferedPosition: Long = 0L,

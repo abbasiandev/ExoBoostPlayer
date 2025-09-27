@@ -36,9 +36,9 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import dev.abbasian.exoboost.R
 import dev.abbasian.exoboost.data.manager.ExoPlayerManager
-import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.VideoQuality
-import dev.abbasian.exoboost.domain.model.VideoState
+import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.presentation.ui.component.EnhancedPlayerControls
 import dev.abbasian.exoboost.presentation.ui.component.GestureHandler
 import dev.abbasian.exoboost.presentation.viewmodel.VideoPlayerViewModel
@@ -53,7 +53,7 @@ import kotlin.time.Duration.Companion.seconds
 fun ExoBoostPlayer(
     videoUrl: String,
     modifier: Modifier = Modifier,
-    config: VideoPlayerConfig = VideoPlayerConfig(),
+    config: MediaPlayerConfig = MediaPlayerConfig(),
     onPlayerReady: (() -> Unit)? = null,
     onError: ((String) -> Unit)? = null,
     onBack: (() -> Unit)? = null,
@@ -81,15 +81,15 @@ fun ExoBoostPlayer(
             Log.d("ExoBoostPlayer", "Player initialized")
 
             launch {
-                playerManager.videoState.collect { state ->
+                playerManager.mediaState.collect { state ->
                     Log.d("ExoBoostPlayer", "Video state: $state")
-                    viewModel.updateVideoState(state)
+                    viewModel.updateMediaState(state)
                 }
             }
 
             launch {
-                playerManager.videoInfo.collect { info ->
-                    viewModel.updateVideoInfo(info)
+                playerManager.mediaInfo.collect { info ->
+                    viewModel.updateMediaInfo(info)
                 }
             }
         } catch (e: Exception) {
@@ -102,7 +102,7 @@ fun ExoBoostPlayer(
         if (isPlayerInitialized && videoUrl.isNotEmpty() && videoUrl.isNotBlank()) {
             try {
                 Log.d("ExoBoostPlayer", "Loading video: $videoUrl")
-                viewModel.loadVideo(videoUrl, config)
+                viewModel.loadMedia(videoUrl, config)
             } catch (e: Exception) {
                 Log.e("ExoBoostPlayer", "Error loading video", e)
                 onError?.invoke("Failed to load video: ${e.message}")
@@ -110,13 +110,13 @@ fun ExoBoostPlayer(
         }
     }
 
-    LaunchedEffect(uiState.videoState) {
-        when (val state = uiState.videoState) {
-            is VideoState.Ready -> {
+    LaunchedEffect(uiState.mediaState) {
+        when (val state = uiState.mediaState) {
+            is MediaState.Ready -> {
                 Log.d("ExoBoostPlayer", "Player ready")
                 onPlayerReady?.invoke()
             }
-            is VideoState.Error -> {
+            is MediaState.Error -> {
                 Log.e("ExoBoostPlayer", "Player error: ${state.error.message}")
                 onError?.invoke(state.error.message)
             }
@@ -124,10 +124,10 @@ fun ExoBoostPlayer(
         }
     }
 
-    LaunchedEffect(controlsVisible, uiState.videoInfo.isPlaying, isModalOpen) {
-        if (controlsVisible && uiState.videoInfo.isPlaying && !isModalOpen) {
+    LaunchedEffect(controlsVisible, uiState.mediaInfo.isPlaying, isModalOpen) {
+        if (controlsVisible && uiState.mediaInfo.isPlaying && !isModalOpen) {
             delay(4.seconds)
-            if (uiState.videoInfo.isPlaying && !isModalOpen) {
+            if (uiState.mediaInfo.isPlaying && !isModalOpen) {
                 controlsVisible = false
             }
         }
@@ -139,7 +139,7 @@ fun ExoBoostPlayer(
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> {
                     if (activity?.isChangingConfigurations != true) {
-                        if (uiState.videoInfo.isPlaying) {
+                        if (uiState.mediaInfo.isPlaying) {
                             viewModel.playPause()
                         }
                     }
@@ -276,16 +276,16 @@ fun ExoBoostPlayer(
                         Log.e("ExoBoostPlayer", "Error seeking", e)
                     }
                 },
-                currentPosition = uiState.videoInfo.currentPosition,
-                duration = uiState.videoInfo.duration,
+                currentPosition = uiState.mediaInfo.currentPosition,
+                duration = uiState.mediaInfo.duration,
                 modifier = Modifier.fillMaxSize()
             )
         }
 
         if (config.showControls && isPlayerInitialized && playerViewReady) {
             EnhancedPlayerControls(
-                videoState = uiState.videoState,
-                videoInfo = uiState.videoInfo,
+                mediaState = uiState.mediaState,
+                mediaInfo = uiState.mediaInfo,
                 showControls = controlsVisible,
                 config = config,
                 onPlayPause = {

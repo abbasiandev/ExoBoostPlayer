@@ -43,18 +43,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import dev.abbasian.exoboost.R
-import dev.abbasian.exoboost.domain.model.VideoInfo
-import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaInfo
+import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.VideoQuality
-import dev.abbasian.exoboost.domain.model.VideoState
+import dev.abbasian.exoboost.domain.model.MediaState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EnhancedPlayerControls(
-    videoState: VideoState,
-    videoInfo: VideoInfo,
+    mediaState: MediaState,
+    mediaInfo: MediaInfo,
     showControls: Boolean,
-    config: VideoPlayerConfig = VideoPlayerConfig(),
+    config: MediaPlayerConfig = MediaPlayerConfig(),
     onPlayPause: () -> Unit,
     onSeek: (Long) -> Unit,
     onRetry: () -> Unit,
@@ -75,7 +75,7 @@ fun EnhancedPlayerControls(
     }
 
     AnimatedVisibility(
-        visible = showControls || videoState is VideoState.Error || videoState is VideoState.Loading,
+        visible = showControls || mediaState is MediaState.Error || mediaState is MediaState.Loading,
         enter = fadeIn(animationSpec = tween(400)) + scaleIn(initialScale = 0.8f),
         exit = fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.8f),
         modifier = modifier
@@ -97,15 +97,15 @@ fun EnhancedPlayerControls(
                     )
             )
 
-            when (videoState) {
-                is VideoState.Loading -> {
+            when (mediaState) {
+                is MediaState.Loading -> {
                     GlassyLoadingIndicator(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-                is VideoState.Error -> {
+                is MediaState.Error -> {
                     ErrorDisplay(
-                        error = videoState.error,
+                        error = mediaState.error,
                         onRetry = onRetry,
                         modifier = Modifier.align(Alignment.Center)
                     )
@@ -143,8 +143,8 @@ fun EnhancedPlayerControls(
                         ) {
                             Icon(
                                 imageVector = when {
-                                    videoInfo.isPlaying -> Icons.Filled.Pause
-                                    videoState is VideoState.Ended -> Icons.Filled.Replay
+                                    mediaInfo.isPlaying -> Icons.Filled.Pause
+                                    mediaState is MediaState.Ended -> Icons.Filled.Replay
                                     else -> Icons.Filled.PlayArrow
                                 },
                                 contentDescription = null,
@@ -183,7 +183,7 @@ fun EnhancedPlayerControls(
                             )
                         }
 
-                        if (config.enableQualitySelection && videoInfo.availableQualities.isNotEmpty()) {
+                        if (config.enableQualitySelection && mediaInfo.availableQualities.isNotEmpty()) {
                             GlassyIconButton(
                                 onClick = { showQualityDialog = true },
                                 icon = Icons.Filled.HighQuality,
@@ -209,7 +209,7 @@ fun EnhancedPlayerControls(
                     }
 
                     // bottom controls
-                    if (videoInfo.duration > 0) {
+                    if (mediaInfo.duration > 0) {
                         Box(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
@@ -237,9 +237,9 @@ fun EnhancedPlayerControls(
                                 .padding(16.dp)
                         ) {
                             GlassySeekBar(
-                                currentPosition = videoInfo.currentPosition,
-                                bufferedPosition = videoInfo.bufferedPosition,
-                                duration = videoInfo.duration,
+                                currentPosition = mediaInfo.currentPosition,
+                                bufferedPosition = mediaInfo.bufferedPosition,
+                                duration = mediaInfo.duration,
                                 onSeek = onSeek,
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -256,7 +256,7 @@ fun EnhancedPlayerControls(
                             dragHandle = null
                         ) {
                             SpeedControlBottomSheet(
-                                currentSpeed = videoInfo.playbackSpeed,
+                                currentSpeed = mediaInfo.playbackSpeed,
                                 availableSpeeds = config.playbackSpeedOptions,
                                 onSpeedSelected = onSpeedSelected,
                                 onDismiss = { showSpeedDialog = false }
@@ -272,8 +272,8 @@ fun EnhancedPlayerControls(
                             dragHandle = null
                         ) {
                             QualitySelectionBottomSheet(
-                                availableQualities = videoInfo.availableQualities,
-                                currentQuality = videoInfo.currentQuality,
+                                availableQualities = mediaInfo.availableQualities,
+                                currentQuality = mediaInfo.currentQuality,
                                 onQualitySelected = onQualitySelected,
                                 onDismiss = { showQualityDialog = false }
                             )

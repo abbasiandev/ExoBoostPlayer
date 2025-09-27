@@ -1,6 +1,6 @@
 package dev.abbasian.exoboost.domain.model
 
-data class VideoPlayerConfig(
+data class MediaPlayerConfig(
     val enableCache: Boolean = true,
     val autoPlay: Boolean = true,
     val showControls: Boolean = true,

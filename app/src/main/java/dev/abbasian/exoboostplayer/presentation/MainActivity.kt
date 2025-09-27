@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -20,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.presentation.ui.component.ExoBoostUniversalPlayer
 import dev.abbasian.exoboostplayer.presentation.ui.screen.HomeScreen
 import dev.abbasian.exoboostplayer.presentation.ui.theme.ExoBoostPlayerTheme
@@ -57,13 +56,13 @@ class MainActivity : ComponentActivity() {
                 ExoBoostUniversalPlayer(
                     mediaUrl = uiState.selectedMedia!!.url,
                     modifier = Modifier.fillMaxSize(),
-                    config = VideoPlayerConfig(
+                    config = MediaPlayerConfig(
                         autoPlay = true,
                         showControls = true,
                         enableGestures = true,
                         enableSpeedControl = true,
                         // Enhanced audio visualization settings
-                        audioVisualization = VideoPlayerConfig.AudioVisualizationConfig(
+                        audioVisualization = MediaPlayerConfig.AudioVisualizationConfig(
                             enableVisualization = true,
                             visualizationType = dev.abbasian.exoboost.domain.model.VisualizationType.SPECTRUM,
                             colorScheme = dev.abbasian.exoboost.domain.model.VisualizationColorScheme.DYNAMIC,
@@ -71,7 +70,7 @@ class MainActivity : ComponentActivity() {
                             smoothingFactor = 0.7f
                         ),
                         // Enhanced glassy UI for modern look
-                        glassyUI = VideoPlayerConfig.GlassyUIConfig(
+                        glassyUI = MediaPlayerConfig.GlassyUIConfig(
                             blurRadius = 20f,
                             backgroundOpacity = 0.15f,
                             borderOpacity = 0.3f,

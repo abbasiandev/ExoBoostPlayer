@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostAudioPlayer
 import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostPlayer
 import dev.abbasian.exoboost.util.MediaType
@@ -22,7 +22,7 @@ fun ExoBoostUniversalPlayer(
     mediaUrl: String,
     mimeType: String? = null,
     modifier: Modifier = Modifier,
-    config: VideoPlayerConfig = VideoPlayerConfig(),
+    config: MediaPlayerConfig = MediaPlayerConfig(),
     onPlayerReady: (() -> Unit)? = null,
     onError: ((String) -> Unit)? = null,
     onBack: (() -> Unit)? = null,

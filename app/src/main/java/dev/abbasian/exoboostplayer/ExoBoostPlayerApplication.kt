@@ -2,6 +2,7 @@ package dev.abbasian.exoboostplayer
 
 import android.app.Application
 import dev.abbasian.exoboost.di.cacheModule
+import dev.abbasian.exoboost.di.dataModule
 import dev.abbasian.exoboost.di.networkModule
 import dev.abbasian.exoboost.di.playerModule
 import dev.abbasian.exoboostplayer.di.appModule
@@ -17,6 +18,7 @@ class ExoBoostPlayerApplication : Application() {
             modules(
                 networkModule,
                 cacheModule,
+                dataModule,
                 playerModule,
                 appModule
             )

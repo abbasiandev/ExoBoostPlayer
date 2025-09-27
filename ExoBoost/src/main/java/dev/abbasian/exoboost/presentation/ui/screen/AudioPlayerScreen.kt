@@ -46,8 +46,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import dev.abbasian.exoboost.data.manager.ExoPlayerManager
-import dev.abbasian.exoboost.domain.model.VideoPlayerConfig
-import dev.abbasian.exoboost.domain.model.VideoState
+import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.VisualizationType
 import dev.abbasian.exoboost.presentation.ui.component.AudioVisualization
 import dev.abbasian.exoboost.presentation.ui.component.GlassyAudioControls
@@ -66,7 +66,7 @@ import kotlin.time.Duration.Companion.milliseconds
 fun ExoBoostAudioPlayer(
     audioUrl: String,
     modifier: Modifier = Modifier,
-    config: VideoPlayerConfig = VideoPlayerConfig(),
+    config: MediaPlayerConfig = MediaPlayerConfig(),
     onPlayerReady: (() -> Unit)? = null,
     onError: ((String) -> Unit)? = null,
     onBack: (() -> Unit)? = null,
@@ -101,14 +101,14 @@ fun ExoBoostAudioPlayer(
             Log.d("ExoBoostAudioPlayer", "Audio player initialized")
 
             launch {
-                playerManager.videoState.collect { state ->
-                    viewModel.updateVideoState(state)
+                playerManager.mediaState.collect { state ->
+                    viewModel.updateMediaState(state)
                 }
             }
 
             launch {
-                playerManager.videoInfo.collect { info ->
-                    viewModel.updateVideoInfo(info)
+                playerManager.mediaInfo.collect { info ->
+                    viewModel.updateMediaInfo(info)
                 }
             }
         } catch (e: Exception) {
@@ -121,7 +121,7 @@ fun ExoBoostAudioPlayer(
         if (isPlayerInitialized && audioUrl.isNotEmpty() && audioUrl.isNotBlank()) {
             try {
                 Log.d("ExoBoostAudioPlayer", "Loading audio: $audioUrl")
-                viewModel.loadVideo(audioUrl, config)
+                viewModel.loadMedia(audioUrl, config)
             } catch (e: Exception) {
                 Log.e("ExoBoostAudioPlayer", "Error loading audio", e)
                 onError?.invoke("Failed to load audio: ${e.message}")
@@ -129,14 +129,14 @@ fun ExoBoostAudioPlayer(
         }
     }
 
-    LaunchedEffect(uiState.videoState) {
-        when (val state = uiState.videoState) {
-            is VideoState.Ready -> {
+    LaunchedEffect(uiState.mediaState) {
+        when (val state = uiState.mediaState) {
+            is MediaState.Ready -> {
                 Log.d("ExoBoostAudioPlayer", "Audio player ready")
                 onPlayerReady?.invoke()
             }
 
-            is VideoState.Error -> {
+            is MediaState.Error -> {
                 Log.e("ExoBoostAudioPlayer", "Audio player error: ${state.error.message}")
                 onError?.invoke(state.error.message)
             }
@@ -145,12 +145,13 @@ fun ExoBoostAudioPlayer(
         }
     }
 
-    LaunchedEffect(uiState.videoInfo.isPlaying, selectedVisualizationType) {
+    LaunchedEffect(uiState.mediaInfo.isPlaying, selectedVisualizationType) {
         if (config.audioVisualization.enableVisualization) {
             launch {
-                while (isActive && uiState.videoInfo.isPlaying) {
+                while (isActive && uiState.mediaInfo.isPlaying) {
                     val audioSessionId = try {
-                        playerManager.getPlayer()?.audioSessionId ?: 0
+                        val player = playerManager.getPlayer()
+                        player?.audioSessionId?.takeIf { it > 0 } ?: 0
                     } catch (e: Exception) {
                         0
                     }
@@ -163,10 +164,11 @@ fun ExoBoostAudioPlayer(
                         smoothingFactor = config.audioVisualization.smoothingFactor
                     )
 
-                    delay(33.milliseconds)
+                    // Use longer delay to reduce CPU usage and crash frequency
+                    delay(50.milliseconds)
                 }
 
-                if (!uiState.videoInfo.isPlaying) {
+                if (!uiState.mediaInfo.isPlaying) {
                     audioVisualizer.clearVisualization()
                 }
             }
@@ -180,7 +182,7 @@ fun ExoBoostAudioPlayer(
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> {
                     if (activity?.isChangingConfigurations != true) {
-                        if (uiState.videoInfo.isPlaying) {
+                        if (uiState.mediaInfo.isPlaying) {
                             viewModel.playPause()
                         }
                     }
@@ -285,13 +287,13 @@ fun ExoBoostAudioPlayer(
                     audioData = audioVisualizer.getVisualizationData(),
                     visualizationType = selectedVisualizationType,
                     colorScheme = config.audioVisualization.colorScheme,
-                    isPlaying = uiState.videoInfo.isPlaying,
+                    isPlaying = uiState.mediaInfo.isPlaying,
                     bassIntensity = audioVisualizer.getBassIntensity(),
                     midIntensity = audioVisualizer.getMidIntensity(),
                     trebleIntensity = audioVisualizer.getTrebleIntensity(),
                     modifier = Modifier
                         .fillMaxSize()
-                        .alpha(if (uiState.videoInfo.isPlaying) 0.9f else 0.2f)
+                        .alpha(if (uiState.mediaInfo.isPlaying) 0.9f else 0.2f)
                 )
             }
         }
@@ -338,12 +340,12 @@ fun ExoBoostAudioPlayer(
 
             // bottom section
             GlassyAudioControls(
-                isPlaying = uiState.videoInfo.isPlaying,
+                isPlaying = uiState.mediaInfo.isPlaying,
                 onPlayPause = { viewModel.playPause() },
                 onSeek = { position -> viewModel.seekTo(position) },
-                currentPosition = uiState.videoInfo.currentPosition,
-                duration = uiState.videoInfo.duration,
-                bufferedPosition = uiState.videoInfo.bufferedPosition,
+                currentPosition = uiState.mediaInfo.currentPosition,
+                duration = uiState.mediaInfo.duration,
+                bufferedPosition = uiState.mediaInfo.bufferedPosition,
                 volume = uiState.volume,
                 onVolumeChange = { volume -> viewModel.setVolume(volume) },
                 trackTitle = trackTitle,
@@ -366,7 +368,7 @@ private fun VisualizationTypeSelector(
     modifier: Modifier = Modifier
 ) {
     GlassyContainer(
-        config = VideoPlayerConfig.GlassyUIConfig(),
+        config = MediaPlayerConfig.GlassyUIConfig(),
         modifier = modifier
     ) {
         Column(
