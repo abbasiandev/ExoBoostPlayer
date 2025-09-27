@@ -11,8 +11,10 @@ material = "1.9.0"
 composeBom = "2024.09.03"
 media3 = "1.4.1"
 workRunTime = "2.9.0"
+datastore = "1.1.7"
 okhttp3 = "4.12.0"
 coroutines = "1.7.3"
+gson = "2.10.1"
 koin = "3.5.0"
 
 [libraries]
@@ -42,8 +44,10 @@ androidx-media3-datasource = { group = "androidx.media3", name = "media3-datasou
 androidx-media3-datasource-okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "media3" }
 androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRunTime" }
+androidx-datastore = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp3" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }

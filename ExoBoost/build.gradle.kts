@@ -72,8 +72,10 @@ dependencies {
 
     implementation(libs.androidx.work.runtime.ktx)
 
+    implementation(libs.androidx.datastore)
     implementation(libs.okhttp3)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.gson)
 
     implementation(libs.koin.core)
     implementation(libs.koin.android)
