@@ -10,25 +10,27 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Repeat
-import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,26 +46,28 @@ fun GlassyAudioControls(
     bufferedPosition: Long = 0L,
     modifier: Modifier = Modifier,
     config: VideoPlayerConfig.GlassyUIConfig = VideoPlayerConfig.GlassyUIConfig(),
-    onSkipPrevious: (() -> Unit)? = null,
-    onSkipNext: (() -> Unit)? = null,
     onVolumeChange: ((Float) -> Unit)? = null,
-    onRepeatToggle: (() -> Unit)? = null,
-    onShuffleToggle: (() -> Unit)? = null,
     volume: Float = 1f,
-    isRepeatEnabled: Boolean = false,
-    isShuffleEnabled: Boolean = false,
     trackTitle: String? = null,
-    artistName: String? = null
+    artistName: String? = null,
+    onNext: (() -> Unit)? = null,
+    onPrevious: (() -> Unit)? = null,
+    showEqualizer: Boolean = false,
+    onEqualizerToggle: (() -> Unit)? = null
 ) {
+    var showVolumeSlider by remember { mutableStateOf(false) }
+    var currentVolume by remember { mutableFloatStateOf(volume) }
+
     GlassyContainer(
         config = config,
         modifier = modifier
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            modifier = Modifier.padding(24.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(20.dp)
         ) {
+            // Track info
             if (trackTitle != null || artistName != null) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -89,6 +93,17 @@ fun GlassyAudioControls(
                 }
             }
 
+            // Equalizer (conditionally shown)
+            if (showEqualizer) {
+                GlassyEqualizer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    config = config
+                )
+            }
+
+            // Seek bar
             GlassySeekBar(
                 currentPosition = currentPosition,
                 bufferedPosition = bufferedPosition,
@@ -98,126 +113,115 @@ fun GlassyAudioControls(
                 config = config
             )
 
-            // time Display
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = formatTime(currentPosition),
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 12.sp
-                )
-                Text(
-                    text = formatTime(duration),
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 12.sp
-                )
-            }
-
-            // Main Control Buttons
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Previous Track
-                onSkipPrevious?.let { skipPrevious ->
-                    GlassyControlButton(
-                        icon = Icons.Filled.FastRewind,
-                        onClick = skipPrevious,
-                        size = 48.dp,
-                        iconSize = 24.dp
-                    )
-                }
-
-                // Main Play/Pause Button
-                Box(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.25f),
-                                    Color.White.copy(alpha = 0.1f)
-                                )
-                            ),
-                            shape = CircleShape
-                        )
-                        .border(
-                            width = 1.dp,
-                            color = Color.White.copy(alpha = 0.4f),
-                            shape = CircleShape
-                        )
-                        .clickable { onPlayPause() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = if (isPlaying) "Pause" else "Play",
-                        modifier = Modifier.size(36.dp),
-                        tint = Color.White
-                    )
-                }
-
-                // Next Track
-                onSkipNext?.let { skipNext ->
-                    GlassyControlButton(
-                        icon = Icons.Filled.FastForward,
-                        onClick = skipNext,
-                        size = 48.dp,
-                        iconSize = 24.dp
-                    )
-                }
-            }
-
-            // Secondary Controls Row
+            // Main Control Buttons Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Shuffle
-                onShuffleToggle?.let { shuffleToggle ->
+                // Previous Button - Always visible if provided
+                onPrevious?.let { previous ->
                     GlassyControlButton(
-                        icon = Icons.Filled.Shuffle,
-                        onClick = shuffleToggle,
-                        size = 40.dp,
-                        iconSize = 20.dp,
-                        isActive = isShuffleEnabled
+                        onClick = previous,
+                        icon = Icons.Filled.SkipPrevious,
+                        iconSize = 24.dp,
+                        buttonSize = 48.dp,
+                        description = "Previous"
                     )
+                } ?: run {
+                    // Empty space if no previous button
+                    Box(modifier = Modifier.size(48.dp))
                 }
 
-                // Repeat
-                onRepeatToggle?.let { repeatToggle ->
-                    GlassyControlButton(
-                        icon = Icons.Filled.Repeat,
-                        onClick = repeatToggle,
-                        size = 40.dp,
-                        iconSize = 20.dp,
-                        isActive = isRepeatEnabled
-                    )
-                }
+                // Play/Pause Button
+                GlassyControlButton(
+                    onClick = onPlayPause,
+                    icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                    iconSize = 32.dp,
+                    buttonSize = 64.dp,
+                    description = if (isPlaying) "Pause" else "Play",
+                    isPrimary = true
+                )
 
-                // Volume Control
+                // Next Button - Always visible if provided
+                onNext?.let { next ->
+                    GlassyControlButton(
+                        onClick = next,
+                        icon = Icons.Filled.SkipNext,
+                        iconSize = 24.dp,
+                        buttonSize = 48.dp,
+                        description = "Next"
+                    )
+                } ?: run {
+                    // Empty space if no next button
+                    Box(modifier = Modifier.size(48.dp))
+                }
+            }
+
+            // Bottom Controls Row (Volume + Equalizer)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Volume Control - Left side
                 onVolumeChange?.let { volumeChange ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Icon(
-                            Icons.Filled.VolumeUp,
-                            contentDescription = "Volume",
-                            tint = Color.White.copy(alpha = 0.8f),
-                            modifier = Modifier.size(20.dp)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.clickable {
+                                showVolumeSlider = !showVolumeSlider
+                            }
+                        ) {
+                            Icon(
+                                Icons.Filled.VolumeUp,
+                                contentDescription = "Volume",
+                                tint = Color.White.copy(alpha = 0.8f),
+                                modifier = Modifier.size(20.dp)
+                            )
 
-                        // Simple volume slider representation
-                        GlassyVolumeSlider(
-                            volume = volume,
-                            onVolumeChange = volumeChange,
-                            modifier = Modifier.width(80.dp)
-                        )
+                            if (showVolumeSlider) {
+                                Slider(
+                                    value = currentVolume,
+                                    onValueChange = { newVolume ->
+                                        currentVolume = newVolume
+                                        volumeChange(newVolume)
+                                    },
+                                    valueRange = 0f..1f,
+                                    modifier = Modifier.weight(1f),
+                                    colors = androidx.compose.material3.SliderDefaults.colors(
+                                        thumbColor = Color.White,
+                                        activeTrackColor = Color.White.copy(alpha = 0.8f),
+                                        inactiveTrackColor = Color.White.copy(alpha = 0.3f)
+                                    )
+                                )
+                            } else {
+                                Text(
+                                    text = "${(currentVolume * 100).toInt()}%",
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
                     }
+                } ?: run {
+                    // Empty space if no volume control
+                    Box(modifier = Modifier.weight(1f))
+                }
+
+                // Equalizer Toggle Button - Right side
+                onEqualizerToggle?.let { equalizerToggle ->
+                    GlassyControlButton(
+                        onClick = equalizerToggle,
+                        icon = Icons.Filled.Equalizer,
+                        iconSize = 20.dp,
+                        buttonSize = 40.dp,
+                        description = if (showEqualizer) "Hide Equalizer" else "Show Equalizer",
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
                 }
             }
         }
@@ -225,36 +229,33 @@ fun GlassyAudioControls(
 }
 
 @Composable
-private fun GlassyControlButton(
-    icon: ImageVector,
+fun GlassyControlButton(
     onClick: () -> Unit,
-    size: androidx.compose.ui.unit.Dp,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     iconSize: androidx.compose.ui.unit.Dp,
-    isActive: Boolean = false,
+    buttonSize: androidx.compose.ui.unit.Dp,
+    description: String,
+    isPrimary: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val alpha = if (isPrimary) 0.4f else 0.3f
+    val borderAlpha = if (isPrimary) 0.6f else 0.4f
+
     Box(
         modifier = modifier
-            .size(size)
+            .size(buttonSize)
             .background(
                 brush = Brush.radialGradient(
-                    colors = if (isActive) {
-                        listOf(
-                            Color.White.copy(alpha = 0.3f),
-                            Color.White.copy(alpha = 0.15f)
-                        )
-                    } else {
-                        listOf(
-                            Color.White.copy(alpha = 0.15f),
-                            Color.White.copy(alpha = 0.05f)
-                        )
-                    }
+                    colors = listOf(
+                        Color.White.copy(alpha = if (isPrimary) 0.25f else 0.2f),
+                        Color.White.copy(alpha = if (isPrimary) 0.1f else 0.05f)
+                    )
                 ),
                 shape = CircleShape
             )
             .border(
-                width = 0.5.dp,
-                color = Color.White.copy(alpha = if (isActive) 0.4f else 0.2f),
+                width = 1.dp,
+                color = Color.White.copy(alpha = borderAlpha),
                 shape = CircleShape
             )
             .clickable { onClick() },
@@ -262,46 +263,9 @@ private fun GlassyControlButton(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = description,
             modifier = Modifier.size(iconSize),
-            tint = Color.White.copy(alpha = if (isActive) 1f else 0.8f)
+            tint = Color.White
         )
     }
-}
-
-@Composable
-private fun GlassyVolumeSlider(
-    volume: Float,
-    onVolumeChange: (Float) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .background(
-                Color.White.copy(alpha = 0.1f),
-                RoundedCornerShape(4.dp)
-            )
-            .border(
-                0.5.dp,
-                Color.White.copy(alpha = 0.2f),
-                RoundedCornerShape(4.dp)
-            )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(volume)
-                .background(
-                    Color.White.copy(alpha = 0.6f),
-                    RoundedCornerShape(4.dp)
-                )
-                .padding(vertical = 4.dp)
-        )
-    }
-}
-
-private fun formatTime(milliseconds: Long): String {
-    val totalSeconds = milliseconds / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return String.format("%d:%02d", minutes, seconds)
 }

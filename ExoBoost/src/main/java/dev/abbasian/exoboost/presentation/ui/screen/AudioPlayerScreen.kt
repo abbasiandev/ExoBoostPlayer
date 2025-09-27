@@ -26,6 +26,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -87,6 +88,9 @@ fun ExoBoostAudioPlayer(
 
     // audio visualization state real time
     val audioVisualizer = remember { EnhancedAudioVisualization() }
+
+    var showEqualizer by remember { mutableStateOf(false) }
+    var volume by remember { mutableFloatStateOf(0.7f) }
 
     // player initialization
     LaunchedEffect(Unit) {
@@ -345,12 +349,10 @@ fun ExoBoostAudioPlayer(
                 trackTitle = trackTitle,
                 artistName = artistName,
                 config = config.glassyUI,
-                onSkipPrevious = { TODO() },
-                onSkipNext = { TODO() },
-                onRepeatToggle = { TODO() },
-                onShuffleToggle = { TODO() },
-                isRepeatEnabled = false,
-                isShuffleEnabled = false,
+                onNext = { /* handle next track */ },
+                onPrevious = { /* handle previous track */ },
+                showEqualizer = showEqualizer,
+                onEqualizerToggle = { showEqualizer = !showEqualizer },
                 modifier = Modifier.padding(bottom = 32.dp)
             )
         }
