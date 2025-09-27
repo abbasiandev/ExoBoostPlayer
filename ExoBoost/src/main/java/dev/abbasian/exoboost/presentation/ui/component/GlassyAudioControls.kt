@@ -53,6 +53,7 @@ fun GlassyAudioControls(
     onNext: (() -> Unit)? = null,
     onPrevious: (() -> Unit)? = null,
     showEqualizer: Boolean = false,
+    onEqualizerChange: ((List<Float>) -> Unit)? = null,
     onEqualizerToggle: (() -> Unit)? = null
 ) {
     var showVolumeSlider by remember { mutableStateOf(false) }
@@ -93,17 +94,16 @@ fun GlassyAudioControls(
                 }
             }
 
-            // Equalizer (conditionally shown)
             if (showEqualizer) {
                 GlassyEqualizer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    config = config
+                    isPlaying = isPlaying,
+                    config = config,
+                    onEqualizerChange = onEqualizerChange,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
-            // Seek bar
+            // seek bar
             GlassySeekBar(
                 currentPosition = currentPosition,
                 bufferedPosition = bufferedPosition,
@@ -119,7 +119,7 @@ fun GlassyAudioControls(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Previous Button - Always visible if provided
+                // previous
                 onPrevious?.let { previous ->
                     GlassyControlButton(
                         onClick = previous,
@@ -128,12 +128,9 @@ fun GlassyAudioControls(
                         buttonSize = 48.dp,
                         description = "Previous"
                     )
-                } ?: run {
-                    // Empty space if no previous button
-                    Box(modifier = Modifier.size(48.dp))
-                }
+                } ?: Box(modifier = Modifier.size(48.dp))
 
-                // Play/Pause Button
+                // play/pause
                 GlassyControlButton(
                     onClick = onPlayPause,
                     icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
@@ -143,7 +140,7 @@ fun GlassyAudioControls(
                     isPrimary = true
                 )
 
-                // Next Button - Always visible if provided
+                // next
                 onNext?.let { next ->
                     GlassyControlButton(
                         onClick = next,
@@ -152,19 +149,16 @@ fun GlassyAudioControls(
                         buttonSize = 48.dp,
                         description = "Next"
                     )
-                } ?: run {
-                    // Empty space if no next button
-                    Box(modifier = Modifier.size(48.dp))
-                }
+                } ?: Box(modifier = Modifier.size(48.dp))
             }
 
-            // Bottom Controls Row (Volume + Equalizer)
+            // volume + equalizer
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Volume Control - Left side
+                // volume Control
                 onVolumeChange?.let { volumeChange ->
                     Column(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -207,12 +201,8 @@ fun GlassyAudioControls(
                             }
                         }
                     }
-                } ?: run {
-                    // Empty space if no volume control
-                    Box(modifier = Modifier.weight(1f))
-                }
+                } ?: Box(modifier = Modifier.weight(1f))
 
-                // Equalizer Toggle Button - Right side
                 onEqualizerToggle?.let { equalizerToggle ->
                     GlassyControlButton(
                         onClick = equalizerToggle,
