@@ -30,6 +30,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,12 +62,17 @@ fun EnhancedPlayerControls(
     onQualitySelected: (VideoQuality) -> Unit = {},
     onSettings: (() -> Unit)? = null,
     onFullscreen: (() -> Unit)? = null,
+    onModalStateChanged: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
 
     var showSpeedDialog by remember { mutableStateOf(false) }
     var showQualityDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(showSpeedDialog, showQualityDialog) {
+        onModalStateChanged(showSpeedDialog || showQualityDialog)
+    }
 
     AnimatedVisibility(
         visible = showControls || videoState is VideoState.Error || videoState is VideoState.Loading,

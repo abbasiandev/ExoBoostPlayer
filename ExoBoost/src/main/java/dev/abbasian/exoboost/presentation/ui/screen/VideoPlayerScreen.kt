@@ -69,6 +69,7 @@ fun ExoBoostPlayer(
 
     var isFullscreen by rememberSaveable { mutableStateOf(false) }
     var controlsVisible by rememberSaveable { mutableStateOf(true) }
+    var isModalOpen by remember { mutableStateOf(false) }
     var isPlayerInitialized by remember { mutableStateOf(false) }
     var playerViewReady by remember { mutableStateOf(false) }
 
@@ -123,10 +124,10 @@ fun ExoBoostPlayer(
         }
     }
 
-    LaunchedEffect(controlsVisible, uiState.videoInfo.isPlaying) {
-        if (controlsVisible && uiState.videoInfo.isPlaying) {
+    LaunchedEffect(controlsVisible, uiState.videoInfo.isPlaying, isModalOpen) {
+        if (controlsVisible && uiState.videoInfo.isPlaying && !isModalOpen) {
             delay(4.seconds)
-            if (uiState.videoInfo.isPlaying) {
+            if (uiState.videoInfo.isPlaying && !isModalOpen) {
                 controlsVisible = false
             }
         }
@@ -339,6 +340,9 @@ fun ExoBoostPlayer(
                     } catch (e: Exception) {
                         Log.e("ExoBoostPlayer", "Error changing orientation", e)
                     }
+                },
+                onModalStateChanged = { isOpen ->
+                    isModalOpen = isOpen
                 },
                 modifier = Modifier.fillMaxSize()
             )
