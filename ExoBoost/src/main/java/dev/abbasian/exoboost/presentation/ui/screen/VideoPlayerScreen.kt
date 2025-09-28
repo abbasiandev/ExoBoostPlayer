@@ -41,7 +41,7 @@ import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.presentation.ui.component.EnhancedPlayerControls
 import dev.abbasian.exoboost.presentation.ui.component.GestureHandler
-import dev.abbasian.exoboost.presentation.viewmodel.VideoPlayerViewModel
+import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -59,7 +59,7 @@ fun ExoBoostPlayer(
     onBack: (() -> Unit)? = null,
     onSpeedChanged: ((Float) -> Unit)? = null,
     onQualityChanged: ((VideoQuality) -> Unit)? = null,
-    viewModel: VideoPlayerViewModel = koinViewModel(),
+    viewModel: MediaPlayerViewModel = koinViewModel(),
     playerManager: ExoPlayerManager = koinInject()
 ) {
     val context = LocalContext.current
