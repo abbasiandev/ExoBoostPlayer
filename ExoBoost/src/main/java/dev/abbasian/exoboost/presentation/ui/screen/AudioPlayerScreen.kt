@@ -26,7 +26,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,7 +51,7 @@ import dev.abbasian.exoboost.domain.model.VisualizationType
 import dev.abbasian.exoboost.presentation.ui.component.AudioVisualization
 import dev.abbasian.exoboost.presentation.ui.component.GlassyAudioControls
 import dev.abbasian.exoboost.presentation.ui.component.GlassyContainer
-import dev.abbasian.exoboost.presentation.viewmodel.VideoPlayerViewModel
+import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import dev.abbasian.exoboost.util.EnhancedAudioVisualization
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -72,7 +71,7 @@ fun ExoBoostAudioPlayer(
     onBack: (() -> Unit)? = null,
     trackTitle: String = "Audio Track",
     artistName: String = "Unknown Artist",
-    viewModel: VideoPlayerViewModel = koinViewModel(),
+    viewModel: MediaPlayerViewModel = koinViewModel(),
     playerManager: ExoPlayerManager = koinInject(),
     onVisualizationTypeChange: ((VisualizationType) -> Unit)? = null,
     currentVisualizationType: VisualizationType = VisualizationType.SPECTRUM
@@ -89,8 +88,8 @@ fun ExoBoostAudioPlayer(
     // audio visualization state real time
     val audioVisualizer = remember { EnhancedAudioVisualization() }
 
-    var showEqualizer by remember { mutableStateOf(false) }
-    var volume by remember { mutableFloatStateOf(0.7f) }
+    val showEqualizer by viewModel.showEqualizer.collectAsState()
+    var equalizerValues by remember { mutableStateOf(List(8) { 0.5f }) }
 
     // player initialization
     LaunchedEffect(Unit) {
@@ -342,10 +341,9 @@ fun ExoBoostAudioPlayer(
             GlassyAudioControls(
                 isPlaying = uiState.mediaInfo.isPlaying,
                 onPlayPause = { viewModel.playPause() },
-                onSeek = { position -> viewModel.seekTo(position) },
                 currentPosition = uiState.mediaInfo.currentPosition,
                 duration = uiState.mediaInfo.duration,
-                bufferedPosition = uiState.mediaInfo.bufferedPosition,
+                onSeek = { viewModel.seekTo(it) },
                 volume = uiState.volume,
                 onVolumeChange = { volume -> viewModel.setVolume(volume) },
                 trackTitle = trackTitle,
@@ -353,8 +351,11 @@ fun ExoBoostAudioPlayer(
                 config = config.glassyUI,
                 onNext = { /* handle next track */ },
                 onPrevious = { /* handle previous track */ },
-                showEqualizer = showEqualizer,
-                onEqualizerToggle = { showEqualizer = !showEqualizer },
+                showEqualizer = uiState.showEqualizer,
+                onEqualizerToggle = { viewModel.toggleEqualizer() },
+                onEqualizerChange = { values ->
+                    viewModel.applyEqualizerValues(values)
+                },
                 modifier = Modifier.padding(bottom = 32.dp)
             )
         }
