@@ -1,6 +1,9 @@
 package dev.abbasian.exoboost.data.manager
 
 import android.content.Context
+import android.media.audiofx.BassBoost
+import android.media.audiofx.Equalizer
+import android.media.audiofx.Virtualizer
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
@@ -40,6 +43,13 @@ class ExoPlayerManager(
     private val dataSourceFactory: DataSource.Factory,
     private val networkManager: NetworkManager
 ) {
+    private var equalizer: Equalizer? = null
+    private var bassBoost: BassBoost? = null
+    private var virtualizer: Virtualizer? = null
+
+    private val _equalizerValues = MutableStateFlow(List(8) { 0.5f })
+    val equalizerValues: StateFlow<List<Float>> = _equalizerValues.asStateFlow()
+
     private val _mediaState = MutableStateFlow<MediaState>(MediaState.Idle)
     val mediaState: StateFlow<MediaState> = _mediaState.asStateFlow()
 
@@ -108,6 +118,8 @@ class ExoPlayerManager(
                     repeatMode = Player.REPEAT_MODE_OFF
                     setVideoScalingMode(C.VIDEO_SCALING_MODE_SCALE_TO_FIT)
                     playWhenReady = false
+
+                    initializeAudioEffects()
                 }
 
             isInitialized.set(true)
@@ -124,6 +136,37 @@ class ExoPlayerManager(
                 )
             )
             isInitialized.set(false)
+        }
+    }
+
+    private fun initializeAudioEffects() {
+        try {
+            exoPlayer?.let { player ->
+                val audioSessionId = player.audioSessionId
+                Log.d("ExoPlayerManager", "Initializing audio effects with session ID: $audioSessionId")
+
+                if (audioSessionId != 0) {
+                    releaseAudioEffects()
+
+                    equalizer = Equalizer(0, audioSessionId).apply {
+                        enabled = true
+                        Log.d("ExoPlayerManager", "Equalizer initialized with ${numberOfBands} bands")
+                    }
+
+                    bassBoost = BassBoost(0, audioSessionId).apply {
+                        enabled = true
+                    }
+
+                    virtualizer = Virtualizer(0, audioSessionId).apply {
+                        enabled = true
+                    }
+
+                } else {
+                    Log.w("ExoPlayerManager", "Invalid audio session ID, cannot initialize effects")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("ExoPlayerManager", "Failed to initialize audio effects", e)
         }
     }
 
@@ -178,6 +221,59 @@ class ExoPlayerManager(
         }
     }
 
+    fun setEqualizerBand(bandIndex: Int, value: Float) {
+        try {
+            equalizer?.let { eq ->
+                if (bandIndex >= 0 && bandIndex < eq.numberOfBands) {
+                    // Convert 0-1 range to -12dB to +12dB
+                    val dbValue = (value - 0.5f) * 24f
+                    val millibels = (dbValue * 100).toInt()
+
+                    val bandLevelRange = eq.bandLevelRange
+                    val clampedLevel = millibels.coerceIn(
+                        bandLevelRange[0].toInt(),
+                        bandLevelRange[1].toInt()
+                    )
+
+                    eq.setBandLevel(bandIndex.toShort(), clampedLevel.toShort())
+
+                    Log.d("ExoPlayerManager", "Set band $bandIndex to ${dbValue}dB ($clampedLevel millibels)")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("ExoPlayerManager", "Error setting equalizer band $bandIndex", e)
+        }
+    }
+
+    fun applyEqualizerValues(values: List<Float>) {
+        Log.d("ExoPlayerManager", "Applying equalizer values: $values")
+        values.forEachIndexed { index, value ->
+            setEqualizerBand(index, value)
+        }
+        _equalizerValues.value = values
+    }
+
+    fun getEqualizerBandCount(): Int {
+        return equalizer?.numberOfBands?.toInt() ?: 8
+    }
+
+    fun getEqualizerFrequencies(): List<String> {
+        return try {
+            equalizer?.let { eq ->
+                (0 until eq.numberOfBands).map { band ->
+                    val centerFreq = eq.getCenterFreq(band.toShort()) / 1000
+                    when {
+                        centerFreq >= 1000 -> "${centerFreq / 1000}kHz"
+                        else -> "${centerFreq}Hz"
+                    }
+                }
+            } ?: listOf("60Hz", "170Hz", "310Hz", "600Hz", "1kHz", "3kHz", "6kHz", "12kHz")
+        } catch (e: Exception) {
+            Log.e("ExoPlayerManager", "Error getting frequencies", e)
+            listOf("60Hz", "170Hz", "310Hz", "600Hz", "1kHz", "3kHz", "6kHz", "12kHz")
+        }
+    }
+
     fun isReadyForSurface(): Boolean {
         return isInitialized.get() && isPrepared.get() && !isReleased.get()
     }
@@ -226,6 +322,10 @@ class ExoPlayerManager(
                     } else {
                         isMediaReady.set(true)
                         _mediaState.value = MediaState.Ready
+                    }
+
+                    if (equalizer == null) {
+                        initializeAudioEffects()
                     }
                 }
                 Player.STATE_ENDED -> {
@@ -402,6 +502,19 @@ class ExoPlayerManager(
         }
     }
 
+    private fun releaseAudioEffects() {
+        try {
+            equalizer?.release()
+            bassBoost?.release()
+            virtualizer?.release()
+            equalizer = null
+            bassBoost = null
+            virtualizer = null
+        } catch (e: Exception) {
+            Log.e("ExoPlayerManager", "Error releasing audio effects", e)
+        }
+    }
+
     fun release() {
         if (isReleased.getAndSet(true)) {
             Log.d("ExoPlayerManager", "Player already released")
@@ -412,6 +525,7 @@ class ExoPlayerManager(
 
         try {
             stopPositionUpdates()
+            releaseAudioEffects()
 
             exoPlayer?.let { player ->
                 player.stop()
