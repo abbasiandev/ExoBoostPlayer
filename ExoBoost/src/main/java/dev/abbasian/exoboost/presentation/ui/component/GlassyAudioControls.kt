@@ -7,17 +7,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -31,7 +32,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
@@ -153,22 +156,23 @@ fun GlassyAudioControls(
             }
 
             // volume + equalizer
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // volume Control
-                onVolumeChange?.let { volumeChange ->
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    onVolumeChange?.let { volumeChange ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.clickable {
-                                showVolumeSlider = !showVolumeSlider
-                            }
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    showVolumeSlider = !showVolumeSlider
+                                }
                         ) {
                             Icon(
                                 Icons.Filled.VolumeUp,
@@ -200,18 +204,19 @@ fun GlassyAudioControls(
                                 )
                             }
                         }
-                    }
-                } ?: Box(modifier = Modifier.weight(1f))
+                    } ?: Spacer(modifier = Modifier.weight(1f))
 
-                onEqualizerToggle?.let { equalizerToggle ->
-                    GlassyControlButton(
-                        onClick = equalizerToggle,
-                        icon = Icons.Filled.Equalizer,
-                        iconSize = 20.dp,
-                        buttonSize = 40.dp,
-                        description = if (showEqualizer) "Hide Equalizer" else "Show Equalizer",
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
+                    onEqualizerToggle?.let { equalizerToggle ->
+                        GlassyControlButton(
+                            onClick = equalizerToggle,
+                            icon = Icons.Filled.Equalizer,
+                            iconSize = 20.dp,
+                            buttonSize = 40.dp,
+                            description = if (showEqualizer) "Hide Equalizer" else "Show Equalizer",
+                            isPrimary = showEqualizer,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
                 }
             }
         }
@@ -221,9 +226,9 @@ fun GlassyAudioControls(
 @Composable
 fun GlassyControlButton(
     onClick: () -> Unit,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    iconSize: androidx.compose.ui.unit.Dp,
-    buttonSize: androidx.compose.ui.unit.Dp,
+    icon: ImageVector,
+    iconSize: Dp,
+    buttonSize: Dp,
     description: String,
     isPrimary: Boolean = false,
     modifier: Modifier = Modifier
