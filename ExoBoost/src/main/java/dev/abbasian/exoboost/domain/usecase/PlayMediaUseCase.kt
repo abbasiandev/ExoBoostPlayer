@@ -4,11 +4,23 @@ import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.domain.repository.MediaRepository
 
-class PlayVideoUseCase(
+class PlayMediaUseCase(
     private val repository: MediaRepository
 ) {
     suspend fun execute(url: String, config: MediaPlayerConfig) {
         repository.loadMedia(url, config)
+    }
+
+    suspend fun applyEqualizerValues(values: List<Float>) {
+        repository.applyEqualizerValues(values)
+    }
+
+    suspend fun getEqualizerBandCount(): Int {
+        return repository.getEqualizerBandCount()
+    }
+
+    suspend fun getEqualizerFrequencies(): List<String> {
+        return repository.getEqualizerFrequencies()
     }
 
     suspend fun play() = repository.play()

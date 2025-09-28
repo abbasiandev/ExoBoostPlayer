@@ -5,9 +5,9 @@ import dev.abbasian.exoboost.data.manager.ExoPlayerManager
 import dev.abbasian.exoboost.data.repository.MediaRepositoryImpl
 import dev.abbasian.exoboost.domain.repository.MediaRepository
 import dev.abbasian.exoboost.domain.usecase.CacheVideoUseCase
-import dev.abbasian.exoboost.domain.usecase.PlayVideoUseCase
-import dev.abbasian.exoboost.domain.usecase.RetryVideoUseCase
-import dev.abbasian.exoboost.presentation.viewmodel.VideoPlayerViewModel
+import dev.abbasian.exoboost.domain.usecase.PlayMediaUseCase
+import dev.abbasian.exoboost.domain.usecase.RetryMediaUseCase
+import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -18,15 +18,15 @@ val playerModule = module {
 
     single<MediaRepository> { MediaRepositoryImpl(get(), get()) }
 
-    factory { PlayVideoUseCase(get()) }
+    factory { PlayMediaUseCase(get()) }
     factory { CacheVideoUseCase(get()) }
-    factory { RetryVideoUseCase(get()) }
+    factory { RetryMediaUseCase(get()) }
 
     viewModel {
-        VideoPlayerViewModel(
-            playVideoUseCase = get(),
+        MediaPlayerViewModel(
+            playMediaUseCase = get(),
             cacheVideoUseCase = get(),
-            retryVideoUseCase = get()
+            retryMediaUseCase = get()
         )
     }
 }
