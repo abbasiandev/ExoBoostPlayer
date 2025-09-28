@@ -26,6 +26,22 @@ class MediaRepositoryImpl(
         playerManager.loadMedia(url)
     }
 
+    override suspend fun applyEqualizerValues(values: List<Float>) {
+        playerManager.applyEqualizerValues(values)
+    }
+
+    override suspend fun getEqualizerBandCount(): Int {
+        return playerManager.getEqualizerBandCount()
+    }
+
+    override suspend fun getEqualizerFrequencies(): List<String> {
+        return playerManager.getEqualizerFrequencies()
+    }
+
+    override fun getEqualizerValues(): Flow<List<Float>> {
+        return playerManager.equalizerValues
+    }
+
     override suspend fun play() {
         playerManager.play()
     }
