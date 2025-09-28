@@ -43,7 +43,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,10 +61,10 @@ fun GlassyEqualizer(
     barCount: Int = 8,
     isPlaying: Boolean = true,
     onEqualizerChange: ((List<Float>) -> Unit)? = null,
-    preferencesManager: EqualizerPreferencesManager = koinInject()
+    preferencesManager: EqualizerPreferencesManager = koinInject(),
+    frequencyLabels: List<String> = listOf("60Hz", "170Hz", "310Hz", "600Hz", "1kHz", "3kHz", "6kHz", "12kHz")
 ) {
     val scope = rememberCoroutineScope()
-    val frequencyLabels = listOf("60Hz", "170Hz", "310Hz", "600Hz", "1kHz", "3kHz", "6kHz", "12kHz")
 
     val equalizerValues = remember {
         mutableStateListOf<Float>().apply {
@@ -181,7 +183,16 @@ fun GlassyEqualizer(
                                 value = equalizerValues[index],
                                 onValueChange = { newValue ->
                                     equalizerValues[index] = newValue
-                                    onEqualizerChange?.invoke(equalizerValues.toList())
+                                    val updatedValues = equalizerValues.toList()
+                                    onEqualizerChange?.invoke(updatedValues)
+
+                                    scope.launch {
+                                        preferencesManager.saveEqualizerState(
+                                            presetName = "",
+                                            values = updatedValues,
+                                            customPresets = customPresets
+                                        )
+                                    }
                                 },
                                 valueRange = 0f..1f,
                                 modifier = Modifier
@@ -201,14 +212,6 @@ fun GlassyEqualizer(
                 }
             }
 
-            // default presets
-            Text(
-                text = "Default Presets",
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
-            )
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -223,7 +226,16 @@ fun GlassyEqualizer(
                                     equalizerValues[index] = value
                                 }
                             }
-                            onEqualizerChange?.invoke(equalizerValues.toList())
+
+                            onEqualizerChange?.invoke(presetValues)
+
+                            scope.launch {
+                                preferencesManager.saveEqualizerState(
+                                    presetName = preset,
+                                    values = presetValues,
+                                    customPresets = customPresets
+                                )
+                            }
                         }
                     )
                 }
@@ -320,24 +332,31 @@ private fun VerticalSlider(
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
     var isDragging by remember { mutableStateOf(false) }
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .pointerInput(Unit) {
                 detectDragGestures(
-                    onDragStart = {
+                    onDragStart = { offset ->
                         isDragging = true
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+
+                        val heightPx = size.height.toFloat()
+                        val normalizedY = (heightPx - offset.y) / heightPx
+                        val newValue = (valueRange.start + normalizedY * (valueRange.endInclusive - valueRange.start))
+                            .coerceIn(valueRange.start, valueRange.endInclusive)
+                        onValueChange(newValue)
                     },
                     onDragEnd = {
                         isDragging = false
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
                 ) { _, dragAmount ->
                     val heightPx = size.height.toFloat()
-                    val deltaValue =
-                        -dragAmount.y / heightPx * (valueRange.endInclusive - valueRange.start)
-                    val newValue =
-                        (value + deltaValue).coerceIn(valueRange.start, valueRange.endInclusive)
+                    val deltaValue = -dragAmount.y / heightPx * (valueRange.endInclusive - valueRange.start)
+                    val newValue = (value + deltaValue).coerceIn(valueRange.start, valueRange.endInclusive)
                     onValueChange(newValue)
                 }
             }
@@ -345,13 +364,13 @@ private fun VerticalSlider(
                 detectTapGestures { offset ->
                     val heightPx = size.height.toFloat()
                     val normalizedY = (heightPx - offset.y) / heightPx
-                    val newValue =
-                        (valueRange.start + normalizedY * (valueRange.endInclusive - valueRange.start))
-                            .coerceIn(valueRange.start, valueRange.endInclusive)
+                    val newValue = (valueRange.start + normalizedY * (valueRange.endInclusive - valueRange.start))
+                        .coerceIn(valueRange.start, valueRange.endInclusive)
                     onValueChange(newValue)
                 }
             }
     ) {
+        // Background track
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -366,58 +385,54 @@ private fun VerticalSlider(
                 )
         )
 
-        BoxWithConstraints(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            val normalizedValue =
-                (value - valueRange.start) / (valueRange.endInclusive - valueRange.start)
-            val thumbY = maxHeight * (1f - normalizedValue)
-            val activeHeight = maxHeight - thumbY
+        // Active fill
+        val normalizedValue = (value - valueRange.start) / (valueRange.endInclusive - valueRange.start)
+        val thumbY = maxHeight * (1f - normalizedValue)
+        val activeHeight = maxHeight - thumbY
 
-            if (activeHeight > 0.dp) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .width(maxWidth)
-                        .height(activeHeight)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.6f),
-                                    Color.White.copy(alpha = 0.3f)
-                                )
-                            ),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                )
-            }
-
-            // thumb
+        if (activeHeight > 0.dp) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset(y = thumbY - 8.dp)
-                    .size(24.dp)
+                    .align(Alignment.BottomCenter)
+                    .width(maxWidth)
+                    .height(activeHeight)
                     .background(
-                        brush = Brush.radialGradient(
+                        brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = if (isDragging) 1f else 0.9f),
-                                Color.White.copy(alpha = if (isDragging) 0.8f else 0.7f)
+                                Color.White.copy(alpha = 0.6f),
+                                Color.White.copy(alpha = 0.3f)
                             )
                         ),
-                        shape = CircleShape
-                    )
-                    .border(
-                        width = if (isDragging) 2.dp else 1.dp,
-                        color = Color.White.copy(alpha = if (isDragging) 1f else 0.8f),
-                        shape = CircleShape
-                    )
-                    .shadow(
-                        elevation = if (isDragging) 8.dp else 4.dp,
-                        shape = CircleShape
+                        shape = RoundedCornerShape(10.dp)
                     )
             )
         }
+
+        // Thumb
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .offset(y = thumbY - 12.dp)
+                .size(24.dp)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = if (isDragging) 1f else 0.9f),
+                            Color.White.copy(alpha = if (isDragging) 0.8f else 0.7f)
+                        )
+                    ),
+                    shape = CircleShape
+                )
+                .border(
+                    width = if (isDragging) 2.dp else 1.dp,
+                    color = Color.White.copy(alpha = if (isDragging) 1f else 0.8f),
+                    shape = CircleShape
+                )
+                .shadow(
+                    elevation = if (isDragging) 8.dp else 4.dp,
+                    shape = CircleShape
+                )
+        )
     }
 }
 
