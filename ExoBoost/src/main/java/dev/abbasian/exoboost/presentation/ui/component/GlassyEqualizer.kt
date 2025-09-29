@@ -100,26 +100,6 @@ fun GlassyEqualizer(
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Equalizer",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                if (currentPresetName.isNotEmpty()) {
-                    Text(
-                        text = "Current: $currentPresetName",
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 11.sp
-                    )
-                }
-            }
-
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 GlassyActionButton(
                     text = "Custom",

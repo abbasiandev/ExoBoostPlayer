@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -97,66 +98,78 @@ fun GlassyAudioControls(
                 }
             }
 
-            if (showEqualizer) {
-                GlassyEqualizer(
-                    isPlaying = isPlaying,
-                    config = config,
-                    onEqualizerChange = onEqualizerChange,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            // seek bar
-            GlassySeekBar(
-                currentPosition = currentPosition,
-                bufferedPosition = bufferedPosition,
-                duration = duration,
-                onSeek = onSeek,
-                modifier = Modifier.fillMaxWidth(),
-                config = config
-            )
-
-            // Main Control Buttons Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+            Box(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                // previous
-                onPrevious?.let { previous ->
-                    GlassyControlButton(
-                        onClick = previous,
-                        icon = Icons.Filled.SkipPrevious,
-                        iconSize = 24.dp,
-                        buttonSize = 48.dp,
-                        description = "Previous"
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // seek bar
+                    GlassySeekBar(
+                        currentPosition = currentPosition,
+                        bufferedPosition = bufferedPosition,
+                        duration = duration,
+                        onSeek = onSeek,
+                        modifier = Modifier.fillMaxWidth(),
+                        config = config
                     )
-                } ?: Box(modifier = Modifier.size(48.dp))
 
-                // play/pause
-                GlassyControlButton(
-                    onClick = onPlayPause,
-                    icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    iconSize = 32.dp,
-                    buttonSize = 64.dp,
-                    description = if (isPlaying) "Pause" else "Play",
-                    isPrimary = true
-                )
+                    // Main Control Buttons Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // previous
+                        onPrevious?.let { previous ->
+                            GlassyControlButton(
+                                onClick = previous,
+                                icon = Icons.Filled.SkipPrevious,
+                                iconSize = 24.dp,
+                                buttonSize = 48.dp,
+                                description = "Previous"
+                            )
+                        } ?: Box(modifier = Modifier.size(48.dp))
 
-                // next
-                onNext?.let { next ->
-                    GlassyControlButton(
-                        onClick = next,
-                        icon = Icons.Filled.SkipNext,
-                        iconSize = 24.dp,
-                        buttonSize = 48.dp,
-                        description = "Next"
+                        // play/pause
+                        GlassyControlButton(
+                            onClick = onPlayPause,
+                            icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                            iconSize = 32.dp,
+                            buttonSize = 64.dp,
+                            description = if (isPlaying) "Pause" else "Play",
+                            isPrimary = true
+                        )
+
+                        // next
+                        onNext?.let { next ->
+                            GlassyControlButton(
+                                onClick = next,
+                                icon = Icons.Filled.SkipNext,
+                                iconSize = 24.dp,
+                                buttonSize = 48.dp,
+                                description = "Next"
+                            )
+                        } ?: Box(modifier = Modifier.size(48.dp))
+                    }
+                }
+
+                if (showEqualizer) {
+                    GlassyEqualizer(
+                        isPlaying = isPlaying,
+                        config = config,
+                        onEqualizerChange = onEqualizerChange,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.Center)
                     )
-                } ?: Box(modifier = Modifier.size(48.dp))
+                }
             }
 
             // volume + equalizer
             Column(
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Row(
@@ -190,7 +203,7 @@ fun GlassyAudioControls(
                                     },
                                     valueRange = 0f..1f,
                                     modifier = Modifier.weight(1f),
-                                    colors = androidx.compose.material3.SliderDefaults.colors(
+                                    colors = SliderDefaults.colors(
                                         thumbColor = Color.White,
                                         activeTrackColor = Color.White.copy(alpha = 0.8f),
                                         inactiveTrackColor = Color.White.copy(alpha = 0.3f)
