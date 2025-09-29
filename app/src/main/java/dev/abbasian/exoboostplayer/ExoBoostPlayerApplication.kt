@@ -1,27 +1,11 @@
 package dev.abbasian.exoboostplayer
 
 import android.app.Application
-import dev.abbasian.exoboost.di.cacheModule
-import dev.abbasian.exoboost.di.dataModule
-import dev.abbasian.exoboost.di.networkModule
-import dev.abbasian.exoboost.di.playerModule
-import dev.abbasian.exoboostplayer.di.appModule
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.context.GlobalContext.startKoin
+import dev.abbasian.exoboost.ExoBoost
 
 class ExoBoostPlayerApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-
-        startKoin {
-            androidContext(this@ExoBoostPlayerApplication)
-            modules(
-                networkModule,
-                cacheModule,
-                dataModule,
-                playerModule,
-                appModule
-            )
-        }
+        ExoBoost.initialize(this)
     }
 }

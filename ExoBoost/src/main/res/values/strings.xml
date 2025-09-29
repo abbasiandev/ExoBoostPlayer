@@ -3,6 +3,7 @@
 
     <string name="error_network">Network error</string>
     <string name="error_security">Security error</string>
+    <string name="error_drm">DRM error</string>
     <string name="error_unknown">Unknown error</string>
     <string name="error_timeout">Connection timed out</string>
     <string name="error_retry_limit">Maximum retry attempts reached</string>
@@ -16,6 +17,7 @@
     <string name="error_ssl_certificate_with_message">SSL certificate error: </string>
     <string name="help_ssl_invalid">The site security certificate may be invalid</string>
 
+    <string name="help_drm">This content is protected and cannot be played</string>
     <string name="help_check_network">Please check your internet connection and try again</string>
     <string name="help_invalid_certificate">The site security certificate may be invalid</string>
     <string name="help_access_forbidden">Access to this content is not allowed</string>
