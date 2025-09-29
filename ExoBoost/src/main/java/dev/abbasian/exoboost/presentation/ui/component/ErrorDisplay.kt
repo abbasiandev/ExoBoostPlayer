@@ -117,6 +117,8 @@ private fun getErrorIcon(error: PlayerError): ImageVector {
         is PlayerError.CodecError -> Icons.Filled.VideoSettings
         is PlayerError.SourceError -> Icons.Filled.BrokenImage
         is PlayerError.LiveStreamError -> Icons.Filled.LiveTv
+        is PlayerError.DrmError -> Icons.Filled.Lock
+        is PlayerError.TimeoutError -> Icons.Filled.Schedule
         is PlayerError.UnknownError -> Icons.Filled.Error
     }
 }
@@ -128,6 +130,8 @@ private fun getErrorTitle(context: Context, error: PlayerError): String {
         is PlayerError.CodecError -> context.getString(R.string.error_decoding)
         is PlayerError.SourceError -> context.getString(R.string.error_source)
         is PlayerError.LiveStreamError -> context.getString(R.string.error_live)
+        is PlayerError.DrmError -> context.getString(R.string.error_drm)
+        is PlayerError.TimeoutError -> context.getString(R.string.error_timeout)
         is PlayerError.UnknownError -> context.getString(R.string.error_unknown)
     }
 }
@@ -148,9 +152,16 @@ private fun getErrorHelpText(context: Context, error: PlayerError): String? {
             context.getString(R.string.help_check_network)
         is PlayerError.SSLError ->
             context.getString(R.string.help_ssl_invalid)
+        is PlayerError.DrmError ->
+            context.getString(R.string.help_drm)
+        is PlayerError.CodecError ->
+            "Try updating your device or using a different video format"
+        is PlayerError.TimeoutError ->
+            "Server is taking too long to respond. Please try again"
         is PlayerError.LiveStreamError -> when (error.httpCode) {
             403 -> context.getString(R.string.help_access_forbidden)
             404 -> context.getString(R.string.help_not_found)
+            500, 502, 503, 504 -> "Server is temporarily unavailable"
             else -> null
         }
         else -> null

@@ -585,14 +585,14 @@ class ExoPlayerManager(
 
             is SocketTimeoutException -> PlayerError.NetworkError(
                 context.getString(R.string.error_timeout),
-                true,
-                error
+                error,
+                retryable = true
             )
 
             is IOException -> PlayerError.NetworkError(
                 context.getString(R.string.error_network) + error.message,
-                true,
-                error
+                error,
+                retryable = true
             )
 
             else -> PlayerError.UnknownError(
@@ -610,15 +610,15 @@ class ExoPlayerManager(
             PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ->
                 PlayerError.NetworkError(
                     context.getString(R.string.error_network),
-                    true,
-                    error
+                    error,
+                    retryable = true
                 )
 
             PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
                 PlayerError.NetworkError(
                     context.getString(R.string.error_timeout),
-                    true,
-                    error
+                    error,
+                    retryable = true
                 )
 
             PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS ->
@@ -641,8 +641,7 @@ class ExoPlayerManager(
             PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED ->
                 PlayerError.CodecError(
                     context.getString(R.string.error_decoding),
-                    null,
-                    error
+                    cause = error
                 )
 
             else -> {

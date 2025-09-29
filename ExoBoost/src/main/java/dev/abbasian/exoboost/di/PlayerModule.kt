@@ -26,7 +26,7 @@ val playerModule = module {
         MediaPlayerViewModel(
             playMediaUseCase = get(),
             cacheVideoUseCase = get(),
-            retryMediaUseCase = get()
+            retryMediaUseCase = get(),
         )
     }
 }
