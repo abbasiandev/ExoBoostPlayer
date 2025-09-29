@@ -22,7 +22,7 @@ fun ExoBoostUniversalPlayer(
     mediaUrl: String,
     mimeType: String? = null,
     modifier: Modifier = Modifier,
-    config: MediaPlayerConfig = MediaPlayerConfig(),
+    mediaConfig: MediaPlayerConfig = MediaPlayerConfig(),
     onPlayerReady: (() -> Unit)? = null,
     onError: ((String) -> Unit)? = null,
     onBack: (() -> Unit)? = null,
@@ -50,7 +50,7 @@ fun ExoBoostUniversalPlayer(
             MediaType.VIDEO -> {
                 ExoBoostPlayer(
                     videoUrl = mediaUrl,
-                    config = config,
+                    mediaConfig = mediaConfig,
                     onPlayerReady = onPlayerReady,
                     onError = onError,
                     onBack = onBack,
@@ -60,7 +60,7 @@ fun ExoBoostUniversalPlayer(
             MediaType.AUDIO -> {
                 ExoBoostAudioPlayer(
                     audioUrl = mediaUrl,
-                    config = config,
+                    mediaConfig = mediaConfig,
                     onPlayerReady = onPlayerReady,
                     onError = onError,
                     onBack = onBack,

@@ -65,7 +65,7 @@ import kotlin.time.Duration.Companion.milliseconds
 fun ExoBoostAudioPlayer(
     audioUrl: String,
     modifier: Modifier = Modifier,
-    config: MediaPlayerConfig = MediaPlayerConfig(),
+    mediaConfig: MediaPlayerConfig = MediaPlayerConfig(),
     onPlayerReady: (() -> Unit)? = null,
     onError: ((String) -> Unit)? = null,
     onBack: (() -> Unit)? = null,
@@ -95,7 +95,7 @@ fun ExoBoostAudioPlayer(
     LaunchedEffect(Unit) {
         try {
             Log.d("ExoBoostAudioPlayer", "Initializing audio player...")
-            playerManager.initializePlayer(config)
+            playerManager.initializePlayer(mediaConfig)
             isPlayerInitialized = true
             Log.d("ExoBoostAudioPlayer", "Audio player initialized")
 
@@ -120,7 +120,7 @@ fun ExoBoostAudioPlayer(
         if (isPlayerInitialized && audioUrl.isNotEmpty() && audioUrl.isNotBlank()) {
             try {
                 Log.d("ExoBoostAudioPlayer", "Loading audio: $audioUrl")
-                viewModel.loadMedia(audioUrl, config)
+                viewModel.loadMedia(audioUrl, mediaConfig)
             } catch (e: Exception) {
                 Log.e("ExoBoostAudioPlayer", "Error loading audio", e)
                 onError?.invoke("Failed to load audio: ${e.message}")
@@ -145,7 +145,7 @@ fun ExoBoostAudioPlayer(
     }
 
     LaunchedEffect(uiState.mediaInfo.isPlaying, selectedVisualizationType) {
-        if (config.audioVisualization.enableVisualization) {
+        if (mediaConfig.audioVisualization.enableVisualization) {
             launch {
                 while (isActive && uiState.mediaInfo.isPlaying) {
                     val audioSessionId = try {
@@ -159,8 +159,8 @@ fun ExoBoostAudioPlayer(
                         isPlaying = true,
                         audioSessionId = audioSessionId,
                         visualizationType = selectedVisualizationType,
-                        sensitivity = config.audioVisualization.sensitivity,
-                        smoothingFactor = config.audioVisualization.smoothingFactor
+                        sensitivity = mediaConfig.audioVisualization.sensitivity,
+                        smoothingFactor = mediaConfig.audioVisualization.smoothingFactor
                     )
 
                     // Use longer delay to reduce CPU usage and crash frequency
@@ -276,7 +276,7 @@ fun ExoBoostAudioPlayer(
             )
         }
 
-        if (config.audioVisualization.enableVisualization && audioVisualizer.hasData()) {
+        if (mediaConfig.audioVisualization.enableVisualization && audioVisualizer.hasData()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -285,7 +285,7 @@ fun ExoBoostAudioPlayer(
                 AudioVisualization(
                     audioData = audioVisualizer.getVisualizationData(),
                     visualizationType = selectedVisualizationType,
-                    colorScheme = config.audioVisualization.colorScheme,
+                    colorScheme = mediaConfig.audioVisualization.colorScheme,
                     isPlaying = uiState.mediaInfo.isPlaying,
                     bassIntensity = audioVisualizer.getBassIntensity(),
                     midIntensity = audioVisualizer.getMidIntensity(),
@@ -323,7 +323,7 @@ fun ExoBoostAudioPlayer(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             // visualization type selector
-            if (config.audioVisualization.enableVisualization) {
+            if (mediaConfig.audioVisualization.enableVisualization) {
                 VisualizationTypeSelector(
                     currentType = selectedVisualizationType,
                     onTypeSelected = { newType ->
@@ -348,7 +348,7 @@ fun ExoBoostAudioPlayer(
                 onVolumeChange = { volume -> viewModel.setVolume(volume) },
                 trackTitle = trackTitle,
                 artistName = artistName,
-                config = config.glassyUI,
+                config = mediaConfig.glassyUI,
                 onNext = { /* handle next track */ },
                 onPrevious = { /* handle previous track */ },
                 showEqualizer = uiState.showEqualizer,

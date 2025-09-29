@@ -53,7 +53,7 @@ import kotlin.time.Duration.Companion.seconds
 fun ExoBoostPlayer(
     videoUrl: String,
     modifier: Modifier = Modifier,
-    config: MediaPlayerConfig = MediaPlayerConfig(),
+    mediaConfig: MediaPlayerConfig = MediaPlayerConfig(),
     onPlayerReady: (() -> Unit)? = null,
     onError: ((String) -> Unit)? = null,
     onBack: (() -> Unit)? = null,
@@ -76,7 +76,7 @@ fun ExoBoostPlayer(
     LaunchedEffect(Unit) {
         try {
             Log.d("ExoBoostPlayer", "Initializing player...")
-            playerManager.initializePlayer(config)
+            playerManager.initializePlayer(mediaConfig)
             isPlayerInitialized = true
             Log.d("ExoBoostPlayer", "Player initialized")
 
@@ -102,7 +102,7 @@ fun ExoBoostPlayer(
         if (isPlayerInitialized && videoUrl.isNotEmpty() && videoUrl.isNotBlank()) {
             try {
                 Log.d("ExoBoostPlayer", "Loading video: $videoUrl")
-                viewModel.loadMedia(videoUrl, config)
+                viewModel.loadMedia(videoUrl, mediaConfig)
             } catch (e: Exception) {
                 Log.e("ExoBoostPlayer", "Error loading video", e)
                 onError?.invoke("Failed to load video: ${e.message}")
@@ -251,7 +251,7 @@ fun ExoBoostPlayer(
             )
         }
 
-        if (config.enableGestures && isPlayerInitialized && playerViewReady) {
+        if (mediaConfig.enableGestures && isPlayerInitialized && playerViewReady) {
             GestureHandler(
                 volume = uiState.volume,
                 brightness = uiState.brightness,
@@ -282,12 +282,12 @@ fun ExoBoostPlayer(
             )
         }
 
-        if (config.showControls && isPlayerInitialized && playerViewReady) {
+        if (mediaConfig.showControls && isPlayerInitialized && playerViewReady) {
             EnhancedPlayerControls(
                 mediaState = uiState.mediaState,
                 mediaInfo = uiState.mediaInfo,
                 showControls = controlsVisible,
-                config = config,
+                mediaConfig = mediaConfig,
                 onPlayPause = {
                     try {
                         viewModel.playPause()

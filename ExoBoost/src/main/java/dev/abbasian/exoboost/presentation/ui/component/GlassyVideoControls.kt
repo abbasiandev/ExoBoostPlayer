@@ -54,7 +54,7 @@ fun EnhancedPlayerControls(
     mediaState: MediaState,
     mediaInfo: MediaInfo,
     showControls: Boolean,
-    config: MediaPlayerConfig = MediaPlayerConfig(),
+    mediaConfig: MediaPlayerConfig = MediaPlayerConfig(),
     onPlayPause: () -> Unit,
     onSeek: (Long) -> Unit,
     onRetry: () -> Unit,
@@ -67,6 +67,7 @@ fun EnhancedPlayerControls(
 ) {
     val context = LocalContext.current
 
+    val glassyConfig: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig()
     var showSpeedDialog by remember { mutableStateOf(false) }
     var showQualityDialog by remember { mutableStateOf(false) }
 
@@ -80,29 +81,17 @@ fun EnhancedPlayerControls(
         exit = fadeOut(animationSpec = tween(300)) + scaleOut(targetScale = 0.8f),
         modifier = modifier
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            // background gradient
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Black.copy(alpha = 0.6f),
-                                Color.Transparent,
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.8f)
-                            )
-                        )
-                    )
-            )
-
+        GlassyContainer(
+            config = glassyConfig,
+            modifier = modifier
+        ) {
             when (mediaState) {
                 is MediaState.Loading -> {
                     GlassyLoadingIndicator(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
+
                 is MediaState.Error -> {
                     ErrorDisplay(
                         error = mediaState.error,
@@ -110,6 +99,7 @@ fun EnhancedPlayerControls(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
+
                 else -> {
                     // main play/pause button
                     Box(
@@ -175,7 +165,7 @@ fun EnhancedPlayerControls(
                             .padding(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        if (config.enableSpeedControl) {
+                        if (mediaConfig.enableSpeedControl) {
                             GlassyIconButton(
                                 onClick = { showSpeedDialog = true },
                                 icon = Icons.Filled.Speed,
@@ -183,7 +173,7 @@ fun EnhancedPlayerControls(
                             )
                         }
 
-                        if (config.enableQualitySelection && mediaInfo.availableQualities.isNotEmpty()) {
+                        if (mediaConfig.enableQualitySelection && mediaInfo.availableQualities.isNotEmpty()) {
                             GlassyIconButton(
                                 onClick = { showQualityDialog = true },
                                 icon = Icons.Filled.HighQuality,
@@ -257,7 +247,7 @@ fun EnhancedPlayerControls(
                         ) {
                             SpeedControlBottomSheet(
                                 currentSpeed = mediaInfo.playbackSpeed,
-                                availableSpeeds = config.playbackSpeedOptions,
+                                availableSpeeds = mediaConfig.playbackSpeedOptions,
                                 onSpeedSelected = onSpeedSelected,
                                 onDismiss = { showSpeedDialog = false }
                             )

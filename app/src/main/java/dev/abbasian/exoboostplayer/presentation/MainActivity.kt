@@ -56,7 +56,7 @@ class MainActivity : ComponentActivity() {
                 ExoBoostUniversalPlayer(
                     mediaUrl = uiState.selectedMedia!!.url,
                     modifier = Modifier.fillMaxSize(),
-                    config = MediaPlayerConfig(
+                    mediaConfig = MediaPlayerConfig(
                         autoPlay = true,
                         showControls = true,
                         enableGestures = true,

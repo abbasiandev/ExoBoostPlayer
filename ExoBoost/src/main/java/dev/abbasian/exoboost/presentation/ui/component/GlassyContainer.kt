@@ -3,9 +3,11 @@ package dev.abbasian.exoboost.presentation.ui.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -21,7 +23,8 @@ fun GlassyContainer(
     config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig(),
     shape: Shape = RoundedCornerShape(16.dp),
     contentPadding: Dp = 16.dp,
-    content: @Composable () -> Unit
+    alignment: Alignment = Alignment.Center,
+    content: @Composable BoxScope.() -> Unit
 ) {
     Box(
         modifier = modifier
@@ -39,7 +42,8 @@ fun GlassyContainer(
                 color = Color.White.copy(alpha = config.borderOpacity),
                 shape = shape
             )
-            .padding(contentPadding)
+            .padding(contentPadding),
+        contentAlignment = alignment
     ) {
         content()
     }

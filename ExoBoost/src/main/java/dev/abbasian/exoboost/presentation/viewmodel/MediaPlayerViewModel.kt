@@ -3,6 +3,8 @@ package dev.abbasian.exoboost.presentation.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.util.UnstableApi
+import dev.abbasian.exoboost.domain.error.ErrorClassifier
 import dev.abbasian.exoboost.domain.model.MediaInfo
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.PlayerError
@@ -11,18 +13,28 @@ import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.usecase.CacheVideoUseCase
 import dev.abbasian.exoboost.domain.usecase.PlayMediaUseCase
 import dev.abbasian.exoboost.domain.usecase.RetryMediaUseCase
+import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import kotlin.coroutines.cancellation.CancellationException
 
+@UnstableApi
 class MediaPlayerViewModel(
     private val playMediaUseCase: PlayMediaUseCase,
     private val cacheVideoUseCase: CacheVideoUseCase,
     private val retryMediaUseCase: RetryMediaUseCase
-) : ViewModel() {
+) : ViewModel(), KoinComponent {
+
+    private val errorClassifier: ErrorClassifier by inject()
+    private val logger: ExoBoostLogger by inject()
+
+    private val _errorState = MutableStateFlow<PlayerError?>(null)
+    val errorState: StateFlow<PlayerError?> = _errorState
 
     private val _uiState = MutableStateFlow(MediaPlayerUiState())
     val uiState: StateFlow<MediaPlayerUiState> = _uiState.asStateFlow()
