@@ -19,19 +19,20 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import kotlin.coroutines.cancellation.CancellationException
 
 @UnstableApi
 class MediaPlayerViewModel(
     private val playMediaUseCase: PlayMediaUseCase,
     private val cacheVideoUseCase: CacheVideoUseCase,
-    private val retryMediaUseCase: RetryMediaUseCase
-) : ViewModel(), KoinComponent {
+    private val retryMediaUseCase: RetryMediaUseCase,
+    private val errorClassifier: ErrorClassifier,
+    private val logger: ExoBoostLogger
+) : ViewModel() {
 
-    private val errorClassifier: ErrorClassifier by inject()
-    private val logger: ExoBoostLogger by inject()
+    companion object {
+        private const val TAG = "MediaPlayerViewModel"
+    }
 
     private val _errorState = MutableStateFlow<PlayerError?>(null)
     val errorState: StateFlow<PlayerError?> = _errorState
@@ -52,7 +53,7 @@ class MediaPlayerViewModel(
 
         if (isMediaLoaded && _uiState.value.currentUrl == url &&
             _uiState.value.mediaState !is MediaState.Error) {
-            Log.d("MediaPlayerViewModel", "media already loaded: $url")
+            logger.debug(TAG, "media already loaded: $url")
             return
         }
 
@@ -66,12 +67,14 @@ class MediaPlayerViewModel(
                     isLoading = true
                 )
 
+                _errorState.value = null
+
                 playMediaUseCase.execute(url, config)
                 isMediaLoaded = true
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("MediaPlayerViewModel", "Error loading media", e)
+                logger.error(TAG, "Error loading media", e)
                 isMediaLoaded = false
                 _uiState.value = _uiState.value.copy(
                     mediaState = MediaState.Error(
@@ -89,16 +92,16 @@ class MediaPlayerViewModel(
     fun toggleEqualizer() {
         val currentState = _uiState.value
         _uiState.value = currentState.copy(showEqualizer = !currentState.showEqualizer)
-        Log.d("MediaPlayerViewModel", "Toggled equalizer: ${_uiState.value.showEqualizer}")
+        logger.debug(TAG, "Toggled equalizer: ${_uiState.value.showEqualizer}")
     }
 
     fun applyEqualizerValues(values: List<Float>) {
         viewModelScope.launch {
             try {
-                Log.d("MediaPlayerViewModel", "Applying equalizer values: $values")
+                logger.debug(TAG, "Applying equalizer values: $values")
                 playMediaUseCase.applyEqualizerValues(values)
             } catch (e: Exception) {
-                Log.e("MediaPlayerViewModel", "Error applying equalizer values", e)
+                logger.error(TAG, "Error applying equalizer values", e)
             }
         }
     }
@@ -108,7 +111,7 @@ class MediaPlayerViewModel(
             try {
                 playMediaUseCase.getEqualizerFrequencies()
             } catch (e: Exception) {
-                Log.e("MediaPlayerViewModel", "Error getting frequencies", e)
+                logger.error(TAG, "Error getting frequencies", e)
                 listOf("60Hz", "170Hz", "310Hz", "600Hz", "1kHz", "3kHz", "6kHz", "12kHz")
             }
         }.getCompleted()
@@ -123,7 +126,8 @@ class MediaPlayerViewModel(
                     playMediaUseCase.play()
                 }
             } catch (e: Exception) {
-                Log.e("MediaPlayerViewModel", "Error in playPause", e)
+                logger.error(TAG, "Error in playPause", e)
+                _errorState.value = errorClassifier.classifyError(e)
             }
         }
     }
@@ -133,7 +137,8 @@ class MediaPlayerViewModel(
             try {
                 playMediaUseCase.setPlaybackSpeed(speed)
             } catch (e: Exception) {
-                Log.e("MediaPlayerViewModel", "Error setting playback speed", e)
+                logger.error(TAG, "Error setting playback speed", e)
+                _errorState.value = errorClassifier.classifyError(e)
             }
         }
     }
@@ -142,8 +147,10 @@ class MediaPlayerViewModel(
         viewModelScope.launch {
             try {
                 playMediaUseCase.selectQuality(quality)
+                logger.debug(TAG, "Quality selected: $quality")
             } catch (e: Exception) {
-                Log.e("MediaPlayerViewModel", "Error selecting quality", e)
+                logger.error(TAG, "Error selecting quality", e)
+                _errorState.value = errorClassifier.classifyError(e)
             }
         }
     }
@@ -153,7 +160,8 @@ class MediaPlayerViewModel(
             try {
                 playMediaUseCase.seekTo(position)
             } catch (e: Exception) {
-                Log.e("MediaPlayerViewModel", "Error seeking", e)
+                logger.error(TAG, "Error seeking", e)
+                _errorState.value = errorClassifier.classifyError(e)
             }
         }
     }
@@ -165,7 +173,7 @@ class MediaPlayerViewModel(
                 playMediaUseCase.setVolume(clampedVolume)
                 _uiState.value = _uiState.value.copy(volume = clampedVolume)
             } catch (e: Exception) {
-                Log.e("MediaPlayerViewModel", "Error setting volume", e)
+                logger.error(TAG, "Error setting volume", e)
             }
         }
     }
@@ -182,19 +190,25 @@ class MediaPlayerViewModel(
     fun retry() {
         if (retryCount < maxRetryCount) {
             retryCount++
+            logger.info(TAG, "Retry attempt $retryCount/$maxRetryCount")
+
             viewModelScope.launch {
                 try {
                     _uiState.value = _uiState.value.copy(
                         mediaState = MediaState.Loading,
                         isLoading = true
                     )
+                    _errorState.value = null
+
                     retryMediaUseCase.execute()
                 } catch (e: Exception) {
-                    Log.e("MediaPlayerViewModel", "Error retrying", e)
+                    logger.error(TAG, "Error retrying", e)
+                    _errorState.value = errorClassifier.classifyError(e)
                     _uiState.value = _uiState.value.copy(isLoading = false)
                 }
             }
         } else {
+            logger.warning(TAG, "Max retry attempts reached")
             _uiState.value = _uiState.value.copy(
                 mediaState = MediaState.Error(
                     PlayerError.UnknownError("Maximum retry attempts reached")
@@ -205,6 +219,8 @@ class MediaPlayerViewModel(
     }
 
     fun updateMediaState(state: MediaState) {
+        logger.debug(TAG, "State updated: ${state::class.simpleName}")
+
         _uiState.value = _uiState.value.copy(
             mediaState = state,
             isLoading = state is MediaState.Loading
@@ -213,6 +229,7 @@ class MediaPlayerViewModel(
         if (state is MediaState.Ready || state is MediaState.Playing) {
             retryCount = 0
             isMediaLoaded = true
+            _errorState.value = null
         }
 
         if (state is MediaState.Error && retryCount < maxRetryCount) {

@@ -27,6 +27,8 @@ val playerModule = module {
             playMediaUseCase = get(),
             cacheVideoUseCase = get(),
             retryMediaUseCase = get(),
+            errorClassifier = get(),
+            logger = get()
         )
     }
 }
