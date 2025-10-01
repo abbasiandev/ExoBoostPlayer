@@ -12,6 +12,8 @@ data class MediaPlayerConfig(
     val defaultPlaybackSpeed: Float = 1.0f,
     val enableSpeedControl: Boolean = true,
     val enableQualitySelection: Boolean = true,
+    val autoQualityOnError: Boolean = true,
+    val preferSoftwareDecoder: Boolean = false,
 
     val audioVisualization: AudioVisualizationConfig = AudioVisualizationConfig(),
     val glassyUI: GlassyUIConfig = GlassyUIConfig()

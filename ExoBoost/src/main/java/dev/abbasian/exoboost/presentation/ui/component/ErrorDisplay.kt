@@ -148,22 +148,67 @@ private fun isRetryableError(error: PlayerError): Boolean {
 
 private fun getErrorHelpText(context: Context, error: PlayerError): String? {
     return when (error) {
-        is PlayerError.NetworkError ->
-            context.getString(R.string.help_check_network)
+        is PlayerError.NetworkError -> when (error.networkErrorType) {
+            PlayerError.NetworkErrorType.DNS_RESOLUTION_FAILED ->
+                "Check your DNS settings or try using a different network"
+            PlayerError.NetworkErrorType.CONNECTION_REFUSED ->
+                "Server is not accepting connections. Try again later"
+            PlayerError.NetworkErrorType.NO_INTERNET ->
+                context.getString(R.string.help_check_network)
+            else -> context.getString(R.string.help_check_network)
+        }
+
+        is PlayerError.CodecError -> when (error.codecErrorType) {
+            PlayerError.CodecErrorType.DECODER_NOT_AVAILABLE,
+            PlayerError.CodecErrorType.DECODER_INIT_FAILED ->
+                "Your device doesn't support this video format. Try a different quality or format"
+            PlayerError.CodecErrorType.FORMAT_UNSUPPORTED ->
+                "This video format is not supported on your device"
+            PlayerError.CodecErrorType.DECODING_FAILED,
+            PlayerError.CodecErrorType.GENERIC ->
+                "Try updating your device or using a different video format"
+        }
+
+        is PlayerError.SourceError -> when (error.sourceErrorType) {
+            PlayerError.SourceErrorType.FILE_CORRUPTED ->
+                "The video file appears to be corrupted"
+            PlayerError.SourceErrorType.CORS_ERROR ->
+                "Server blocked access due to security policy (CORS)"
+            PlayerError.SourceErrorType.FILE_NOT_FOUND ->
+                context.getString(R.string.help_not_found)
+            else -> null
+        }
+
         is PlayerError.SSLError ->
             context.getString(R.string.help_ssl_invalid)
-        is PlayerError.DrmError ->
-            context.getString(R.string.help_drm)
-        is PlayerError.CodecError ->
-            "Try updating your device or using a different video format"
+
+        is PlayerError.DrmError -> when (error.drmErrorType) {
+            PlayerError.DrmErrorType.LICENSE_ACQUISITION_FAILED ->
+                "Failed to acquire DRM license. Check your subscription or authentication."
+
+            PlayerError.DrmErrorType.PROVISIONING_FAILED ->
+                "DRM provisioning failed. Your device may not support this content protection."
+
+            PlayerError.DrmErrorType.DEVICE_REVOKED ->
+                "Your device's DRM certificate has been revoked and cannot play protected content."
+
+            PlayerError.DrmErrorType.LICENSE_EXPIRED ->
+                "DRM license has expired. Please renew your subscription or re-authenticate."
+
+            PlayerError.DrmErrorType.GENERIC ->
+                context.getString(R.string.help_drm)
+        }
+
         is PlayerError.TimeoutError ->
             "Server is taking too long to respond. Please try again"
+
         is PlayerError.LiveStreamError -> when (error.httpCode) {
             403 -> context.getString(R.string.help_access_forbidden)
             404 -> context.getString(R.string.help_not_found)
             500, 502, 503, 504 -> "Server is temporarily unavailable"
             else -> null
         }
-        else -> null
+
+        is PlayerError.UnknownError -> null
     }
 }
