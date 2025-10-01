@@ -1,7 +1,6 @@
 package dev.abbasian.exoboost.presentation.ui.screen
 
 import android.app.Activity
-import android.util.Log
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
@@ -53,6 +52,7 @@ import dev.abbasian.exoboost.presentation.ui.component.GlassyAudioControls
 import dev.abbasian.exoboost.presentation.ui.component.GlassyContainer
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import dev.abbasian.exoboost.util.EnhancedAudioVisualization
+import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -76,6 +76,9 @@ fun ExoBoostAudioPlayer(
     onVisualizationTypeChange: ((VisualizationType) -> Unit)? = null,
     currentVisualizationType: VisualizationType = VisualizationType.SPECTRUM
 ) {
+    val TAG = "ExoBoostAudioPlayer"
+    val logger: ExoBoostLogger = koinInject()
+
     val context = LocalContext.current
     val activity = context as? Activity
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -86,7 +89,7 @@ fun ExoBoostAudioPlayer(
     var selectedVisualizationType by remember { mutableStateOf(currentVisualizationType) }
 
     // audio visualization state real time
-    val audioVisualizer = remember { EnhancedAudioVisualization() }
+    val audioVisualizer = remember { EnhancedAudioVisualization(logger) }
 
     val showEqualizer by viewModel.showEqualizer.collectAsState()
     var equalizerValues by remember { mutableStateOf(List(8) { 0.5f }) }
@@ -94,10 +97,10 @@ fun ExoBoostAudioPlayer(
     // player initialization
     LaunchedEffect(Unit) {
         try {
-            Log.d("ExoBoostAudioPlayer", "Initializing audio player...")
+            logger.debug(TAG, "Initializing audio player...")
             playerManager.initializePlayer(mediaConfig)
             isPlayerInitialized = true
-            Log.d("ExoBoostAudioPlayer", "Audio player initialized")
+            logger.debug(TAG, "Audio player initialized")
 
             launch {
                 playerManager.mediaState.collect { state ->
@@ -111,7 +114,7 @@ fun ExoBoostAudioPlayer(
                 }
             }
         } catch (e: Exception) {
-            Log.e("ExoBoostAudioPlayer", "Error initializing audio player", e)
+            logger.error(TAG, "Error initializing audio player", e)
             onError?.invoke("Failed to initialize audio player: ${e.message}")
         }
     }
@@ -119,10 +122,10 @@ fun ExoBoostAudioPlayer(
     LaunchedEffect(audioUrl, isPlayerInitialized) {
         if (isPlayerInitialized && audioUrl.isNotEmpty() && audioUrl.isNotBlank()) {
             try {
-                Log.d("ExoBoostAudioPlayer", "Loading audio: $audioUrl")
+                logger.debug(TAG, "Loading audio: $audioUrl")
                 viewModel.loadMedia(audioUrl, mediaConfig)
             } catch (e: Exception) {
-                Log.e("ExoBoostAudioPlayer", "Error loading audio", e)
+                logger.error(TAG, "Error loading audio", e)
                 onError?.invoke("Failed to load audio: ${e.message}")
             }
         }
@@ -131,12 +134,12 @@ fun ExoBoostAudioPlayer(
     LaunchedEffect(uiState.mediaState) {
         when (val state = uiState.mediaState) {
             is MediaState.Ready -> {
-                Log.d("ExoBoostAudioPlayer", "Audio player ready")
+                logger.debug(TAG, "Audio player ready")
                 onPlayerReady?.invoke()
             }
 
             is MediaState.Error -> {
-                Log.e("ExoBoostAudioPlayer", "Audio player error: ${state.error.message}")
+                logger.error(TAG, "Audio player error: ${state.error.message}")
                 onError?.invoke(state.error.message)
             }
 
@@ -193,7 +196,7 @@ fun ExoBoostAudioPlayer(
                             playerManager.pause()
                             audioVisualizer.release()
                         } catch (e: Exception) {
-                            Log.e("ExoBoostAudioPlayer", "Error pausing", e)
+                            logger.error(TAG, "Error pausing", e)
                         }
                     }
                 }
@@ -206,7 +209,7 @@ fun ExoBoostAudioPlayer(
                             isPlayerInitialized = false
                             playerViewReady = false
                         } catch (e: Exception) {
-                            Log.e("ExoBoostAudioPlayer", "Error releasing", e)
+                            logger.error(TAG, "Error releasing", e)
                         }
                     }
                 }
@@ -229,7 +232,7 @@ fun ExoBoostAudioPlayer(
                     }
                 }
             } catch (e: Exception) {
-                Log.e("ExoBoostAudioPlayer", "Error in dispose", e)
+                logger.error(TAG, "Error in dispose", e)
             }
         }
     }
@@ -266,7 +269,7 @@ fun ExoBoostAudioPlayer(
                                 playerManager.onSurfaceAvailable()
                             }
                         } catch (e: Exception) {
-                            Log.e("ExoBoostAudioPlayer", "Error setting up PlayerView", e)
+                            logger.error(TAG, "Error setting up PlayerView", e)
                         }
                     }
                 },
@@ -339,11 +342,13 @@ fun ExoBoostAudioPlayer(
 
             // bottom section
             GlassyAudioControls(
+                mediaState = uiState.mediaState,
                 isPlaying = uiState.mediaInfo.isPlaying,
                 onPlayPause = { viewModel.playPause() },
                 currentPosition = uiState.mediaInfo.currentPosition,
                 duration = uiState.mediaInfo.duration,
                 onSeek = { viewModel.seekTo(it) },
+                onRetry = { viewModel.retry() },
                 volume = uiState.volume,
                 onVolumeChange = { volume -> viewModel.setVolume(volume) },
                 trackTitle = trackTitle,

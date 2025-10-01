@@ -6,10 +6,18 @@ import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
+import dev.abbasian.exoboost.util.ExoBoostLogger
 import java.io.File
 
 @UnstableApi
-class CacheManager(private val context: Context) {
+class CacheManager(
+    private val context: Context,
+    private val logger: ExoBoostLogger
+) {
+
+    companion object {
+        private const val TAG = "CacheManager"
+    }
 
     private val cacheSize = 100L * 1024 * 1024 // 100MB
     private val cacheDir = File(context.cacheDir, "video_cache")
@@ -30,7 +38,7 @@ class CacheManager(private val context: Context) {
                 _internalCache.removeResource(key)
             }
         } catch (e: Exception) {
-            android.util.Log.e("CacheManager", "Error clearing cache", e)
+            logger.error(TAG, "Error clearing cache", e)
         }
     }
 
@@ -42,7 +50,7 @@ class CacheManager(private val context: Context) {
         try {
             _internalCache.release()
         } catch (e: Exception) {
-            android.util.Log.e("CacheManager", "Error releasing cache", e)
+            logger.error(TAG, "Error releasing cache", e)
         }
     }
 }

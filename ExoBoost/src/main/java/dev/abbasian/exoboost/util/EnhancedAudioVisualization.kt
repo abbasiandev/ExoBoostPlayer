@@ -1,14 +1,15 @@
 package dev.abbasian.exoboost.util
 
 import android.media.audiofx.Visualizer
-import android.util.Log
 import dev.abbasian.exoboost.domain.model.VisualizationType
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 
-internal class EnhancedAudioVisualization {
+internal class EnhancedAudioVisualization(
+    private val logger: ExoBoostLogger
+) {
     private var visualizer: Visualizer? = null
     private var visualizationData = FloatArray(64) { 0f }
     private var bassIntensity = 0f
@@ -22,9 +23,11 @@ internal class EnhancedAudioVisualization {
     private val random = Random.Default
 
     companion object {
+        private const val TAG = "EnhancedAudioVisualization"
+
         private var REAL_AUDIO_SUPPORTED: Boolean? = null
 
-        private fun isRealAudioSupported(): Boolean {
+        private fun isRealAudioSupported(logger: ExoBoostLogger): Boolean {
             if (REAL_AUDIO_SUPPORTED != null) return REAL_AUDIO_SUPPORTED!!
 
             return try {
@@ -33,7 +36,7 @@ internal class EnhancedAudioVisualization {
                 REAL_AUDIO_SUPPORTED = true
                 true
             } catch (e: Exception) {
-                Log.i("AudioVisualizer", "Device does not support real audio visualization")
+                logger.info(TAG, "Device does not support real audio visualization")
                 REAL_AUDIO_SUPPORTED = false
                 false
             }
@@ -73,7 +76,7 @@ internal class EnhancedAudioVisualization {
             }
             true
         } catch (e: Exception) {
-            Log.e("AudioVisualizer", "Failed to setup real audio visualizer", e)
+            logger.error(TAG, "Failed to setup real audio visualizer", e)
             false
         }
     }
@@ -152,7 +155,7 @@ internal class EnhancedAudioVisualization {
             return
         }
 
-        val useRealAudio = isRealAudioSupported() && audioSessionId > 0
+        val useRealAudio = isRealAudioSupported(logger) && audioSessionId > 0
 
         if (useRealAudio) {
             setupRealAudioVisualizer(audioSessionId)
@@ -340,7 +343,7 @@ internal class EnhancedAudioVisualization {
             visualizer?.release()
             visualizer = null
         } catch (e: Exception) {
-            Log.e("AudioVisualizer", "Error releasing visualizer", e)
+            logger.error(TAG, "Error releasing visualizer", e)
         }
         clearVisualization()
     }

@@ -8,7 +8,7 @@ import org.koin.dsl.module
 
 @UnstableApi
 val networkModule = module {
-    single { NetworkManager(androidContext()) }
+    single { NetworkManager(androidContext(), get()) }
 
     single<HttpDataSource.Factory> {
         get<NetworkManager>().createHttpDataSourceFactory(allowUnsafeSSL = false)

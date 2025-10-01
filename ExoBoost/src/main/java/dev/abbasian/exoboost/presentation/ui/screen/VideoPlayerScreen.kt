@@ -2,7 +2,6 @@ package dev.abbasian.exoboost.presentation.ui.screen
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
-import android.util.Log
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
@@ -37,11 +36,12 @@ import androidx.media3.ui.PlayerView
 import dev.abbasian.exoboost.R
 import dev.abbasian.exoboost.data.manager.ExoPlayerManager
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
-import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.domain.model.MediaState
+import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.presentation.ui.component.EnhancedPlayerControls
 import dev.abbasian.exoboost.presentation.ui.component.GestureHandler
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
+import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -62,6 +62,9 @@ fun ExoBoostPlayer(
     viewModel: MediaPlayerViewModel = koinViewModel(),
     playerManager: ExoPlayerManager = koinInject()
 ) {
+    val TAG = "ExoBoostPlayer"
+    val logger: ExoBoostLogger = koinInject()
+
     val context = LocalContext.current
     val activity = context as? Activity
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -75,14 +78,14 @@ fun ExoBoostPlayer(
 
     LaunchedEffect(Unit) {
         try {
-            Log.d("ExoBoostPlayer", "Initializing player...")
+            logger.debug(TAG, "Initializing player...")
             playerManager.initializePlayer(mediaConfig)
             isPlayerInitialized = true
-            Log.d("ExoBoostPlayer", "Player initialized")
+            logger.debug(TAG, "Player initialized")
 
             launch {
                 playerManager.mediaState.collect { state ->
-                    Log.d("ExoBoostPlayer", "Video state: $state")
+                    logger.debug(TAG, "Video state: $state")
                     viewModel.updateMediaState(state)
                 }
             }
@@ -93,7 +96,7 @@ fun ExoBoostPlayer(
                 }
             }
         } catch (e: Exception) {
-            Log.e("ExoBoostPlayer", "Error initializing player", e)
+            logger.error(TAG, "Error initializing player", e)
             onError?.invoke("Failed to initialize player: ${e.message}")
         }
     }
@@ -101,10 +104,10 @@ fun ExoBoostPlayer(
     LaunchedEffect(videoUrl, isPlayerInitialized) {
         if (isPlayerInitialized && videoUrl.isNotEmpty() && videoUrl.isNotBlank()) {
             try {
-                Log.d("ExoBoostPlayer", "Loading video: $videoUrl")
+                logger.debug(TAG, "Loading video: $videoUrl")
                 viewModel.loadMedia(videoUrl, mediaConfig)
             } catch (e: Exception) {
-                Log.e("ExoBoostPlayer", "Error loading video", e)
+                logger.error(TAG, "Error loading video", e)
                 onError?.invoke("Failed to load video: ${e.message}")
             }
         }
@@ -113,11 +116,11 @@ fun ExoBoostPlayer(
     LaunchedEffect(uiState.mediaState) {
         when (val state = uiState.mediaState) {
             is MediaState.Ready -> {
-                Log.d("ExoBoostPlayer", "Player ready")
+                logger.debug(TAG, "Player ready")
                 onPlayerReady?.invoke()
             }
             is MediaState.Error -> {
-                Log.e("ExoBoostPlayer", "Player error: ${state.error.message}")
+                logger.error(TAG, "Player error: ${state.error.message}")
                 onError?.invoke(state.error.message)
             }
             else -> {}
@@ -135,7 +138,7 @@ fun ExoBoostPlayer(
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            Log.d("ExoBoostPlayer", "Lifecycle event: $event")
+            logger.debug(TAG, "Lifecycle event: $event")
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> {
                     if (activity?.isChangingConfigurations != true) {
@@ -150,7 +153,7 @@ fun ExoBoostPlayer(
                         try {
                             playerManager.pause()
                         } catch (e: Exception) {
-                            Log.e("ExoBoostPlayer", "Error pausing player", e)
+                            logger.error(TAG, "Error pausing player", e)
                         }
                     }
                 }
@@ -162,7 +165,7 @@ fun ExoBoostPlayer(
                             isPlayerInitialized = false
                             playerViewReady = false
                         } catch (e: Exception) {
-                            Log.e("ExoBoostPlayer", "Error releasing player", e)
+                            logger.error(TAG, "Error releasing player", e)
                         }
                     }
                 }
@@ -184,7 +187,7 @@ fun ExoBoostPlayer(
                     }
                 }
             } catch (e: Exception) {
-                Log.e("ExoBoostPlayer", "Error in dispose", e)
+                logger.error(TAG, "Error in dispose", e)
             }
         }
     }
@@ -200,7 +203,7 @@ fun ExoBoostPlayer(
         if (isPlayerInitialized) {
             AndroidView(
                 factory = { context ->
-                    Log.d("ExoBoostPlayer", "Creating PlayerView")
+                    logger.debug(TAG, "Creating PlayerView")
                     PlayerView(context).apply {
                         try {
                             useController = false
@@ -217,14 +220,14 @@ fun ExoBoostPlayer(
                             val currentPlayer = playerManager.getPlayer()
                             if (currentPlayer != null) {
                                 player = currentPlayer
-                                Log.d("ExoBoostPlayer", "PlayerView connected to player")
+                                logger.debug(TAG, "PlayerView connected to player")
                                 playerViewReady = true
                                 playerManager.onSurfaceAvailable()
                             } else {
-                                Log.w("ExoBoostPlayer", "No player available for PlayerView")
+                                logger.warning(TAG, "No player available for PlayerView")
                             }
                         } catch (e: Exception) {
-                            Log.e("ExoBoostPlayer", "Error setting up PlayerView", e)
+                            logger.error(TAG, "Error setting up PlayerView", e)
                         }
                     }
                 },
@@ -233,7 +236,7 @@ fun ExoBoostPlayer(
                         val currentPlayer = playerManager.getPlayer()
                         if (currentPlayer != null && view.player !== currentPlayer) {
                             view.player = currentPlayer
-                            Log.d("ExoBoostPlayer", "PlayerView updated with new player")
+                            logger.debug(TAG, "PlayerView updated with new player")
 
                             view.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIT)
                             view.requestLayout()
@@ -244,7 +247,7 @@ fun ExoBoostPlayer(
                             }
                         }
                     } catch (e: Exception) {
-                        Log.e("ExoBoostPlayer", "Error updating PlayerView", e)
+                        logger.error(TAG, "Error updating PlayerView", e)
                     }
                 },
                 modifier = Modifier.fillMaxSize()
@@ -259,21 +262,21 @@ fun ExoBoostPlayer(
                     try {
                         viewModel.setVolume(volume)
                     } catch (e: Exception) {
-                        Log.e("ExoBoostPlayer", "Error setting volume", e)
+                        logger.error(TAG, "Error setting volume", e)
                     }
                 },
                 onBrightnessChange = { brightness ->
                     try {
                         viewModel.setBrightness(brightness)
                     } catch (e: Exception) {
-                        Log.e("ExoBoostPlayer", "Error setting brightness", e)
+                        logger.error(TAG, "Error setting brightness", e)
                     }
                 },
                 onSeek = { position ->
                     try {
                         viewModel.seekTo(position)
                     } catch (e: Exception) {
-                        Log.e("ExoBoostPlayer", "Error seeking", e)
+                        logger.error(TAG, "Error seeking", e)
                     }
                 },
                 currentPosition = uiState.mediaInfo.currentPosition,
@@ -293,14 +296,14 @@ fun ExoBoostPlayer(
                         viewModel.playPause()
                         controlsVisible = true
                     } catch (e: Exception) {
-                        Log.e("ExoBoostPlayer", "Error in playPause", e)
+                        logger.error(TAG, "Error in playPause", e)
                     }
                 },
                 onSeek = { position ->
                     try {
                         viewModel.seekTo(position)
                     } catch (e: Exception) {
-                        Log.e("ExoBoostPlayer", "Error seeking from controls", e)
+                        logger.error(TAG, "Error seeking from controls", e)
                     }
                 },
                 onRetry = {
@@ -308,7 +311,7 @@ fun ExoBoostPlayer(
                         viewModel.retry()
                         controlsVisible = true
                     } catch (e: Exception) {
-                        Log.e("ExoBoostPlayer", "Error retrying", e)
+                        logger.error(TAG, "Error retrying", e)
                     }
                 },
                 onSpeedSelected = { speed ->
@@ -316,7 +319,7 @@ fun ExoBoostPlayer(
                         viewModel.setPlaybackSpeed(speed)
                         onSpeedChanged?.invoke(speed)
                     } catch (e: Exception) {
-                        Log.e("ExoBoostPlayer", "Error setting speed", e)
+                        logger.error(TAG, "Error setting speed", e)
                     }
                 },
                 onQualitySelected = { quality ->
@@ -324,7 +327,7 @@ fun ExoBoostPlayer(
                         viewModel.selectQuality(quality)
                         onQualityChanged?.invoke(quality)
                     } catch (e: Exception) {
-                        Log.e("ExoBoostPlayer", "Error selecting quality", e)
+                        logger.error(TAG, "Error selecting quality", e)
                     }
                 },
                 onFullscreen = {
@@ -336,9 +339,9 @@ fun ExoBoostPlayer(
                         }
                         activity?.requestedOrientation = newOrientation
                         isFullscreen = !isFullscreen
-                        Log.d("ExoBoostPlayer", "Orientation changing to: $newOrientation")
+                        logger.debug(TAG, "Orientation changing to: $newOrientation")
                     } catch (e: Exception) {
-                        Log.e("ExoBoostPlayer", "Error changing orientation", e)
+                        logger.error(TAG, "Error changing orientation", e)
                     }
                 },
                 onModalStateChanged = { isOpen ->
@@ -360,7 +363,7 @@ fun ExoBoostPlayer(
                             onBack?.invoke()
                         }
                     } catch (e: Exception) {
-                        Log.e("ExoBoostPlayer", "Error handling back button", e)
+                        logger.error(TAG, "Error handling back button", e)
                     }
                 },
                 modifier = Modifier

@@ -10,7 +10,7 @@ import org.koin.dsl.module
 
 @UnstableApi
 val cacheModule = module {
-    single { CacheManager(androidContext()) }
+    single { CacheManager(androidContext(), get()) }
 
     single<Cache> { get<CacheManager>().getCache() }
 

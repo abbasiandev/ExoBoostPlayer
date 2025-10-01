@@ -14,7 +14,7 @@ import org.koin.dsl.module
 
 @UnstableApi
 val playerModule = module {
-    single { ExoPlayerManager(androidContext(), get(), get()) }
+    single { ExoPlayerManager(androidContext(), get(), get(), get()) }
 
     single<MediaRepository> { MediaRepositoryImpl(get(), get()) }
 

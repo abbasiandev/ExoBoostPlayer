@@ -9,6 +9,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import dev.abbasian.exoboost.util.ExoBoostLogger
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import java.security.cert.X509Certificate
@@ -18,7 +19,14 @@ import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
 @UnstableApi
-class NetworkManager(private val context: Context) {
+class NetworkManager(
+    private val context: Context,
+    private val logger: ExoBoostLogger
+) {
+
+    companion object {
+        private const val TAG = "NetworkManager"
+    }
 
     private val connectTimeoutMs = 10000
     private val readTimeoutMs = 20000
@@ -30,7 +38,7 @@ class NetworkManager(private val context: Context) {
         return try {
             createOkHttpDataSourceFactory(allowUnsafeSSL)
         } catch (e: Exception) {
-            Log.w("NetworkManager", "OkHttp failed, falling back to default: ${e.message}")
+            logger.warning(TAG, "OkHttp failed, falling back to default: ${e.message}")
             createDefaultHttpDataSourceFactory()
         }
     }
@@ -97,9 +105,9 @@ class NetworkManager(private val context: Context) {
             clientBuilder.sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
             clientBuilder.hostnameVerifier { _, _ -> true }
 
-            Log.w("NetworkManager", "SSL trust-all configured - NOT RECOMMENDED FOR PRODUCTION")
+            logger.warning(TAG, "SSL trust-all configured - NOT RECOMMENDED FOR PRODUCTION")
         } catch (e: Exception) {
-            Log.e("NetworkManager", "Failed to configure SSL: ${e.message}", e)
+            logger.error(TAG, "Failed to configure SSL: ${e.message}", e)
         }
     }
 
@@ -114,7 +122,7 @@ class NetworkManager(private val context: Context) {
                     networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ||
                     networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
         } catch (e: Exception) {
-            Log.e("NetworkManager", "Error checking network availability", e)
+            logger.error(TAG, "Error checking network availability", e)
             false
         }
     }
@@ -133,7 +141,7 @@ class NetworkManager(private val context: Context) {
                 else -> NetworkType.OTHER
             }
         } catch (e: Exception) {
-            Log.e("NetworkManager", "Error getting network type", e)
+            logger.error(TAG, "Error getting network type", e)
             NetworkType.NONE
         }
     }
@@ -164,7 +172,7 @@ class NetworkManager(private val context: Context) {
                 else -> ConnectionQuality.MEDIUM
             }
         } catch (e: Exception) {
-            Log.e("NetworkManager", "Error getting connection quality", e)
+            logger.error(TAG, "Error getting connection quality", e)
             ConnectionQuality.UNKNOWN
         }
     }
@@ -175,7 +183,7 @@ class NetworkManager(private val context: Context) {
             cachedClient?.connectionPool?.evictAll()
             cachedClient = null
         } catch (e: Exception) {
-            Log.e("NetworkManager", "Error during cleanup", e)
+            logger.error(TAG, "Error during cleanup", e)
         }
     }
 

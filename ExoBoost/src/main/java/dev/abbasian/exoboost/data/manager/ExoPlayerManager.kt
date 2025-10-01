@@ -7,7 +7,6 @@ import android.media.audiofx.Virtualizer
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -26,9 +25,10 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import dev.abbasian.exoboost.R
 import dev.abbasian.exoboost.domain.model.MediaInfo
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.PlayerError
 import dev.abbasian.exoboost.domain.model.VideoQuality
-import dev.abbasian.exoboost.domain.model.MediaState
+import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,8 +41,14 @@ import javax.net.ssl.SSLException
 class ExoPlayerManager(
     private val context: Context,
     private val dataSourceFactory: DataSource.Factory,
-    private val networkManager: NetworkManager
+    private val networkManager: NetworkManager,
+    private val logger: ExoBoostLogger
 ) {
+
+    companion object {
+        private const val TAG = "ExoPlayerManager"
+    }
+
     private var equalizer: Equalizer? = null
     private var bassBoost: BassBoost? = null
     private var virtualizer: Virtualizer? = null
@@ -77,7 +83,7 @@ class ExoPlayerManager(
 
     fun initializePlayer(config: MediaPlayerConfig) {
         if (isInitialized.get() && !isReleased.get()) {
-            Log.d("ExoPlayerManager", "Player already initialized")
+            logger.debug(TAG, "Player already initialized")
             return
         }
 
@@ -86,7 +92,7 @@ class ExoPlayerManager(
             isPrepared.set(false)
             isMediaReady.set(false)
             currentConfig = config
-            Log.d("ExoPlayerManager", "Initializing ExoPlayer...")
+            logger.debug(TAG, "Initializing ExoPlayer...")
 
             val loadControl = DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
@@ -125,10 +131,10 @@ class ExoPlayerManager(
             isInitialized.set(true)
             startPositionUpdates()
 
-            Log.d("ExoPlayerManager", "ExoPlayer initialized successfully")
+            logger.debug(TAG, "ExoPlayer initialized successfully")
 
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Failed to initialize player", e)
+            logger.error(TAG, "Failed to initialize player", e)
             _mediaState.value = MediaState.Error(
                 PlayerError.UnknownError(
                     context.getString(R.string.error_init_player) + e.message,
@@ -143,14 +149,14 @@ class ExoPlayerManager(
         try {
             exoPlayer?.let { player ->
                 val audioSessionId = player.audioSessionId
-                Log.d("ExoPlayerManager", "Initializing audio effects with session ID: $audioSessionId")
+                logger.debug(TAG, "Initializing audio effects with session ID: $audioSessionId")
 
                 if (audioSessionId != 0) {
                     releaseAudioEffects()
 
                     equalizer = Equalizer(0, audioSessionId).apply {
                         enabled = true
-                        Log.d("ExoPlayerManager", "Equalizer initialized with ${numberOfBands} bands")
+                        logger.debug(TAG, "Equalizer initialized with ${numberOfBands} bands")
                     }
 
                     bassBoost = BassBoost(0, audioSessionId).apply {
@@ -162,27 +168,27 @@ class ExoPlayerManager(
                     }
 
                 } else {
-                    Log.w("ExoPlayerManager", "Invalid audio session ID, cannot initialize effects")
+                    logger.warning(TAG, "Invalid audio session ID, cannot initialize effects")
                 }
             }
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Failed to initialize audio effects", e)
+            logger.error(TAG, "Failed to initialize audio effects", e)
         }
     }
 
     fun loadMedia(url: String) {
         if (isReleased.get()) {
-            Log.w("ExoPlayerManager", "Cannot load video: player is released")
+            logger.warning(TAG, "Cannot load video: player is released")
             return
         }
 
         if (!isInitialized.get()) {
-            Log.w("ExoPlayerManager", "Cannot load video: player not initialized")
+            logger.warning(TAG, "Cannot load video: player not initialized")
             return
         }
 
         if (currentUrl == url && isPrepared.get()) {
-            Log.d("ExoPlayerManager", "Video already loaded: $url")
+            logger.debug(TAG, "Video already loaded: $url")
             return
         }
 
@@ -200,7 +206,7 @@ class ExoPlayerManager(
 
         try {
             _mediaState.value = MediaState.Loading
-            Log.d("ExoPlayerManager", "Loading video: $url")
+            logger.debug(TAG, "Loading video: $url")
 
             val mediaItem = MediaItem.Builder()
                 .setUri(Uri.parse(url))
@@ -213,10 +219,10 @@ class ExoPlayerManager(
                 prepare()
             }
 
-            Log.d("ExoPlayerManager", "Video preparation started")
+            logger.debug(TAG, "Video preparation started")
 
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error loading video", e)
+            logger.error(TAG, "Error loading video", e)
             handleLoadError(e)
         }
     }
@@ -237,16 +243,16 @@ class ExoPlayerManager(
 
                     eq.setBandLevel(bandIndex.toShort(), clampedLevel.toShort())
 
-                    Log.d("ExoPlayerManager", "Set band $bandIndex to ${dbValue}dB ($clampedLevel millibels)")
+                    logger.debug(TAG, "Set band $bandIndex to ${dbValue}dB ($clampedLevel millibels)")
                 }
             }
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error setting equalizer band $bandIndex", e)
+            logger.error(TAG, "Error setting equalizer band $bandIndex", e)
         }
     }
 
     fun applyEqualizerValues(values: List<Float>) {
-        Log.d("ExoPlayerManager", "Applying equalizer values: $values")
+        logger.debug(TAG, "Applying equalizer values: $values")
         values.forEachIndexed { index, value ->
             setEqualizerBand(index, value)
         }
@@ -269,7 +275,7 @@ class ExoPlayerManager(
                 }
             } ?: listOf("60Hz", "170Hz", "310Hz", "600Hz", "1kHz", "3kHz", "6kHz", "12kHz")
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error getting frequencies", e)
+            logger.error(TAG, "Error getting frequencies", e)
             listOf("60Hz", "170Hz", "310Hz", "600Hz", "1kHz", "3kHz", "6kHz", "12kHz")
         }
     }
@@ -279,7 +285,7 @@ class ExoPlayerManager(
     }
 
     fun onSurfaceAvailable() {
-        Log.d("ExoPlayerManager", "Surface available")
+        logger.debug(TAG, "Surface available")
         if (isReadyForSurface() && currentConfig.autoPlay) {
             mainHandler.postDelayed({
                 if (!isReleased.get() && exoPlayer != null) {
@@ -301,7 +307,7 @@ class ExoPlayerManager(
                 else -> "UNKNOWN"
             }
 
-            Log.d("ExoPlayerManager", "Playback state changed: $stateString")
+            logger.debug(TAG, "Playback state changed: $stateString")
 
             when (playbackState) {
                 Player.STATE_IDLE -> {
@@ -337,7 +343,7 @@ class ExoPlayerManager(
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             if (isReleased.get()) return
 
-            Log.d("ExoPlayerManager", "Is playing changed: $isPlaying")
+            logger.debug(TAG, "Is playing changed: $isPlaying")
 
             _mediaState.value = if (isPlaying) {
                 MediaState.Playing
@@ -353,12 +359,12 @@ class ExoPlayerManager(
 
         override fun onVideoSizeChanged(videoSize: VideoSize) {
             if (isReleased.get()) return
-            Log.d("ExoPlayerManager", "Video size changed: ${videoSize.width}x${videoSize.height}")
+            logger.debug(TAG, "Video size changed: ${videoSize.width}x${videoSize.height}")
         }
 
         override fun onRenderedFirstFrame() {
             if (isReleased.get()) return
-            Log.d("ExoPlayerManager", "First frame rendered")
+            logger.debug(TAG, "First frame rendered")
 
             isMediaReady.set(true)
 
@@ -390,8 +396,8 @@ class ExoPlayerManager(
                 logMessage += "\n Cause: ${cause.javaClass.simpleName} - ${cause.message}"
             }
 
-            Log.e(
-                "ExoPlayerManager",
+            logger.error(
+                TAG,
                 logMessage,
                 error
             )
@@ -415,7 +421,7 @@ class ExoPlayerManager(
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             if (isReleased.get()) return
-            Log.d("ExoPlayerManager", "Media item transition")
+            logger.debug(TAG, "Media item transition")
             updateMediaInfo()
         }
     }
@@ -424,9 +430,9 @@ class ExoPlayerManager(
         if (isReleased.get() || !isInitialized.get()) return
         try {
             exoPlayer?.playWhenReady = true
-            Log.d("ExoPlayerManager", "Play requested")
+            logger.debug(TAG, "Play requested")
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error playing", e)
+            logger.error(TAG, "Error playing", e)
         }
     }
 
@@ -435,9 +441,9 @@ class ExoPlayerManager(
         try {
             exoPlayer?.playWhenReady = false
             exoPlayer?.pause()
-            Log.d("ExoPlayerManager", "Pause requested")
+            logger.debug(TAG, "Pause requested")
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error pausing", e)
+            logger.error(TAG, "Error pausing", e)
         }
     }
 
@@ -445,9 +451,9 @@ class ExoPlayerManager(
         if (isReleased.get() || !isInitialized.get()) return
         try {
             exoPlayer?.seekTo(position.coerceAtLeast(0L))
-            Log.d("ExoPlayerManager", "Seek to: $position")
+            logger.debug(TAG, "Seek to: $position")
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error seeking", e)
+            logger.error(TAG, "Error seeking", e)
         }
     }
 
@@ -457,15 +463,15 @@ class ExoPlayerManager(
             val clampedVolume = volume.coerceIn(0f, 1f)
             exoPlayer?.volume = clampedVolume
             updateMediaInfo()
-            Log.d("ExoPlayerManager", "Volume set to: $clampedVolume")
+            logger.debug(TAG, "Volume set to: $clampedVolume")
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error setting volume", e)
+            logger.error(TAG, "Error setting volume", e)
         }
     }
 
     fun retry() {
         if (isReleased.get() || !isInitialized.get()) {
-            Log.w("ExoPlayerManager", "Cannot retry: player not available")
+            logger.warning(TAG, "Cannot retry: player not available")
             return
         }
 
@@ -489,7 +495,7 @@ class ExoPlayerManager(
 
         try {
             _mediaState.value = MediaState.Loading
-            Log.d("ExoPlayerManager", "Retrying... attempt $retryCount")
+            logger.debug(TAG, "Retrying... attempt $retryCount")
 
             exoPlayer?.let { player ->
                 player.stop()
@@ -497,7 +503,7 @@ class ExoPlayerManager(
                 player.playWhenReady = false
             }
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error during retry", e)
+            logger.error(TAG, "Error during retry", e)
             handleLoadError(e)
         }
     }
@@ -511,17 +517,17 @@ class ExoPlayerManager(
             bassBoost = null
             virtualizer = null
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error releasing audio effects", e)
+            logger.error(TAG, "Error releasing audio effects", e)
         }
     }
 
     fun release() {
         if (isReleased.getAndSet(true)) {
-            Log.d("ExoPlayerManager", "Player already released")
+            logger.debug(TAG, "Player already released")
             return
         }
 
-        Log.d("ExoPlayerManager", "Releasing ExoPlayer")
+        logger.debug(TAG, "Releasing ExoPlayer")
 
         try {
             stopPositionUpdates()
@@ -542,10 +548,10 @@ class ExoPlayerManager(
             retryCount = 0
             _mediaState.value = MediaState.Idle
 
-            Log.d("ExoPlayerManager", "ExoPlayer released successfully")
+            logger.debug(TAG, "ExoPlayer released successfully")
 
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error during release", e)
+            logger.error(TAG, "Error during release", e)
         }
     }
 
@@ -602,7 +608,7 @@ class ExoPlayerManager(
         }
 
         _mediaState.value = MediaState.Error(playerError)
-        Log.e("ExoPlayerManager", "Load error: ${playerError.message}", error)
+        logger.error(TAG, "Load error: ${playerError.message}", error)
     }
 
     private fun mapPlaybackException(error: PlaybackException): PlayerError {
@@ -699,10 +705,10 @@ class ExoPlayerManager(
         try {
             val clampedSpeed = speed.coerceIn(0.25f, 3.0f)
             exoPlayer?.setPlaybackSpeed(clampedSpeed)
-            Log.d("ExoPlayerManager", "Playback speed set to: $clampedSpeed")
+            logger.debug(TAG, "Playback speed set to: $clampedSpeed")
             updateMediaInfo()
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error setting playback speed", e)
+            logger.error(TAG, "Error setting playback speed", e)
         }
     }
 
@@ -756,7 +762,7 @@ class ExoPlayerManager(
                 qualities.distinctBy { it.height }.sortedByDescending { it.height }
             } ?: emptyList()
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error getting available qualities", e)
+            logger.error(TAG, "Error getting available qualities", e)
             emptyList()
         }
     }
@@ -782,14 +788,14 @@ class ExoPlayerManager(
             }
 
             trackSelector.setParameters(parametersBuilder.build())
-            Log.d("ExoPlayerManager", "Quality selected: ${quality.getQualityLabel()}")
+            logger.debug(TAG, "Quality selected: ${quality.getQualityLabel()}")
 
             mainHandler.postDelayed({
                 updateMediaInfo()
             }, 1000)
 
         } catch (e: Exception) {
-            Log.e("ExoPlayerManager", "Error selecting quality", e)
+            logger.error(TAG, "Error selecting quality", e)
         }
     }
 

@@ -38,13 +38,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.abbasian.exoboost.domain.model.MediaInfo
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaState
 
 @Composable
 fun GlassyAudioControls(
+    mediaState: MediaState,
     isPlaying: Boolean,
     onPlayPause: () -> Unit,
     onSeek: (Long) -> Unit,
+    onRetry: () -> Unit,
     currentPosition: Long,
     duration: Long,
     bufferedPosition: Long = 0L,
@@ -70,168 +74,186 @@ fun GlassyAudioControls(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(20.dp)
+            modifier = Modifier
+                .padding(20.dp)
+                .align(Alignment.Center)
         ) {
-            // Track info
-            if (trackTitle != null || artistName != null) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    trackTitle?.let { title ->
-                        Text(
-                            text = title,
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1
-                        )
-                    }
-                    artistName?.let { artist ->
-                        Text(
-                            text = artist,
-                            color = Color.White.copy(alpha = 0.8f),
-                            fontSize = 14.sp,
-                            maxLines = 1
-                        )
-                    }
-                }
-            }
-
-            Box(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // seek bar
-                    GlassySeekBar(
-                        currentPosition = currentPosition,
-                        bufferedPosition = bufferedPosition,
-                        duration = duration,
-                        onSeek = onSeek,
-                        modifier = Modifier.fillMaxWidth(),
-                        config = config
-                    )
-
-                    // Main Control Buttons Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // previous
-                        onPrevious?.let { previous ->
-                            GlassyControlButton(
-                                onClick = previous,
-                                icon = Icons.Filled.SkipPrevious,
-                                iconSize = 24.dp,
-                                buttonSize = 48.dp,
-                                description = "Previous"
-                            )
-                        } ?: Box(modifier = Modifier.size(48.dp))
-
-                        // play/pause
-                        GlassyControlButton(
-                            onClick = onPlayPause,
-                            icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                            iconSize = 32.dp,
-                            buttonSize = 64.dp,
-                            description = if (isPlaying) "Pause" else "Play",
-                            isPrimary = true
-                        )
-
-                        // next
-                        onNext?.let { next ->
-                            GlassyControlButton(
-                                onClick = next,
-                                icon = Icons.Filled.SkipNext,
-                                iconSize = 24.dp,
-                                buttonSize = 48.dp,
-                                description = "Next"
-                            )
-                        } ?: Box(modifier = Modifier.size(48.dp))
-                    }
+            when (mediaState) {
+                is MediaState.Loading -> {
+                    GlassyLoadingIndicator()
                 }
 
-                if (showEqualizer) {
-                    GlassyEqualizer(
-                        isPlaying = isPlaying,
-                        config = config,
-                        onEqualizerChange = onEqualizerChange,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.Center)
+                is MediaState.Error -> {
+                    ErrorDisplay(
+                        error = mediaState.error,
+                        onRetry = onRetry
                     )
                 }
-            }
 
-            // volume + equalizer
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    onVolumeChange?.let { volumeChange ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable {
-                                    showVolumeSlider = !showVolumeSlider
-                                }
+                else -> {
+                    // Track info
+                    if (trackTitle != null || artistName != null) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Icon(
-                                Icons.Filled.VolumeUp,
-                                contentDescription = "Volume",
-                                tint = Color.White.copy(alpha = 0.8f),
-                                modifier = Modifier.size(20.dp)
-                            )
-
-                            if (showVolumeSlider) {
-                                Slider(
-                                    value = currentVolume,
-                                    onValueChange = { newVolume ->
-                                        currentVolume = newVolume
-                                        volumeChange(newVolume)
-                                    },
-                                    valueRange = 0f..1f,
-                                    modifier = Modifier.weight(1f),
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Color.White,
-                                        activeTrackColor = Color.White.copy(alpha = 0.8f),
-                                        inactiveTrackColor = Color.White.copy(alpha = 0.3f)
-                                    )
-                                )
-                            } else {
+                            trackTitle?.let { title ->
                                 Text(
-                                    text = "${(currentVolume * 100).toInt()}%",
+                                    text = title,
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1
+                                )
+                            }
+                            artistName?.let { artist ->
+                                Text(
+                                    text = artist,
                                     color = Color.White.copy(alpha = 0.8f),
-                                    fontSize = 14.sp
+                                    fontSize = 14.sp,
+                                    maxLines = 1
                                 )
                             }
                         }
-                    } ?: Spacer(modifier = Modifier.weight(1f))
+                    }
 
-                    onEqualizerToggle?.let { equalizerToggle ->
-                        GlassyControlButton(
-                            onClick = equalizerToggle,
-                            icon = Icons.Filled.Equalizer,
-                            iconSize = 20.dp,
-                            buttonSize = 40.dp,
-                            description = if (showEqualizer) "Hide Equalizer" else "Show Equalizer",
-                            isPrimary = showEqualizer,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            // seek bar
+                            GlassySeekBar(
+                                currentPosition = currentPosition,
+                                bufferedPosition = bufferedPosition,
+                                duration = duration,
+                                onSeek = onSeek,
+                                modifier = Modifier.fillMaxWidth(),
+                                config = config
+                            )
+
+                            // Main Control Buttons Row
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // previous
+                                onPrevious?.let { previous ->
+                                    GlassyControlButton(
+                                        onClick = previous,
+                                        icon = Icons.Filled.SkipPrevious,
+                                        iconSize = 24.dp,
+                                        buttonSize = 48.dp,
+                                        description = "Previous"
+                                    )
+                                } ?: Box(modifier = Modifier.size(48.dp))
+
+                                // play/pause
+                                GlassyControlButton(
+                                    onClick = onPlayPause,
+                                    icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                    iconSize = 32.dp,
+                                    buttonSize = 64.dp,
+                                    description = if (isPlaying) "Pause" else "Play",
+                                    isPrimary = true
+                                )
+
+                                // next
+                                onNext?.let { next ->
+                                    GlassyControlButton(
+                                        onClick = next,
+                                        icon = Icons.Filled.SkipNext,
+                                        iconSize = 24.dp,
+                                        buttonSize = 48.dp,
+                                        description = "Next"
+                                    )
+                                } ?: Box(modifier = Modifier.size(48.dp))
+                            }
+                        }
+
+                        if (showEqualizer) {
+                            GlassyEqualizer(
+                                isPlaying = isPlaying,
+                                config = config,
+                                onEqualizerChange = onEqualizerChange,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.Center)
+                            )
+                        }
+                    }
+
+                    // volume + equalizer
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            onVolumeChange?.let { volumeChange ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable {
+                                            showVolumeSlider = !showVolumeSlider
+                                        }
+                                ) {
+                                    Icon(
+                                        Icons.Filled.VolumeUp,
+                                        contentDescription = "Volume",
+                                        tint = Color.White.copy(alpha = 0.8f),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+
+                                    if (showVolumeSlider) {
+                                        Slider(
+                                            value = currentVolume,
+                                            onValueChange = { newVolume ->
+                                                currentVolume = newVolume
+                                                volumeChange(newVolume)
+                                            },
+                                            valueRange = 0f..1f,
+                                            modifier = Modifier.weight(1f),
+                                            colors = SliderDefaults.colors(
+                                                thumbColor = Color.White,
+                                                activeTrackColor = Color.White.copy(alpha = 0.8f),
+                                                inactiveTrackColor = Color.White.copy(alpha = 0.3f)
+                                            )
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "${(currentVolume * 100).toInt()}%",
+                                            color = Color.White.copy(alpha = 0.8f),
+                                            fontSize = 14.sp
+                                        )
+                                    }
+                                }
+                            } ?: Spacer(modifier = Modifier.weight(1f))
+
+                            onEqualizerToggle?.let { equalizerToggle ->
+                                GlassyControlButton(
+                                    onClick = equalizerToggle,
+                                    icon = Icons.Filled.Equalizer,
+                                    iconSize = 20.dp,
+                                    buttonSize = 40.dp,
+                                    description = if (showEqualizer) "Hide Equalizer" else "Show Equalizer",
+                                    isPrimary = showEqualizer,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
+
         }
     }
 }
