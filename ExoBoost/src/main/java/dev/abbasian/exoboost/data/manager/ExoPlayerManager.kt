@@ -29,6 +29,7 @@ import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.PlayerError
 import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.util.ExoBoostLogger
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,6 +53,9 @@ class ExoPlayerManager(
     private var equalizer: Equalizer? = null
     private var bassBoost: BassBoost? = null
     private var virtualizer: Virtualizer? = null
+    private var hasTriedSoftwareDecoder = false
+    private var qualityDowngradeAttempts = 0
+    private val maxQualityDowngrades = 3
 
     private val _equalizerValues = MutableStateFlow(List(8) { 0.5f })
     val equalizerValues: StateFlow<List<Float>> = _equalizerValues.asStateFlow()
@@ -243,7 +247,10 @@ class ExoPlayerManager(
 
                     eq.setBandLevel(bandIndex.toShort(), clampedLevel.toShort())
 
-                    logger.debug(TAG, "Set band $bandIndex to ${dbValue}dB ($clampedLevel millibels)")
+                    logger.debug(
+                        TAG,
+                        "Set band $bandIndex to ${dbValue}dB ($clampedLevel millibels)"
+                    )
                 }
             }
         } catch (e: Exception) {
@@ -315,11 +322,16 @@ class ExoPlayerManager(
                     isMediaReady.set(false)
                     _mediaState.value = MediaState.Idle
                 }
+
                 Player.STATE_BUFFERING -> {
                     _mediaState.value = MediaState.Loading
                 }
+
                 Player.STATE_READY -> {
                     retryCount = 0
+                    hasTriedSoftwareDecoder = false
+                    qualityDowngradeAttempts = 0
+
                     isPrepared.set(true)
 
                     val hasVideo = exoPlayer?.videoFormat != null
@@ -334,6 +346,7 @@ class ExoPlayerManager(
                         initializeAudioEffects()
                     }
                 }
+
                 Player.STATE_ENDED -> {
                     _mediaState.value = MediaState.Ended
                 }
@@ -384,7 +397,8 @@ class ExoPlayerManager(
         override fun onPlayerError(error: PlaybackException) {
             if (isReleased.get()) return
 
-            var logMessage = "Player error: ${error.errorCodeName} (${error.errorCode}) - ${error.message}"
+            var logMessage =
+                "Player error: ${error.errorCodeName} (${error.errorCode}) - ${error.message}"
 
             val cause = error.cause
             if (cause is HttpDataSource.InvalidResponseCodeException) {
@@ -408,21 +422,124 @@ class ExoPlayerManager(
             val playerError = mapPlaybackException(error)
             _mediaState.value = MediaState.Error(playerError)
 
-            if (currentConfig.retryOnError && isRetryableError(playerError) &&
-                retryCount < currentConfig.maxRetryCount
+            if (error.errorCode == PlaybackException.ERROR_CODE_DECODING_FAILED &&
+                !hasTriedSoftwareDecoder
             ) {
+                logger.warning(TAG, "Hardware decoder failed, attempting software decoder fallback")
+                hasTriedSoftwareDecoder = true
+
                 mainHandler.postDelayed({
                     if (!isReleased.get()) {
-                        retry()
+                        try {
+                            val currentPosition = exoPlayer?.currentPosition ?: 0L
+                            val wasPlaying = exoPlayer?.playWhenReady ?: false
+
+                            initializePlayer(
+                                currentConfig.copy(
+                                    preferSoftwareDecoder = true
+                                )
+                            )
+
+                            loadMedia(currentUrl)
+
+                            mainHandler.postDelayed({
+                                seekTo(currentPosition)
+                                if (wasPlaying) play()
+                            }, 1000)
+
+                            logger.info(TAG, "Switched to software decoder")
+                        } catch (e: Exception) {
+                            logger.error(TAG, "Software decoder fallback failed", e)
+                        }
                     }
-                }, 2000)
+                }, 1000)
+                return
             }
+
+            if (currentConfig.autoQualityOnError &&
+                playerError is PlayerError.NetworkError &&
+                qualityDowngradeAttempts < maxQualityDowngrades
+            ) {
+
+                logger.warning(TAG, "Network issue detected, attempting quality downgrade")
+
+                mainHandler.postDelayed({
+                    if (!isReleased.get()) {
+                        try {
+                            val availableQualities = getAvailableQualities()
+                                .filter { it.label != "Auto" }
+                                .sortedBy { it.height }
+
+                            val currentQuality = getCurrentSelectedQuality(availableQualities)
+                            val currentIndex = availableQualities.indexOfFirst {
+                                it.height == currentQuality?.height
+                            }
+
+                            if (currentIndex > 0) {
+                                val lowerQuality = availableQualities[currentIndex - 1]
+                                logger.info(
+                                    TAG,
+                                    "Auto-downgrading: ${currentQuality?.label} -> ${lowerQuality.label}"
+                                )
+
+                                selectQuality(lowerQuality)
+                                qualityDowngradeAttempts++
+
+                                mainHandler.postDelayed({
+                                    if (!isReleased.get()) {
+                                        retry()
+                                    }
+                                }, 1500)
+                            } else {
+                                logger.warning(
+                                    TAG,
+                                    "Already at lowest quality, cannot downgrade further"
+                                )
+                                scheduleNormalRetry(playerError)
+                            }
+                        } catch (e: Exception) {
+                            logger.error(TAG, "Quality downgrade failed", e)
+                            scheduleNormalRetry(playerError)
+                        }
+                    }
+                }, 1000)
+                return
+            }
+
+            scheduleNormalRetry(playerError)
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             if (isReleased.get()) return
             logger.debug(TAG, "Media item transition")
             updateMediaInfo()
+        }
+    }
+
+    private fun scheduleNormalRetry(playerError: PlayerError) {
+        if (currentConfig.retryOnError &&
+            isRetryableError(playerError) &&
+            retryCount < currentConfig.maxRetryCount
+        ) {
+
+            val baseDelay = 2000L
+            val retryDelay = (baseDelay * (1 shl retryCount)).coerceAtMost(10000L)
+
+            logger.info(
+                TAG,
+                "Scheduling retry ${retryCount + 1}/${currentConfig.maxRetryCount} after ${retryDelay}ms"
+            )
+
+            mainHandler.postDelayed({
+                if (!isReleased.get()) {
+                    retry()
+                }
+            }, retryDelay)
+        } else {
+            logger.warning(TAG, "Retry not possible or max attempts reached")
+
+            hasTriedSoftwareDecoder = false
+            qualityDowngradeAttempts = 0
         }
     }
 
@@ -479,6 +596,9 @@ class ExoPlayerManager(
             _mediaState.value = MediaState.Error(
                 PlayerError.UnknownError(context.getString(R.string.error_retry_limit))
             )
+
+            hasTriedSoftwareDecoder = false
+            qualityDowngradeAttempts = 0
             return
         }
 
@@ -723,15 +843,17 @@ class ExoPlayerManager(
             mappedTrackInfo?.let { trackInfo ->
                 val qualities = mutableListOf<VideoQuality>()
 
-                qualities.add(VideoQuality(
-                    trackGroup = -1,
-                    trackIndex = -1,
-                    width = 0,
-                    height = 0,
-                    bitrate = 0,
-                    label = "Auto",
-                    isSelected = trackSelectionParameters?.maxVideoWidth == Int.MAX_VALUE
-                ))
+                qualities.add(
+                    VideoQuality(
+                        trackGroup = -1,
+                        trackIndex = -1,
+                        width = 0,
+                        height = 0,
+                        bitrate = 0,
+                        label = "Auto",
+                        isSelected = trackSelectionParameters?.maxVideoWidth == Int.MAX_VALUE
+                    )
+                )
 
                 for (rendererIndex in 0 until trackInfo.rendererCount) {
                     if (trackInfo.getRendererType(rendererIndex) == C.TRACK_TYPE_VIDEO) {
@@ -744,15 +866,17 @@ class ExoPlayerManager(
                                 val format = trackGroup.getFormat(trackIndex)
 
                                 if (format.width > 0 && format.height > 0) {
-                                    qualities.add(VideoQuality(
-                                        trackGroup = groupIndex,
-                                        trackIndex = trackIndex,
-                                        width = format.width,
-                                        height = format.height,
-                                        bitrate = format.bitrate,
-                                        label = "${format.height}p",
-                                        isSelected = false
-                                    ))
+                                    qualities.add(
+                                        VideoQuality(
+                                            trackGroup = groupIndex,
+                                            trackIndex = trackIndex,
+                                            width = format.width,
+                                            height = format.height,
+                                            bitrate = format.bitrate,
+                                            label = "${format.height}p",
+                                            isSelected = false
+                                        )
+                                    )
                                 }
                             }
                         }
@@ -828,6 +952,33 @@ class ExoPlayerManager(
                     .setPreferredAudioLanguages("en", "fa", "ar")
                     .setRendererDisabled(C.TRACK_TYPE_TEXT, false)
             )
+        }
+    }
+
+    private suspend fun handleNetworkDegradation() {
+        if (qualityDowngradeAttempts >= maxQualityDowngrades) {
+            logger.warning(TAG, "Max quality downgrades reached")
+            return
+        }
+
+        val availableQualities = getAvailableQualities()
+            .filter { it.label != "Auto" }
+            .sortedBy { it.height }
+
+        val currentQuality = getCurrentSelectedQuality(availableQualities)
+        val currentIndex = availableQualities.indexOf(currentQuality)
+
+        if (currentIndex > 0) {
+            val lowerQuality = availableQualities[currentIndex - 1]
+            logger.info(
+                TAG,
+                "Auto-downgrading quality: ${currentQuality?.label} -> ${lowerQuality.label}"
+            )
+            selectQuality(lowerQuality)
+            qualityDowngradeAttempts++
+            delay(2000)
+        } else {
+            logger.warning(TAG, "Already at lowest quality")
         }
     }
 
