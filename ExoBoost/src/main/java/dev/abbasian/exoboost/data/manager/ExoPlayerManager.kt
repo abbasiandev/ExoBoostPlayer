@@ -29,10 +29,12 @@ import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.PlayerError
 import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.util.ExoBoostLogger
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -43,6 +45,7 @@ class ExoPlayerManager(
     private val context: Context,
     private val dataSourceFactory: DataSource.Factory,
     private val networkManager: NetworkManager,
+    private val autoRecoveryManager: AutoRecoveryManager,
     private val logger: ExoBoostLogger
 ) {
 
@@ -329,8 +332,7 @@ class ExoPlayerManager(
 
                 Player.STATE_READY -> {
                     retryCount = 0
-                    hasTriedSoftwareDecoder = false
-                    qualityDowngradeAttempts = 0
+                    resetRecoveryState()
 
                     isPrepared.set(true)
 
@@ -517,30 +519,39 @@ class ExoPlayerManager(
     }
 
     private fun scheduleNormalRetry(playerError: PlayerError) {
-        if (currentConfig.retryOnError &&
-            isRetryableError(playerError) &&
-            retryCount < currentConfig.maxRetryCount
-        ) {
-
-            val baseDelay = 2000L
-            val retryDelay = (baseDelay * (1 shl retryCount)).coerceAtMost(10000L)
-
-            logger.info(
-                TAG,
-                "Scheduling retry ${retryCount + 1}/${currentConfig.maxRetryCount} after ${retryDelay}ms"
-            )
-
-            mainHandler.postDelayed({
-                if (!isReleased.get()) {
-                    retry()
-                }
-            }, retryDelay)
-        } else {
-            logger.warning(TAG, "Retry not possible or max attempts reached")
-
-            hasTriedSoftwareDecoder = false
-            qualityDowngradeAttempts = 0
+        if (!currentConfig.retryOnError || !isRetryableError(playerError)) {
+            logger.warning(TAG, "Error is not retryable")
+            resetRecoveryState()
+            return
         }
+
+        if (retryCount >= currentConfig.maxRetryCount) {
+            logger.warning(TAG, "Max retry attempts reached")
+            resetRecoveryState()
+            return
+        }
+
+        mainHandler.post {
+            GlobalScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                try {
+                    if (autoRecoveryManager.shouldRetry(playerError, currentConfig.maxRetryCount)) {
+                        retry()
+                    } else {
+                        logger.warning(TAG, "AutoRecoveryManager decided not to retry")
+                        resetRecoveryState()
+                    }
+                } catch (e: Exception) {
+                    logger.error(TAG, "Error in auto recovery", e)
+                    resetRecoveryState()
+                }
+            }
+        }
+    }
+
+    private fun resetRecoveryState() {
+        hasTriedSoftwareDecoder = false
+        qualityDowngradeAttempts = 0
+        autoRecoveryManager.reset()
     }
 
     fun play() {
