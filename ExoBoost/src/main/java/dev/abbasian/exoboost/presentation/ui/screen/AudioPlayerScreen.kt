@@ -1,6 +1,7 @@
 package dev.abbasian.exoboost.presentation.ui.screen
 
 import android.app.Activity
+import android.content.pm.ActivityInfo
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
@@ -93,6 +94,15 @@ fun ExoBoostAudioPlayer(
 
     val showEqualizer by viewModel.showEqualizer.collectAsState()
     var equalizerValues by remember { mutableStateOf(List(8) { 0.5f }) }
+
+    DisposableEffect(Unit) {
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
+        onDispose {
+            activity?.requestedOrientation =
+                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
 
     // player initialization
     LaunchedEffect(Unit) {
