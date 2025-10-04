@@ -15,6 +15,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -48,6 +49,18 @@ class MainActivity : ComponentActivity() {
         val uiState by mainViewModel.uiState.collectAsState()
 
         if (uiState.showPlayer && uiState.selectedMedia != null) {
+            val selectedMedia = uiState.selectedMedia!!
+
+            val mediaType = remember(selectedMedia.url, selectedMedia.mimeType) {
+                dev.abbasian.exoboost.util.MediaUtil.getMediaType(
+                    selectedMedia.url,
+                    selectedMedia.mimeType
+                )
+            }
+
+            val isAudio = mediaType == dev.abbasian.exoboost.util.MediaType.AUDIO
+            val hasPlaylist = uiState.playlist.isNotEmpty() && isAudio
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -61,7 +74,7 @@ class MainActivity : ComponentActivity() {
                         showControls = true,
                         enableGestures = true,
                         enableSpeedControl = true,
-                        // Enhanced audio visualization settings
+                        // audio visualization settings
                         audioVisualization = MediaPlayerConfig.AudioVisualizationConfig(
                             enableVisualization = true,
                             visualizationType = dev.abbasian.exoboost.domain.model.VisualizationType.SPECTRUM,
@@ -69,7 +82,7 @@ class MainActivity : ComponentActivity() {
                             sensitivity = 0.8f,
                             smoothingFactor = 0.7f
                         ),
-                        // Enhanced glassy UI for modern look
+                        // glassy UI for modern look
                         glassyUI = MediaPlayerConfig.GlassyUIConfig(
                             blurRadius = 20f,
                             backgroundOpacity = 0.15f,
@@ -82,9 +95,12 @@ class MainActivity : ComponentActivity() {
                         maxRetryCount = 5,
                         retryOnError = true
                     ),
-                    // Extract track info from media object if available
                     trackTitle = uiState.selectedMedia!!.title ?: "Unknown Track",
-                    artistName = uiState.selectedMedia!!.artist ?: "Unknown Artist",
+                    artistName = selectedMedia.artist ?: "Unknown Artist",
+                    currentTrackIndex = if (hasPlaylist) uiState.currentTrackIndex else 0,
+                    totalTracks = if (hasPlaylist) uiState.playlist.size else 1,
+                    onNext = if (hasPlaylist) {{ mainViewModel.playNext() }} else null,
+                    onPrevious = if (hasPlaylist) {{ mainViewModel.playPrevious() }} else null,
                     onPlayerReady = {
                         Log.d("MainActivity", "Player is ready")
                     },
@@ -96,7 +112,6 @@ class MainActivity : ComponentActivity() {
                     }
                 )
 
-                // Error display
                 uiState.errorMessage?.let { error ->
                     Snackbar(
                         modifier = Modifier
@@ -113,7 +128,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         } else {
-            // Home screen with video selection
             HomeScreen(
                 onMediaSelected = { media ->
                     mainViewModel.selectMedia(media)

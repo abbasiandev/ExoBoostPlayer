@@ -20,62 +20,74 @@ fun HomeScreen(
         MediaItem(
             title = "Big Buck Bunny (MP4)",
             url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-            description = "ویدیوی تست کیفیت HD"
+            description = "ویدیوی تست کیفیت HD",
+            mimeType = "video/mp4"
         ),
         MediaItem(
             title = "Classical Piano (MP3)",
             url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-            description = "قطعه پیانو کلاسیک برای تست"
+            description = "قطعه پیانو کلاسیک برای تست",
+            mimeType = "audio/mpeg"
         ),
         MediaItem(
             title = "Ambient Rain & Piano",
             url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-            description = "آهنگ آرام پیانو با صدای باران"
+            description = "آهنگ آرام پیانو با صدای باران",
+            mimeType = "audio/mpeg"
         ),
         MediaItem(
             title = "Peaceful Guitar Melody",
             url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-            description = "ملودی آرام گیتار برای استراحت"
+            description = "ملودی آرام گیتار برای استراحت",
+            mimeType = "audio/mpeg"
         ),
         MediaItem(
             title = "Soft Electronic Ambient",
             url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
-            description = "موسیقی الکترونیک آرام"
+            description = "موسیقی الکترونیک آرام",
+            mimeType = "audio/mpeg"
         ),
         MediaItem(
             title = "Nature Sounds & Flute",
             url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3",
-            description = "صداهای طبیعت با فلوت"
+            description = "صداهای طبیعت با فلوت",
+            mimeType = "audio/mpeg"
         ),
         MediaItem(
             title = "Meditation Piano",
             url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
-            description = "پیانو مدیتیشن و آرامش"
+            description = "پیانو مدیتیشن و آرامش",
+            mimeType = "audio/mpeg"
         ),
         MediaItem(
             title = "HLS Big Buck Bunny",
             url = "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8",
-            description = "Public HLS stream from Apple for testing"
+            description = "Public HLS stream from Apple for testing",
+            mimeType = "video/mp4"
         ),
         MediaItem(
             title = "DASH Stream",
             url = "https://bitmovin-a.akamaihd.net/content/sintel/sintel.mpd",
-            description = "DASH adaptive stream"
+            description = "DASH adaptive stream",
+            mimeType = "video/mp4"
         ),
         MediaItem(
             title = "Elephant Dream (MP4)",
             url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-            description = "انیمیشن کوتاه با کیفیت بالا"
+            description = "انیمیشن کوتاه با کیفیت بالا",
+            mimeType = "video/mp4"
         ),
         MediaItem(
             title = "Tears of Steel (MP4)",
             url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-            description = "فیلم کوتاه علمی-تخیلی"
+            description = "فیلم کوتاه علمی-تخیلی",
+            mimeType = "video/mp4"
         ),
         MediaItem(
             title = "Sintel (MP4)",
             url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
-            description = "انیمیشن فانتزی کوتاه"
+            description = "انیمیشن فانتزی کوتاه",
+            mimeType = "video/mp4"
         )
     )
 
