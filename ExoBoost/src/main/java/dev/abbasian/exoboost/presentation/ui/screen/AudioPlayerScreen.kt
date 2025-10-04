@@ -343,7 +343,8 @@ fun ExoBoostAudioPlayer(
                         selectedVisualizationType = newType
                         onVisualizationTypeChange?.invoke(newType)
                     },
-                    modifier = Modifier.padding(top = 40.dp)
+                    modifier = Modifier
+                        .padding(top = 40.dp, bottom = 24.dp)
                 )
             }
 
@@ -371,7 +372,7 @@ fun ExoBoostAudioPlayer(
                 onEqualizerChange = { values ->
                     viewModel.applyEqualizerValues(values)
                 },
-                modifier = Modifier.padding(bottom = 32.dp)
+                modifier = Modifier.padding(top = 24.dp, bottom = 32.dp)
             )
         }
     }
