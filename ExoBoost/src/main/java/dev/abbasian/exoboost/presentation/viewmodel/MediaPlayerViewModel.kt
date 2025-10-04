@@ -144,6 +144,18 @@ class MediaPlayerViewModel(
         }
     }
 
+    fun setPlaylistInfo(currentIndex: Int, totalTracks: Int) {
+        _uiState.value = _uiState.value.copy(
+            currentTrackIndex = currentIndex,
+            hasNext = currentIndex < totalTracks - 1,
+            hasPrevious = currentIndex > 0
+        )
+    }
+
+    fun canNavigateNext(): Boolean = _uiState.value.hasNext
+
+    fun canNavigatePrevious(): Boolean = _uiState.value.hasPrevious
+
     fun selectQuality(quality: VideoQuality) {
         viewModelScope.launch {
             try {
@@ -280,5 +292,8 @@ data class MediaPlayerUiState(
     val brightness: Float = 0.5f,
     val isLoading: Boolean = false,
     val currentUrl: String = "",
-    val showEqualizer: Boolean = false
+    val showEqualizer: Boolean = false,
+    val currentTrackIndex: Int = 0,
+    val hasNext: Boolean = false,
+    val hasPrevious: Boolean = false
 )

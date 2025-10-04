@@ -75,7 +75,11 @@ fun ExoBoostAudioPlayer(
     viewModel: MediaPlayerViewModel = koinViewModel(),
     playerManager: ExoPlayerManager = koinInject(),
     onVisualizationTypeChange: ((VisualizationType) -> Unit)? = null,
-    currentVisualizationType: VisualizationType = VisualizationType.SPECTRUM
+    currentVisualizationType: VisualizationType = VisualizationType.SPECTRUM,
+    onNext: (() -> Unit)? = null,
+    onPrevious: (() -> Unit)? = null,
+    currentTrackIndex: Int = 0,
+    totalTracks: Int = 1
 ) {
     val TAG = "ExoBoostAudioPlayer"
     val logger: ExoBoostLogger = koinInject()
@@ -94,6 +98,10 @@ fun ExoBoostAudioPlayer(
 
     val showEqualizer by viewModel.showEqualizer.collectAsState()
     var equalizerValues by remember { mutableStateOf(List(8) { 0.5f }) }
+
+    LaunchedEffect(currentTrackIndex, totalTracks) {
+        viewModel.setPlaylistInfo(currentTrackIndex, totalTracks)
+    }
 
     DisposableEffect(Unit) {
         activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
@@ -365,8 +373,8 @@ fun ExoBoostAudioPlayer(
                 trackTitle = trackTitle,
                 artistName = artistName,
                 config = mediaConfig.glassyUI,
-                onNext = { /* handle next track */ },
-                onPrevious = { /* handle previous track */ },
+                onNext = if (uiState.hasNext) onNext else null,
+                onPrevious = if (uiState.hasPrevious) onPrevious else null,
                 showEqualizer = uiState.showEqualizer,
                 onEqualizerToggle = { viewModel.toggleEqualizer() },
                 onEqualizerChange = { values ->
