@@ -1,8 +1,10 @@
 package dev.abbasian.exoboost.domain.error
 
+import android.content.Context
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
+import dev.abbasian.exoboost.R
 import dev.abbasian.exoboost.domain.model.PlayerError
 import dev.abbasian.exoboost.util.ExoBoostLogger
 import java.io.IOException
@@ -12,6 +14,7 @@ import javax.net.ssl.SSLException
 
 @UnstableApi
 class ErrorClassifier(
+    private val context: Context,
     private val logger: ExoBoostLogger
 ) {
     companion object {
@@ -26,7 +29,7 @@ class ErrorClassifier(
             is IOException -> classifyIOException(exception)
             is SSLException -> classifySSLException(exception)
             else -> PlayerError.UnknownError(
-                message = exception.message ?: "Unknown error occurred",
+                message = exception.message ?: context.getString(R.string.error_msg_unknown),
                 cause = exception
             )
         }
@@ -46,7 +49,7 @@ class ErrorClassifier(
 
             PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT -> {
                 PlayerError.NetworkError(
-                    message = "Network connection timed out",
+                    message = context.getString(R.string.error_msg_network_timeout),
                     cause = exception,
                     retryable = true,
                     networkErrorType = PlayerError.NetworkErrorType.CONNECTION_TIMEOUT
@@ -58,7 +61,7 @@ class ErrorClassifier(
 
                 if (isCorsError(httpException)) {
                     return PlayerError.SourceError(
-                        message = "CORS policy blocking access to media",
+                        message = context.getString(R.string.error_msg_cors),
                         sourceUrl = httpException?.dataSpec?.uri?.toString(),
                         cause = exception,
                         sourceErrorType = PlayerError.SourceErrorType.CORS_ERROR
@@ -66,7 +69,10 @@ class ErrorClassifier(
                 }
 
                 PlayerError.LiveStreamError(
-                    message = "HTTP error: ${httpException?.responseCode ?: "Unknown"}",
+                    message = context.getString(
+                        R.string.error_msg_http,
+                        httpException?.responseCode?.toString() ?: "Unknown"
+                    ),
                     httpCode = httpException?.responseCode,
                     cause = exception
                 )
@@ -74,7 +80,7 @@ class ErrorClassifier(
 
             PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND -> {
                 PlayerError.SourceError(
-                    message = "Media file not found",
+                    message = context.getString(R.string.error_msg_file_not_found),
                     cause = exception,
                     sourceErrorType = PlayerError.SourceErrorType.FILE_NOT_FOUND
                 )
@@ -82,7 +88,7 @@ class ErrorClassifier(
 
             PlaybackException.ERROR_CODE_DECODER_INIT_FAILED -> {
                 PlayerError.CodecError(
-                    message = "Decoder initialization failed (Error 4001). Device may not support this format.",
+                    message = context.getString(R.string.error_msg_decoder_init),
                     exoPlayerErrorCode = 4001,
                     cause = exception,
                     codecErrorType = PlayerError.CodecErrorType.DECODER_INIT_FAILED
@@ -91,7 +97,7 @@ class ErrorClassifier(
 
             PlaybackException.ERROR_CODE_DECODING_FAILED -> {
                 PlayerError.CodecError(
-                    message = "Failed to decode media",
+                    message = context.getString(R.string.error_msg_decoding_failed),
                     cause = exception,
                     codecErrorType = PlayerError.CodecErrorType.DECODING_FAILED
                 )
@@ -99,7 +105,7 @@ class ErrorClassifier(
 
             PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED -> {
                 PlayerError.CodecError(
-                    message = "Media codec not supported on this device",
+                    message = context.getString(R.string.error_msg_codec_unsupported),
                     cause = exception,
                     codecErrorType = PlayerError.CodecErrorType.FORMAT_UNSUPPORTED
                 )
@@ -107,7 +113,7 @@ class ErrorClassifier(
 
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED -> {
                 PlayerError.SourceError(
-                    message = "Media file is corrupted or malformed",
+                    message = context.getString(R.string.error_msg_file_corrupted),
                     cause = exception,
                     sourceErrorType = PlayerError.SourceErrorType.FILE_CORRUPTED
                 )
@@ -115,7 +121,7 @@ class ErrorClassifier(
 
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED -> {
                 PlayerError.SourceError(
-                    message = "Media container format not supported",
+                    message = context.getString(R.string.error_msg_container_unsupported),
                     cause = exception,
                     sourceErrorType = PlayerError.SourceErrorType.UNSUPPORTED_FORMAT
                 )
@@ -123,7 +129,7 @@ class ErrorClassifier(
 
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED -> {
                 PlayerError.SourceError(
-                    message = "Media manifest is malformed",
+                    message = context.getString(R.string.error_msg_manifest_malformed),
                     cause = exception,
                     sourceErrorType = PlayerError.SourceErrorType.MANIFEST_MALFORMED
                 )
@@ -132,7 +138,7 @@ class ErrorClassifier(
             PlaybackException.ERROR_CODE_DRM_SYSTEM_ERROR,
             PlaybackException.ERROR_CODE_DRM_LICENSE_ACQUISITION_FAILED -> {
                 PlayerError.DrmError(
-                    message = "DRM license acquisition failed",
+                    message = context.getString(R.string.error_msg_drm_license),
                     cause = exception,
                     drmErrorType = PlayerError.DrmErrorType.LICENSE_ACQUISITION_FAILED
                 )
@@ -140,7 +146,7 @@ class ErrorClassifier(
 
             PlaybackException.ERROR_CODE_DRM_PROVISIONING_FAILED -> {
                 PlayerError.DrmError(
-                    message = "DRM provisioning failed",
+                    message = context.getString(R.string.error_msg_drm_provisioning),
                     cause = exception,
                     drmErrorType = PlayerError.DrmErrorType.PROVISIONING_FAILED
                 )
@@ -148,7 +154,7 @@ class ErrorClassifier(
 
             PlaybackException.ERROR_CODE_DRM_DEVICE_REVOKED -> {
                 PlayerError.DrmError(
-                    message = "Device DRM certificate has been revoked",
+                    message = context.getString(R.string.error_msg_drm_device_revoked),
                     cause = exception,
                     drmErrorType = PlayerError.DrmErrorType.DEVICE_REVOKED
                 )
@@ -156,7 +162,7 @@ class ErrorClassifier(
 
             PlaybackException.ERROR_CODE_TIMEOUT -> {
                 PlayerError.TimeoutError(
-                    message = "Operation timed out",
+                    message = context.getString(R.string.error_msg_timeout),
                     cause = exception
                 )
             }
@@ -165,7 +171,7 @@ class ErrorClassifier(
                 exception.cause?.let { cause ->
                     return classifyError(cause)
                 } ?: PlayerError.UnknownError(
-                    message = exception.message ?: "Playback error",
+                    message = exception.message ?: context.getString(R.string.error_msg_playback),
                     cause = exception
                 )
             }
@@ -175,14 +181,14 @@ class ErrorClassifier(
     private fun classifyIOException(exception: IOException): PlayerError {
         return when (exception) {
             is UnknownHostException -> PlayerError.NetworkError(
-                message = "Cannot resolve server address (DNS error)",
+                message = context.getString(R.string.error_msg_dns),
                 cause = exception,
                 retryable = true,
                 networkErrorType = PlayerError.NetworkErrorType.DNS_RESOLUTION_FAILED
             )
 
             is SocketTimeoutException -> PlayerError.TimeoutError(
-                message = "Connection timed out",
+                message = context.getString(R.string.error_msg_connection_timeout),
                 cause = exception
             )
 
@@ -200,7 +206,7 @@ class ErrorClassifier(
                 }
 
                 PlayerError.NetworkError(
-                    message = exception.message ?: "Network error",
+                    message = exception.message ?: context.getString(R.string.error_msg_network_generic),
                     cause = exception,
                     retryable = true,
                     networkErrorType = errorType
@@ -212,12 +218,12 @@ class ErrorClassifier(
     private fun classifySSLException(exception: SSLException): PlayerError {
         val message = when {
             exception.message?.contains("certificate", ignoreCase = true) == true ->
-                "SSL certificate verification failed"
+                context.getString(R.string.error_msg_ssl_certificate)
 
             exception.message?.contains("handshake", ignoreCase = true) == true ->
-                "SSL handshake failed"
+                context.getString(R.string.error_msg_ssl_handshake)
 
-            else -> "SSL/TLS error: ${exception.message}"
+            else -> context.getString(R.string.error_msg_ssl_generic, exception.message ?: "")
         }
 
         return PlayerError.SSLError(
@@ -251,21 +257,21 @@ class ErrorClassifier(
     private fun getNetworkErrorMessage(type: PlayerError.NetworkErrorType): String {
         return when (type) {
             PlayerError.NetworkErrorType.DNS_RESOLUTION_FAILED ->
-                "Cannot resolve server address"
+                context.getString(R.string.error_msg_dns_failed)
 
             PlayerError.NetworkErrorType.CONNECTION_TIMEOUT ->
-                "Connection timed out"
+                context.getString(R.string.error_msg_connection_timeout)
 
             PlayerError.NetworkErrorType.CONNECTION_REFUSED ->
-                "Server refused connection"
+                context.getString(R.string.error_msg_connection_refused)
 
             PlayerError.NetworkErrorType.CONNECTION_RESET ->
-                "Connection was reset"
+                context.getString(R.string.error_msg_connection_reset)
 
             PlayerError.NetworkErrorType.NO_INTERNET ->
-                "No internet connection available"
+                context.getString(R.string.error_msg_no_internet)
 
-            else -> "Network connection failed"
+            else -> context.getString(R.string.error_msg_network_failed)
         }
     }
 
@@ -289,13 +295,13 @@ class ErrorClassifier(
             exception.message?.let { msg ->
                 when {
                     msg.contains("Unable to find valid certification path") ->
-                        "Untrusted certificate"
+                        context.getString(R.string.cert_info_untrusted)
 
                     msg.contains("Certificate expired") ->
-                        "Expired certificate"
+                        context.getString(R.string.cert_info_expired)
 
                     msg.contains("Hostname") ->
-                        "Hostname mismatch"
+                        context.getString(R.string.cert_info_hostname_mismatch)
 
                     else -> null
                 }

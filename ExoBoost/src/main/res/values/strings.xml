@@ -15,13 +15,65 @@
     <string name="error_init_player">Error initializing player: </string>
     <string name="error_security_certificate_with_message">Security certificate error: </string>
     <string name="error_ssl_certificate_with_message">SSL certificate error: </string>
-    <string name="help_ssl_invalid">The site security certificate may be invalid</string>
 
+    <string name="help_ssl_invalid">The site security certificate may be invalid</string>
     <string name="help_drm">This content is protected and cannot be played</string>
     <string name="help_check_network">Please check your internet connection and try again</string>
     <string name="help_invalid_certificate">The site security certificate may be invalid</string>
     <string name="help_access_forbidden">Access to this content is not allowed</string>
     <string name="help_not_found">Requested content not found</string>
+
+    <string name="help_dns_resolution">Check your DNS settings or try using a different network</string>
+    <string name="help_connection_refused">Server is not accepting connections. Try again later</string>
+
+    <string name="help_decoder_not_available">Your device doesn\'t support this video format. Try a different quality or format</string>
+    <string name="help_format_unsupported">This video format is not supported on your device</string>
+    <string name="help_decoding_generic">Try updating your device or using a different video format</string>
+
+    <string name="help_file_corrupted">The video file appears to be corrupted</string>
+    <string name="help_cors_error">Server blocked access due to security policy (CORS)</string>
+
+    <string name="help_drm_license_failed">Failed to acquire DRM license. Check your subscription or authentication.</string>
+    <string name="help_drm_provisioning">DRM provisioning failed. Your device may not support this content protection.</string>
+    <string name="help_drm_device_revoked">Your device\'s DRM certificate has been revoked and cannot play protected content.</string>
+    <string name="help_drm_license_expired">DRM license has expired. Please renew your subscription or re-authenticate.</string>
+
+    <string name="help_timeout">Server is taking too long to respond. Please try again</string>
+
+    <string name="help_server_unavailable">Server is temporarily unavailable</string>
+
+    <string name="error_msg_network_timeout">Network connection timed out</string>
+    <string name="error_msg_http">HTTP error: %s</string>
+    <string name="error_msg_cors">CORS policy blocking access to media</string>
+    <string name="error_msg_file_not_found">Media file not found</string>
+    <string name="error_msg_decoder_init">Decoder initialization failed (Error 4001). Device may not support this format.</string>
+    <string name="error_msg_decoding_failed">Failed to decode media</string>
+    <string name="error_msg_codec_unsupported">Media codec not supported on this device</string>
+    <string name="error_msg_file_corrupted">Media file is corrupted or malformed</string>
+    <string name="error_msg_container_unsupported">Media container format not supported</string>
+    <string name="error_msg_manifest_malformed">Media manifest is malformed</string>
+    <string name="error_msg_drm_license">DRM license acquisition failed</string>
+    <string name="error_msg_drm_provisioning">DRM provisioning failed</string>
+    <string name="error_msg_drm_device_revoked">Device DRM certificate has been revoked</string>
+    <string name="error_msg_timeout">Operation timed out</string>
+    <string name="error_msg_playback">Playback error</string>
+    <string name="error_msg_dns">Cannot resolve server address (DNS error)</string>
+    <string name="error_msg_connection_timeout">Connection timed out</string>
+    <string name="error_msg_ssl_certificate">SSL certificate verification failed</string>
+    <string name="error_msg_ssl_handshake">SSL handshake failed</string>
+    <string name="error_msg_ssl_generic">SSL/TLS error: %s</string>
+    <string name="error_msg_network_generic">Network error</string>
+    <string name="error_msg_unknown">Unknown error occurred</string>
+
+    <string name="error_msg_dns_failed">Cannot resolve server address</string>
+    <string name="error_msg_connection_refused">Server refused connection</string>
+    <string name="error_msg_connection_reset">Connection was reset</string>
+    <string name="error_msg_no_internet">No internet connection available</string>
+    <string name="error_msg_network_failed">Network connection failed</string>
+
+    <string name="cert_info_untrusted">Untrusted certificate</string>
+    <string name="cert_info_expired">Expired certificate</string>
+    <string name="cert_info_hostname_mismatch">Hostname mismatch</string>
 
     <string name="action_retry">Retry</string>
     <string name="action_back">Back</string>

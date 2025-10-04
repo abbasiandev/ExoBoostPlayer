@@ -1,15 +1,14 @@
 package dev.abbasian.exoboost.presentation.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
 import dev.abbasian.exoboost.domain.error.ErrorClassifier
 import dev.abbasian.exoboost.domain.model.MediaInfo
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
+import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.PlayerError
 import dev.abbasian.exoboost.domain.model.VideoQuality
-import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.usecase.CacheVideoUseCase
 import dev.abbasian.exoboost.domain.usecase.PlayMediaUseCase
 import dev.abbasian.exoboost.domain.usecase.RetryMediaUseCase
@@ -17,7 +16,9 @@ import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -266,7 +267,7 @@ class MediaPlayerViewModel(
             currentJob?.cancel()
             playMediaUseCase.release()
         } catch (e: Exception) {
-            Log.e("MediaPlayerViewModel", "Error releasing resources", e)
+            logger.error(TAG, "Error releasing resources", e)
         }
     }
 }

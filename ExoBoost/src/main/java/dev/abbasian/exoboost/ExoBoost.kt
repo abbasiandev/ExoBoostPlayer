@@ -16,13 +16,14 @@ import org.koin.dsl.module
 
 object ExoBoost {
 
+    private const val TAG = "ExoBoost"
     private var isInitialized = false
     private var customLogger: ExoBoostLogger? = null
 
     @OptIn(UnstableApi::class)
     fun initialize(context: Context) {
         if (isInitialized) {
-            android.util.Log.w("ExoBoost", "Already initialized")
+            customLogger?.warning(TAG, "Already initialized")
             return
         }
 
@@ -52,6 +53,6 @@ object ExoBoost {
         single<ExoBoostLogger> {
             customLogger ?: DefaultLogger()
         }
-        single { ErrorClassifier(logger = get()) }
+        single { ErrorClassifier(context = androidContext(), logger = get()) }
     }
 }
