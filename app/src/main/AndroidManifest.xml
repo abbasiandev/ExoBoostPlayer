@@ -19,6 +19,7 @@
         android:theme="@style/Theme.ExoBoostPlayer">
         <activity
             android:name=".presentation.MainActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.ExoBoostPlayer">
