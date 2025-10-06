@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.maven.publish)
 }
 
 android {
@@ -85,4 +86,41 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+mavenPublishing {
+    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
+    signAllPublications()
+
+    coordinates("dev.abbasian", "exoboost", "1.0.0")
+
+    pom {
+        name.set("ExoBoost")
+        description.set("Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, and adaptive quality switching for robust media playback")
+        inceptionYear.set("2025")
+        url.set("https://github.com/abbasiandev/exoboost")
+
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("abbasiandev")
+                name.set("Abbasian Dev")
+                email.set("info@abbasian.dev")
+                url.set("https://abbasian.dev/")
+            }
+        }
+
+        scm {
+            url.set("https://github.com/abbasiandev/exoboost")
+            connection.set("scm:git:git://github.com/abbasiandev/exoboost.git")
+            developerConnection.set("scm:git:ssh://git@github.com/abbasiandev/exoboost.git")
+        }
+    }
 }
