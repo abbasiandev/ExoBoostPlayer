@@ -201,17 +201,6 @@ MediaPlayerConfig(
     )
 )
 ```
-
-### Audio Visualization Color Schemes
-
-```kotlin
-VisualizationColorScheme.DYNAMIC    // Colors change with audio
-VisualizationColorScheme.BLUE       // Blue theme
-VisualizationColorScheme.GREEN      // Green theme  
-VisualizationColorScheme.RED        // Red theme
-VisualizationColorScheme.PURPLE     // Purple theme
-```
-
 ---
 
 ## Key Components
