@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.ExoBoost" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/exo_default_primary_dark</item>
-        <item name="colorOnPrimary">@color/exo_default_on_primary_dark</item>
-        <item name="colorSecondary">@color/exo_default_secondary_dark</item>
-        <item name="colorOnSecondary">@color/exo_default_on_secondary_dark</item>
-        <item name="colorSurface">@color/exo_default_surface_dark</item>
-        <item name="colorOnSurface">@color/exo_default_on_surface_dark</item>
+        <item name="colorPrimary">@color/exo_default_primary</item>
+        <item name="colorOnPrimary">@color/exo_default_on_primary</item>
+        <item name="colorSecondary">@color/exo_default_secondary</item>
+        <item name="colorOnSecondary">@color/exo_default_on_secondary</item>
+        <item name="colorSurface">@color/exo_default_surface</item>
+        <item name="colorOnSurface">@color/exo_default_on_surface</item>
     </style>
 </resources>
