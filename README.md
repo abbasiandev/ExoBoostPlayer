@@ -3,6 +3,7 @@
 Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, and adaptive quality switching for robust media playback.
 
 [![Maven Central](https://img.shields.io/maven-central/v/dev.abbasian/exoboost?color=blue)](https://search.maven.org/search?q=g:dev.abbasian%20AND%20a:exoboost)
+[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Ready-brightgreen)](https://developer.android.com/jetpack/compose)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 [![API Level](https://img.shields.io/badge/API-24%2B-brightgreen.svg)](https://developer.android.com/guide/topics/manifest/uses-sdk-element#ApiLevels)
 
@@ -28,7 +29,7 @@ Add ExoBoost to your `build.gradle` (Module: app):
 
 ```gradle
 dependencies {
-    implementation "dev.abbasian:exoboost:1.0.0"
+    implementation("dev.abbasian:exoboost:1.0.1")
 }
 ```
 
@@ -41,6 +42,22 @@ class MyApplication : Application() {
         ExoBoost.initialize(this)
     }
 }
+```
+
+Manifest for Landscape Support and Permissions
+
+Add to AndroidManifest.xml:
+
+```xml
+<activity
+    android:name=".presentation.MainActivity"
+    android:configChanges="orientation|screenSize"
+    android:exported="true"
+    android:theme="@style/Theme.ExoBoostPlayer" />
+
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" /> <!-- For audio visualization -->
 ```
 
 ---
@@ -176,12 +193,6 @@ MediaPlayerConfig(
     
     // Playback speeds
     playbackSpeedOptions = listOf(0.5f, 1.0f, 1.25f, 1.5f, 2.0f),
-    
-    // Glassy UI effects
-    glassyUI = MediaPlayerConfig.GlassyUIConfig(
-        blurRadius = 30f,
-        borderOpacity = 0.4f
-    ),
     
     // Audio visualization
     audioVisualization = MediaPlayerConfig.AudioVisualizationConfig(
