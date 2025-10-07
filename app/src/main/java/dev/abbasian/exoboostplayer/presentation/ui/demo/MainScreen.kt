@@ -26,9 +26,14 @@ fun MainScreen() {
         when (demo) {
             is Demo.VideoBasic -> BasicVideoPlayerDemo(demo.url) { currentDemo = null }
             is Demo.VideoAdvanced -> AdvancedVideoPlayerDemo(demo.url) { currentDemo = null }
-            is Demo.VideoErrorRecovery -> ErrorRecoveryDemo(demo.url) { currentDemo = null }
+            is Demo.VideoErrorRecovery -> NetworkRecoveryDemo(demo.url) { currentDemo = null }
             is Demo.VideoQualityControl -> QualityControlDemo(demo.url) { currentDemo = null }
-            is Demo.AudioVisualization -> AudioVisualizationDemo(
+            is Demo.ErrorComparison -> ErrorComparisonDemo(demo.url) { currentDemo = null }
+            is Demo.BufferVisualization -> BufferVisualizationDemo(demo.url) { currentDemo = null }
+            is Demo.CacheDemo -> BasicVideoPlayerDemo(demo.url) { currentDemo = null }
+            is Demo.NetworkSimulation -> NetworkSimulationDemo(demo.url) { currentDemo = null }
+
+            is Demo.AudioVisualization -> AdvancedAudioVisualizationDemo(
                 demo.url,
                 demo.title,
                 demo.artist
