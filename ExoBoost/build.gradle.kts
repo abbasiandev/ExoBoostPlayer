@@ -94,7 +94,7 @@ mavenPublishing {
     publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
 
-    coordinates("dev.abbasian", "exoboost", "1.0.1-alpha01")
+    coordinates("dev.abbasian", "exoboost", "1.0.1-alpha02")
 
     pom {
         name.set("ExoBoost")
@@ -133,4 +133,11 @@ tasks.withType<DokkaTask>().configureEach {
             includes.from(file("README.md"))
         }
     }
+}
+
+val dokkaHtml by tasks.getting(DokkaTask::class)
+val javadocJar by tasks.registering(Jar::class) {
+    dependsOn(dokkaHtml)
+    archiveClassifier.set("javadoc")
+    from(dokkaHtml.outputDirectory)
 }
