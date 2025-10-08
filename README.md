@@ -228,17 +228,6 @@ ExoBoost automatically handles common media playback errors:
 
 All errors are handled internally with user-friendly fallbacks and recovery mechanisms.
 
----
-
-## Requirements
-
-- **Android API Level**: 24+ (Android 7.0)
-- **Kotlin**: 1.8.0+
-- **Jetpack Compose**: BOM 2024.02.00+
-- **Media3**: 1.3.0+
-
----
-
 ## Support
 
 - **GitHub**: [ExoBoostPlayer Repository](https://github.com/abbasiandev/ExoBoostPlayer)
