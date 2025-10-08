@@ -7,7 +7,7 @@ Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, 
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 [![API Level](https://img.shields.io/badge/API-24%2B-brightgreen.svg)](https://developer.android.com/guide/topics/manifest/uses-sdk-element#ApiLevels)
 
----
+![Banner](https://miro.medium.com/v2/resize:fit:720/format:webp/1*leuKdAStRv2ds58NUcz-5A.png)
 
 ## Features
 
@@ -21,15 +21,13 @@ Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, 
 - **Speed Control**: Multiple playback speed options
 - **Quality Selection**: Manual and automatic quality switching
 
----
-
 ## Installation
 
-Add ExoBoost to your `build.gradle` (Module: app):
+Add ExoBoost to your `build.gradle.kts`:
 
 ```gradle
 dependencies {
-    implementation("dev.abbasian:exoboost:1.0.1-alpha01")
+    implementation("dev.abbasian:exoboost:1.0.1-alpha05")
 }
 ```
 
@@ -60,8 +58,6 @@ Add to AndroidManifest.xml:
 <uses-permission android:name="android.permission.RECORD_AUDIO" /> <!-- For audio visualization -->
 ```
 
----
-
 ## Quick Start
 
 ### Basic Video Player
@@ -78,7 +74,7 @@ fun BasicVideoPlayer() {
             autoPlay = true,
             showControls = true
         ),
-        onBack = { /* Handle back navigation */ },
+        onBack = { /* back navigation */ },
         modifier = Modifier.fillMaxSize()
     )
 }
@@ -105,7 +101,7 @@ fun AdvancedVideoPlayer() {
                 borderOpacity = 0.4f
             )
         ),
-        onBack = { /* Handle back navigation */ },
+        onBack = { /* back navigation */ },
         modifier = Modifier.fillMaxSize()
     )
 }
@@ -130,13 +126,13 @@ fun AudioPlayerWithEqualizer() {
                 colorScheme = VisualizationColorScheme.DYNAMIC
             )
         ),
-        onBack = { /* Handle back navigation */ },
+        onBack = { /* back navigation */ },
         modifier = Modifier.fillMaxSize()
     )
 }
 ```
 
-### Audio Playlist Example
+### Audio Playlist
 
 ```kotlin
 @Composable
@@ -166,15 +162,13 @@ fun PlaylistPlayer() {
         ),
         onNext = { if (currentIndex < playlist.size - 1) currentIndex++ },
         onPrevious = { if (currentIndex > 0) currentIndex-- },
-        onBack = { /* Handle back navigation */ },
+        onBack = { /* back navigation */ },
         modifier = Modifier.fillMaxSize()
     )
 }
 
 data class Track(val url: String, val title: String, val artist: String)
 ```
-
----
 
 ## Configuration Options
 
@@ -201,7 +195,6 @@ MediaPlayerConfig(
     )
 )
 ```
----
 
 ## Key Components
 
@@ -232,9 +225,5 @@ All errors are handled internally with user-friendly fallbacks and recovery mech
 
 - **GitHub**: [ExoBoostPlayer Repository](https://github.com/abbasiandev/ExoBoostPlayer)
 - **Issues**: [Report Issues](https://github.com/abbasiandev/ExoBoostPlayer/issues)
-- **Email**: info@abbasian.dev
-- **Website**: https://abbasian.dev
-
----
-
-*Built with ❤️ for the Android community*
+- **Email**: [info@abbasian.dev](mailto:info@abbasian.dev)
+- **Portfolio**: https://abbasian.dev
