@@ -7,7 +7,9 @@ Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, 
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 [![API Level](https://img.shields.io/badge/API-24%2B-brightgreen.svg)](https://developer.android.com/guide/topics/manifest/uses-sdk-element#ApiLevels)
 
-![Banner](https://miro.medium.com/v2/resize:fit:720/format:webp/1*leuKdAStRv2ds58NUcz-5A.png)
+<p align="center">
+  <img src="https://miro.medium.com/v2/resize:fit:720/format:webp/1*leuKdAStRv2ds58NUcz-5A.png" alt="Banner">
+</p>
 
 ## Features
 
