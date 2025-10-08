@@ -5,6 +5,9 @@ on:
     types: [created]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -31,7 +34,10 @@ jobs:
         run: ./gradlew clean --no-daemon
 
       - name: Build AAR
-        run: ./gradlew :exoboost:assembleRelease --no-daemon
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Find AAR file
+        run: find . -name "*.aar" -type f
 
       - name: Publish to Maven Central
         run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache --no-daemon --stacktrace
@@ -43,9 +49,8 @@ jobs:
 
       - name: Upload AAR to Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            ./exoboost/build/outputs/aar/exoboost-release.aar
+            **/build/outputs/aar/*.aar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
