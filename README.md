@@ -29,7 +29,7 @@ Add ExoBoost to your `build.gradle` (Module: app):
 
 ```gradle
 dependencies {
-    implementation("dev.abbasian:exoboost:1.0.1")
+    implementation("dev.abbasian:exoboost:1.0.1-alpha01")
 }
 ```
 
