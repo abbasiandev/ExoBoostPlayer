@@ -1,11 +1,37 @@
+# Gradle files
+.gradle/
+build/
+gradle.properties
+local.properties
+
+# Android Studio
 *.iml
-.gradle
-/local.properties
 .idea/
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
 captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing keys
+*.gpg
+*.asc
+*.jks
+*.keystore
+
+# Logs
+*.log
+
+# Built application files
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+release/
