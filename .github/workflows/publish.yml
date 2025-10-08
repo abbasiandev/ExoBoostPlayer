@@ -36,8 +36,12 @@ jobs:
       - name: Build AAR
         run: ./gradlew assembleRelease --no-daemon
 
-      - name: Find AAR file
-        run: find . -name "*.aar" -type f
+      - name: Find and list AAR files
+        run: |
+          echo "Looking for AAR files..."
+          find . -name "*.aar" -type f
+          echo "Listing build outputs..."
+          ls -la */build/outputs/aar/ || echo "No aar directory found"
 
       - name: Publish to Maven Central
         run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache --no-daemon --stacktrace
@@ -47,10 +51,32 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
 
-      - name: Upload AAR to Release
-        uses: softprops/action-gh-release@v1
+      - name: Upload AAR as Artifact
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
         with:
-          files: |
-            **/build/outputs/aar/*.aar
+          name: exoboost-aar
+          path: '**/build/outputs/aar/*.aar'
+
+      - name: Upload AAR to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          echo "Finding AAR file..."
+          AAR_FILE=$(find . -name "*-release.aar" -type f | head -n 1)
+          if [ -z "$AAR_FILE" ]; then
+            echo "Error: No AAR file found"
+            exit 1
+          fi
+          echo "Found AAR: $AAR_FILE"
+          
+          # Get version from tag (e.g., 1.0.1-alpha03 from refs/tags/1.0.1-alpha03)
+          VERSION="${{ github.ref_name }}"
+          
+          # Rename AAR to exoboost-{version}.aar
+          NEW_NAME="exoboost-${VERSION}.aar"
+          cp "$AAR_FILE" "$NEW_NAME"
+          
+          echo "Uploading $NEW_NAME to release $VERSION"
+          gh release upload "$VERSION" "$NEW_NAME" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
