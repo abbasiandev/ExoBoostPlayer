@@ -1,7 +1,6 @@
 # Gradle files
 .gradle/
 build/
-gradle.properties
 local.properties
 
 # Android Studio
