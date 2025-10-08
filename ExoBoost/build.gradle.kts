@@ -1,3 +1,5 @@
+import org.jetbrains.dokka.gradle.DokkaTask
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -46,13 +48,6 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-        }
-    }
-
 }
 
 dependencies {
@@ -128,6 +123,14 @@ mavenPublishing {
             url.set("https://github.com/abbasiandev/exoboost")
             connection.set("scm:git:git://github.com/abbasiandev/exoboost.git")
             developerConnection.set("scm:git:ssh://git@github.com/abbasiandev/exoboost.git")
+        }
+    }
+}
+
+tasks.withType<DokkaTask>().configureEach {
+    dokkaSourceSets {
+        configureEach {
+            includes.from(file("README.md"))
         }
     }
 }
