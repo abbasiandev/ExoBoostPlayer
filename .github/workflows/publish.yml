@@ -30,6 +30,9 @@ jobs:
       - name: Clean build cache
         run: ./gradlew clean --no-daemon
 
+      - name: Build AAR
+        run: ./gradlew :exoboost:assembleRelease --no-daemon
+
       - name: Publish to Maven Central
         run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache --no-daemon --stacktrace
         env:
@@ -37,3 +40,12 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+
+      - name: Upload AAR to Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            ./exoboost/build/outputs/aar/exoboost-release.aar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
