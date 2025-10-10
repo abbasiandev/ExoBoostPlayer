@@ -27,7 +27,7 @@ Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, 
 
 ```toml
 exoboost = "1.0.1-alpha05"
-koin = "3.5.0" // same as library version needed
+koin = "3.5.0" # same as library version needed
 
 [libraries]
 exoboost = { group = "dev.abbasian", name = "exoboost", version.ref = "exoboost" }
