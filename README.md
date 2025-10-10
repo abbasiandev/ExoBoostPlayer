@@ -25,11 +25,29 @@ Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, 
 
 ## Installation
 
+```toml
+exoboost = "1.0.1-alpha05"
+koin = "3.5.0" // same as library version needed
+
+[libraries]
+exoboost = { group = "dev.abbasian", name = "exoboost", version.ref = "exoboost" }
+
+# Koin Dependencies
+koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
+koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
+koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
+```
+
 Add ExoBoost to your `build.gradle.kts`:
 
 ```gradle
 dependencies {
-    implementation("dev.abbasian:exoboost:1.0.1-alpha05")
+    implementation(libs.exoboost)
+
+     // Koin Dependencies
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
 }
 ```
 
@@ -49,6 +67,8 @@ Manifest for Landscape Support and Permissions
 Add to AndroidManifest.xml:
 
 ```xml
+<application
+    android:name=".MyApplication"
 <activity
     android:name=".presentation.MainActivity"
     android:configChanges="orientation|screenSize"
