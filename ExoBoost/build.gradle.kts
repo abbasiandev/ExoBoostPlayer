@@ -96,10 +96,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.gson)
 
-    implementation(libs.tensorflow.lite)
-    implementation(libs.tensorflow.lite.support)
-    implementation(libs.tensorflow.lite.gpu)
-
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)

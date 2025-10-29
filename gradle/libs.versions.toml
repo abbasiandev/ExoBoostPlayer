@@ -20,6 +20,7 @@ gson = "2.10.1"
 tensorFlow = "2.14.0"
 tensorflowSupport = "0.4.4"
 koin = "3.5.0"
+androidx-collection = "1.4.4"
 ktlint = "12.1.1"
 detekt = "1.23.7"
 
@@ -60,6 +61,8 @@ tensorflow-lite-gpu = { group = "org.tensorflow", name = "tensorflow-lite-gpu", 
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
+androidx-collection = { group = "androidx.collection", name = "collection", version.ref = "androidx-collection" }
+androidx-collection-ktx = { group = "androidx.collection", name = "collection-ktx", version.ref = "androidx-collection" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

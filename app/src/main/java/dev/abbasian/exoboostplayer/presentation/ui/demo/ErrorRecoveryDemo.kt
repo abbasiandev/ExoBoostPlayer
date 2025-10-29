@@ -46,7 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
-import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostPlayer
+import dev.abbasian.exoboost.presentation.ui.screen.exoBoostPlayer
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import dev.abbasian.exoboostplayer.presentation.RetryAttempt
 import kotlinx.coroutines.delay
@@ -54,7 +54,10 @@ import org.koin.androidx.compose.koinViewModel
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
-fun ErrorRecoveryDemo(url: String, onBack: () -> Unit) {
+fun ErrorRecoveryDemo(
+    url: String,
+    onBack: () -> Unit,
+) {
     val viewModel: MediaPlayerViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
 
@@ -67,22 +70,24 @@ fun ErrorRecoveryDemo(url: String, onBack: () -> Unit) {
             is MediaState.Error -> {
                 currentAttempt++
                 val backoffDelay = (1000L * (1 shl (currentAttempt - 1))).coerceAtMost(10000L)
-                retryAttempts = retryAttempts + RetryAttempt(
-                    attemptNumber = currentAttempt,
-                    timestamp = System.currentTimeMillis(),
-                    delayMs = backoffDelay,
-                    success = false
-                )
+                retryAttempts = retryAttempts +
+                    RetryAttempt(
+                        attemptNumber = currentAttempt,
+                        timestamp = System.currentTimeMillis(),
+                        delayMs = backoffDelay,
+                        success = false,
+                    )
             }
 
             is MediaState.Ready, is MediaState.Playing -> {
                 if (currentAttempt > 0) {
-                    retryAttempts = retryAttempts.dropLast(1) + RetryAttempt(
-                        attemptNumber = currentAttempt,
-                        timestamp = System.currentTimeMillis(),
-                        delayMs = 0,
-                        success = true
-                    )
+                    retryAttempts = retryAttempts.dropLast(1) +
+                        RetryAttempt(
+                            attemptNumber = currentAttempt,
+                            timestamp = System.currentTimeMillis(),
+                            delayMs = 0,
+                            success = true,
+                        )
                     delay(2.seconds)
                     currentAttempt = 0
                 }
@@ -93,41 +98,44 @@ fun ErrorRecoveryDemo(url: String, onBack: () -> Unit) {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        ExoBoostPlayer(
+        exoBoostPlayer(
             videoUrl = url,
-            mediaConfig = MediaPlayerConfig(
-                autoPlay = true,
-                showControls = true,
-                retryOnError = true,
-                maxRetryCount = 5,
-                bufferDurations = MediaPlayerConfig.BufferDurations(
-                    minBufferMs = 20000,
-                    maxBufferMs = 60000,
-                    bufferForPlaybackMs = 3000,
-                    bufferForPlaybackAfterRebufferMs = 6000
-                )
-            ),
+            mediaConfig =
+                MediaPlayerConfig(
+                    autoPlay = true,
+                    showControls = true,
+                    retryOnError = true,
+                    maxRetryCount = 5,
+                    bufferDurations =
+                        MediaPlayerConfig.BufferDurations(
+                            minBufferMs = 20000,
+                            maxBufferMs = 60000,
+                            bufferForPlaybackMs = 3000,
+                            bufferForPlaybackAfterRebufferMs = 6000,
+                        ),
+                ),
             onBack = onBack,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         )
 
         if (showMetrics) {
             RetryVisualizationOverlay(
                 retryAttempts = retryAttempts,
                 currentState = uiState.mediaState,
-                onDismiss = { showMetrics = false }
+                onDismiss = { showMetrics = false },
             )
         }
 
         FloatingActionButton(
             onClick = { showMetrics = !showMetrics },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
         ) {
             Icon(
                 if (showMetrics) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                contentDescription = "Toggle metrics"
+                contentDescription = "Toggle metrics",
             )
         }
     }
@@ -137,30 +145,32 @@ fun ErrorRecoveryDemo(url: String, onBack: () -> Unit) {
 private fun RetryVisualizationOverlay(
     retryAttempts: List<RetryAttempt>,
     currentState: MediaState,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Black.copy(alpha = 0.9f)
-        ),
-        shape = RoundedCornerShape(16.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = Color.Black.copy(alpha = 0.9f),
+            ),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "Recovery Timeline",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 IconButton(onClick = onDismiss) {
                     Icon(Icons.Filled.Close, "Close", tint = Color.White)
@@ -179,7 +189,7 @@ private fun RetryVisualizationOverlay(
                 Text(
                     text = "Retry Attempts (${retryAttempts.size})",
                     style = MaterialTheme.typography.labelLarge,
-                    color = Color.White.copy(alpha = 0.7f)
+                    color = Color.White.copy(alpha = 0.7f),
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -195,7 +205,7 @@ private fun RetryVisualizationOverlay(
                 Text(
                     text = "No retry attempts yet",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.5f)
+                    color = Color.White.copy(alpha = 0.5f),
                 )
             }
         }
@@ -204,42 +214,46 @@ private fun RetryVisualizationOverlay(
 
 @Composable
 private fun StateIndicator(state: MediaState) {
-    val (icon, color, text) = when (state) {
-        is MediaState.Loading -> Triple(Icons.Filled.CloudSync, Color(0xFFFF9800), "Connecting...")
-        is MediaState.Ready, is MediaState.Playing -> Triple(
-            Icons.Filled.CheckCircle,
-            Color(0xFF4CAF50),
-            "Connected"
-        )
+    val (icon, color, text) =
+        when (state) {
+            is MediaState.Loading -> Triple(Icons.Filled.CloudSync, Color(0xFFFF9800), "Connecting...")
+            is MediaState.Ready, is MediaState.Playing ->
+                Triple(
+                    Icons.Filled.CheckCircle,
+                    Color(0xFF4CAF50),
+                    "Connected",
+                )
 
-        is MediaState.Error -> Triple(
-            Icons.Filled.Error,
-            Color(0xFFF44336),
-            "Error: ${state.error.message.take(50)}"
-        )
+            is MediaState.Error ->
+                Triple(
+                    Icons.Filled.Error,
+                    Color(0xFFF44336),
+                    "Error: ${state.error.message.take(50)}",
+                )
 
-        is MediaState.Ended -> Triple(Icons.Filled.Stop, Color.Gray, "Ended")
-        else -> Triple(Icons.Filled.Info, Color.Gray, "Idle")
-    }
+            is MediaState.Ended -> Triple(Icons.Filled.Stop, Color.Gray, "Ended")
+            else -> Triple(Icons.Filled.Info, Color.Gray, "Idle")
+        }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(color.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(color.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = color,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(24.dp),
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White
+            color = Color.White,
         )
     }
 }
@@ -249,27 +263,27 @@ private fun RetryAttemptItem(attempt: RetryAttempt) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = if (attempt.success) Icons.Filled.CheckCircle else Icons.Filled.Refresh,
                 contentDescription = null,
                 tint = if (attempt.success) Color(0xFF4CAF50) else Color(0xFFFF9800),
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Attempt #${attempt.attemptNumber}",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White
+                color = Color.White,
             )
         }
         if (!attempt.success && attempt.delayMs > 0) {
             Text(
                 text = "Backoff: ${attempt.delayMs}ms",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.6f)
+                color = Color.White.copy(alpha = 0.6f),
             )
         }
     }
@@ -283,14 +297,15 @@ private fun BackoffVisualization(failedAttempts: List<RetryAttempt>) {
         Text(
             text = "Exponential Backoff Pattern",
             style = MaterialTheme.typography.labelMedium,
-            color = Color.White.copy(alpha = 0.7f)
+            color = Color.White.copy(alpha = 0.7f),
         )
         Spacer(modifier = Modifier.height(8.dp))
 
         Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(100.dp),
         ) {
             val maxDelay = failedAttempts.maxOfOrNull { it.delayMs } ?: 1L
             val width = size.width
@@ -302,7 +317,9 @@ private fun BackoffVisualization(failedAttempts: List<RetryAttempt>) {
                 drawRect(
                     color = Color(0xFFFF9800),
                     topLeft = Offset(index * barWidth + 4, height - barHeight),
-                    size = androidx.compose.ui.geometry.Size(barWidth - 8, barHeight)
+                    size =
+                        androidx.compose.ui.geometry
+                            .Size(barWidth - 8, barHeight),
                 )
             }
         }

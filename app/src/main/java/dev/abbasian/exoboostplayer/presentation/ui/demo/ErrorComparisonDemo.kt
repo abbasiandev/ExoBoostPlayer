@@ -43,7 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
-import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostPlayer
+import dev.abbasian.exoboost.presentation.ui.screen.exoBoostPlayer
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import dev.abbasian.exoboostplayer.presentation.PlayerMetrics
 import kotlinx.coroutines.delay
@@ -51,7 +51,10 @@ import org.koin.androidx.compose.koinViewModel
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
-fun ErrorComparisonDemo(url: String, onBack: () -> Unit) {
+fun ErrorComparisonDemo(
+    url: String,
+    onBack: () -> Unit,
+) {
     var showComparison by remember { mutableStateOf(true) }
     val viewModel: MediaPlayerViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
@@ -65,23 +68,27 @@ fun ErrorComparisonDemo(url: String, onBack: () -> Unit) {
             is MediaState.Error -> {
                 if (errorStartTime == null) {
                     errorStartTime = System.currentTimeMillis()
-                    exoBoostMetrics = exoBoostMetrics.copy(
-                        errorCount = exoBoostMetrics.errorCount + 1
-                    )
+                    exoBoostMetrics =
+                        exoBoostMetrics.copy(
+                            errorCount = exoBoostMetrics.errorCount + 1,
+                        )
                 }
             }
+
             is MediaState.Ready, is MediaState.Playing -> {
                 errorStartTime?.let { startTime ->
                     val recoveryTime = System.currentTimeMillis() - startTime
                     val newRecoveryCount = exoBoostMetrics.recoveryCount + 1
-                    exoBoostMetrics = exoBoostMetrics.copy(
-                        recoveryCount = newRecoveryCount,
-                        totalDowntime = exoBoostMetrics.totalDowntime + recoveryTime,
-                        averageRecoveryTime = (exoBoostMetrics.totalDowntime + recoveryTime) / newRecoveryCount
-                    )
+                    exoBoostMetrics =
+                        exoBoostMetrics.copy(
+                            recoveryCount = newRecoveryCount,
+                            totalDowntime = exoBoostMetrics.totalDowntime + recoveryTime,
+                            averageRecoveryTime = (exoBoostMetrics.totalDowntime + recoveryTime) / newRecoveryCount,
+                        )
                     errorStartTime = null
                 }
             }
+
             else -> {}
         }
     }
@@ -89,25 +96,27 @@ fun ErrorComparisonDemo(url: String, onBack: () -> Unit) {
     LaunchedEffect(uiState.mediaState) {
         if (uiState.mediaState is MediaState.Error) {
             delay(5.seconds)
-            vanillaMetrics = vanillaMetrics.copy(
-                errorCount = vanillaMetrics.errorCount + 1,
-                failureCount = vanillaMetrics.failureCount + 1
-            )
+            vanillaMetrics =
+                vanillaMetrics.copy(
+                    errorCount = vanillaMetrics.errorCount + 1,
+                    failureCount = vanillaMetrics.failureCount + 1,
+                )
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        ExoBoostPlayer(
+        exoBoostPlayer(
             videoUrl = url,
-            mediaConfig = MediaPlayerConfig(
-                autoPlay = true,
-                showControls = true,
-                retryOnError = true,
-                maxRetryCount = 5,
-                autoQualityOnError = true
-            ),
+            mediaConfig =
+                MediaPlayerConfig(
+                    autoPlay = true,
+                    showControls = true,
+                    retryOnError = true,
+                    maxRetryCount = 5,
+                    autoQualityOnError = true,
+                ),
             onBack = onBack,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         )
 
         if (showComparison) {
@@ -115,19 +124,20 @@ fun ErrorComparisonDemo(url: String, onBack: () -> Unit) {
                 exoBoostMetrics = exoBoostMetrics,
                 vanillaMetrics = vanillaMetrics,
                 currentState = uiState.mediaState,
-                onDismiss = { showComparison = false }
+                onDismiss = { showComparison = false },
             )
         }
 
         FloatingActionButton(
             onClick = { showComparison = !showComparison },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
         ) {
             Icon(
                 if (showComparison) Icons.Filled.VisibilityOff else Icons.Filled.CompareArrows,
-                contentDescription = "Toggle comparison"
+                contentDescription = "Toggle comparison",
             )
         }
     }
@@ -138,30 +148,32 @@ private fun ComparisonPanel(
     exoBoostMetrics: PlayerMetrics,
     vanillaMetrics: PlayerMetrics,
     currentState: MediaState,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Black.copy(alpha = 0.95f)
-        ),
-        shape = RoundedCornerShape(16.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = Color.Black.copy(alpha = 0.95f),
+            ),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "Recovery Comparison",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 IconButton(onClick = onDismiss) {
                     Icon(Icons.Filled.Close, "Close", tint = Color.White)
@@ -173,7 +185,7 @@ private fun ComparisonPanel(
             PlayerMetricsCard(
                 metrics = exoBoostMetrics,
                 color = Color(0xFF4CAF50),
-                icon = Icons.Filled.AutoAwesome
+                icon = Icons.Filled.AutoAwesome,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -181,7 +193,7 @@ private fun ComparisonPanel(
             PlayerMetricsCard(
                 metrics = vanillaMetrics,
                 color = Color(0xFFF44336),
-                icon = Icons.Filled.Warning
+                icon = Icons.Filled.Warning,
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -199,25 +211,26 @@ private fun ComparisonPanel(
 private fun PlayerMetricsCard(
     metrics: PlayerMetrics,
     color: Color,
-    icon: ImageVector
+    icon: ImageVector,
 ) {
     Surface(
         color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = color,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 )
 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -226,7 +239,7 @@ private fun PlayerMetricsCard(
                     text = metrics.playerName,
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
 
@@ -234,7 +247,7 @@ private fun PlayerMetricsCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 MetricItem("Errors", metrics.errorCount.toString(), color)
                 MetricItem("Recovered", metrics.recoveryCount.toString(), Color(0xFF4CAF50))
@@ -246,7 +259,7 @@ private fun PlayerMetricsCard(
                 Text(
                     text = "Avg Recovery: ${metrics.averageRecoveryTime / 1000}s",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.White.copy(alpha = 0.7f)
+                    color = Color.White.copy(alpha = 0.7f),
                 )
             }
         }
@@ -254,18 +267,22 @@ private fun PlayerMetricsCard(
 }
 
 @Composable
-private fun MetricItem(label: String, value: String, color: Color) {
+private fun MetricItem(
+    label: String,
+    value: String,
+    color: Color,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,
             style = MaterialTheme.typography.titleLarge,
             color = color,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.6f)
+            color = Color.White.copy(alpha = 0.6f),
         )
     }
 }
@@ -273,26 +290,30 @@ private fun MetricItem(label: String, value: String, color: Color) {
 @Composable
 private fun ComparisonSummary(
     exoBoost: PlayerMetrics,
-    vanilla: PlayerMetrics
+    vanilla: PlayerMetrics,
 ) {
-    val successRate = if (exoBoost.errorCount > 0) {
-        (exoBoost.recoveryCount.toFloat() / exoBoost.errorCount * 100).toInt()
-    } else 100
+    val successRate =
+        if (exoBoost.errorCount > 0) {
+            (exoBoost.recoveryCount.toFloat() / exoBoost.errorCount * 100).toInt()
+        } else {
+            100
+        }
 
     Surface(
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             Text(
                 text = "ExoBoost Advantage",
                 style = MaterialTheme.typography.titleSmall,
                 color = Color.White,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -300,17 +321,17 @@ private fun ComparisonSummary(
             Text(
                 text = "✓ $successRate% automatic recovery rate",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.9f)
+                color = Color.White.copy(alpha = 0.9f),
             )
             Text(
                 text = "✓ Zero manual intervention required",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.9f)
+                color = Color.White.copy(alpha = 0.9f),
             )
             Text(
                 text = "✓ Intelligent quality downgrade on errors",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.9f)
+                color = Color.White.copy(alpha = 0.9f),
             )
         }
     }
@@ -322,19 +343,20 @@ private fun FeatureComparisonTable() {
         Text(
             text = "Feature Comparison",
             style = MaterialTheme.typography.labelLarge,
-            color = Color.White.copy(alpha = 0.7f)
+            color = Color.White.copy(alpha = 0.7f),
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        val features = listOf(
-            Triple("Auto Retry", true, false),
-            Triple("Exponential Backoff", true, false),
-            Triple("Quality Downgrade", true, false),
-            Triple("Codec Fallback", true, false),
-            Triple("Error Classification", true, false),
-            Triple("Recovery Metrics", true, false)
-        )
+        val features =
+            listOf(
+                Triple("Auto Retry", true, false),
+                Triple("Exponential Backoff", true, false),
+                Triple("Quality Downgrade", true, false),
+                Triple("Codec Fallback", true, false),
+                Triple("Error Classification", true, false),
+                Triple("Recovery Metrics", true, false),
+            )
 
         features.forEach { (feature, exoBoost, vanilla) ->
             FeatureRow(feature, exoBoost, vanilla)
@@ -344,23 +366,27 @@ private fun FeatureComparisonTable() {
 }
 
 @Composable
-private fun FeatureRow(feature: String, exoBoost: Boolean, vanilla: Boolean) {
+private fun FeatureRow(
+    feature: String,
+    exoBoost: Boolean,
+    vanilla: Boolean,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = feature,
             style = MaterialTheme.typography.bodySmall,
             color = Color.White.copy(alpha = 0.8f),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         Icon(
             imageVector = if (exoBoost) Icons.Filled.CheckCircle else Icons.Filled.Cancel,
             contentDescription = null,
             tint = if (exoBoost) Color(0xFF4CAF50) else Color.Gray,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(16.dp),
         )
 
         Spacer(modifier = Modifier.width(24.dp))
@@ -369,7 +395,7 @@ private fun FeatureRow(feature: String, exoBoost: Boolean, vanilla: Boolean) {
             imageVector = if (vanilla) Icons.Filled.CheckCircle else Icons.Filled.Cancel,
             contentDescription = null,
             tint = if (vanilla) Color(0xFF4CAF50) else Color.Gray,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(16.dp),
         )
     }
 }

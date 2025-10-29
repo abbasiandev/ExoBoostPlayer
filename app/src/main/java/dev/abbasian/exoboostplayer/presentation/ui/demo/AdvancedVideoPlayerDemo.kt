@@ -4,12 +4,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
-import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostPlayer
+import dev.abbasian.exoboost.presentation.ui.screen.exoBoostPlayer
 
 @Composable
 fun AdvancedVideoPlayerDemo(url: String, onBack: () -> Unit) {
 
-    ExoBoostPlayer(
+    exoBoostPlayer(
         videoUrl = url,
         mediaConfig = MediaPlayerConfig(
             autoPlay = true,

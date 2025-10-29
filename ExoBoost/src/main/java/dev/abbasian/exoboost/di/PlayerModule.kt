@@ -28,9 +28,6 @@ val playerModule =
             MediaPlayerViewModel(
                 playMediaUseCase = get(),
                 retryMediaUseCase = get(),
-                generateThumbnailsUseCase = get(),
-                getBestThumbnailUseCase = get(),
-                analyzeVideoUseCase = get(),
                 errorClassifier = get(),
                 logger = get(),
             )

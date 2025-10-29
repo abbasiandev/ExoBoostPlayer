@@ -5,23 +5,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.VisualizationColorScheme
-import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostAudioPlayer
+import dev.abbasian.exoboost.presentation.ui.screen.exoBoostAudioPlayer
 
 @Composable
-fun AudioEqualizerDemo(url: String, title: String, artist: String, onBack: () -> Unit) {
-
-    ExoBoostAudioPlayer(
+fun AudioEqualizerDemo(
+    url: String,
+    title: String,
+    artist: String,
+    onBack: () -> Unit,
+) {
+    exoBoostAudioPlayer(
         audioUrl = url,
         trackTitle = title,
         artistName = artist,
-        mediaConfig = MediaPlayerConfig(
-            autoPlay = true,
-            audioVisualization = MediaPlayerConfig.AudioVisualizationConfig(
-                enableVisualization = true,
-                colorScheme = VisualizationColorScheme.DYNAMIC,
-            )
-        ),
+        mediaConfig =
+            MediaPlayerConfig(
+                autoPlay = true,
+                audioVisualization =
+                    MediaPlayerConfig.AudioVisualizationConfig(
+                        enableVisualization = true,
+                        colorScheme = VisualizationColorScheme.DYNAMIC,
+                    ),
+            ),
         onBack = onBack,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     )
 }

@@ -3,7 +3,6 @@ package dev.abbasian.exoboost
 import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
-import dev.abbasian.exoboost.di.aiModule
 import dev.abbasian.exoboost.di.cacheModule
 import dev.abbasian.exoboost.di.dataModule
 import dev.abbasian.exoboost.di.networkModule
@@ -47,7 +46,6 @@ object ExoBoost {
             cacheModule,
             dataModule,
             playerModule,
-            aiModule,
         )
 
     @UnstableApi

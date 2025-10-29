@@ -48,13 +48,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
-import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostPlayer
+import dev.abbasian.exoboost.presentation.ui.screen.exoBoostPlayer
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import dev.abbasian.exoboostplayer.presentation.NetworkSimulation
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun NetworkSimulationDemo(url: String, onBack: () -> Unit) {
+fun NetworkSimulationDemo(
+    url: String,
+    onBack: () -> Unit,
+) {
     val viewModel: MediaPlayerViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
 
@@ -62,86 +65,104 @@ fun NetworkSimulationDemo(url: String, onBack: () -> Unit) {
     var showSimulator by remember { mutableStateOf(true) }
     var simulationEvents by remember { mutableStateOf<List<String>>(emptyList()) }
 
-    val config = remember(currentSimulation) {
-        when (currentSimulation) {
-            NetworkSimulation.PERFECT -> MediaPlayerConfig(
-                autoPlay = true,
-                showControls = true,
-                bufferDurations = MediaPlayerConfig.BufferDurations(
-                    minBufferMs = 30000,
-                    maxBufferMs = 60000,
-                    bufferForPlaybackMs = 2500,
-                    bufferForPlaybackAfterRebufferMs = 5000
-                )
-            )
-            NetworkSimulation.GOOD -> MediaPlayerConfig(
-                autoPlay = true,
-                showControls = true,
-                bufferDurations = MediaPlayerConfig.BufferDurations(
-                    minBufferMs = 20000,
-                    maxBufferMs = 50000,
-                    bufferForPlaybackMs = 3000,
-                    bufferForPlaybackAfterRebufferMs = 6000
-                )
-            )
-            NetworkSimulation.MODERATE -> MediaPlayerConfig(
-                autoPlay = true,
-                showControls = true,
-                retryOnError = true,
-                maxRetryCount = 3,
-                bufferDurations = MediaPlayerConfig.BufferDurations(
-                    minBufferMs = 15000,
-                    maxBufferMs = 40000,
-                    bufferForPlaybackMs = 4000,
-                    bufferForPlaybackAfterRebufferMs = 8000
-                )
-            )
-            NetworkSimulation.POOR -> MediaPlayerConfig(
-                autoPlay = true,
-                showControls = true,
-                retryOnError = true,
-                maxRetryCount = 5,
-                autoQualityOnError = true,
-                bufferDurations = MediaPlayerConfig.BufferDurations(
-                    minBufferMs = 10000,
-                    maxBufferMs = 30000,
-                    bufferForPlaybackMs = 5000,
-                    bufferForPlaybackAfterRebufferMs = 10000
-                )
-            )
-            NetworkSimulation.VERY_POOR -> MediaPlayerConfig(
-                autoPlay = true,
-                showControls = true,
-                retryOnError = true,
-                maxRetryCount = 10,
-                autoQualityOnError = true,
-                preferSoftwareDecoder = true,
-                bufferDurations = MediaPlayerConfig.BufferDurations(
-                    minBufferMs = 5000,
-                    maxBufferMs = 20000,
-                    bufferForPlaybackMs = 8000,
-                    bufferForPlaybackAfterRebufferMs = 15000
-                )
-            )
-            NetworkSimulation.OFFLINE -> MediaPlayerConfig(
-                autoPlay = false,
-                showControls = true,
-                retryOnError = true,
-                maxRetryCount = 5
-            )
+    val config =
+        remember(currentSimulation) {
+            when (currentSimulation) {
+                NetworkSimulation.PERFECT ->
+                    MediaPlayerConfig(
+                        autoPlay = true,
+                        showControls = true,
+                        bufferDurations =
+                            MediaPlayerConfig.BufferDurations(
+                                minBufferMs = 30000,
+                                maxBufferMs = 60000,
+                                bufferForPlaybackMs = 2500,
+                                bufferForPlaybackAfterRebufferMs = 5000,
+                            ),
+                    )
+
+                NetworkSimulation.GOOD ->
+                    MediaPlayerConfig(
+                        autoPlay = true,
+                        showControls = true,
+                        bufferDurations =
+                            MediaPlayerConfig.BufferDurations(
+                                minBufferMs = 20000,
+                                maxBufferMs = 50000,
+                                bufferForPlaybackMs = 3000,
+                                bufferForPlaybackAfterRebufferMs = 6000,
+                            ),
+                    )
+
+                NetworkSimulation.MODERATE ->
+                    MediaPlayerConfig(
+                        autoPlay = true,
+                        showControls = true,
+                        retryOnError = true,
+                        maxRetryCount = 3,
+                        bufferDurations =
+                            MediaPlayerConfig.BufferDurations(
+                                minBufferMs = 15000,
+                                maxBufferMs = 40000,
+                                bufferForPlaybackMs = 4000,
+                                bufferForPlaybackAfterRebufferMs = 8000,
+                            ),
+                    )
+
+                NetworkSimulation.POOR ->
+                    MediaPlayerConfig(
+                        autoPlay = true,
+                        showControls = true,
+                        retryOnError = true,
+                        maxRetryCount = 5,
+                        autoQualityOnError = true,
+                        bufferDurations =
+                            MediaPlayerConfig.BufferDurations(
+                                minBufferMs = 10000,
+                                maxBufferMs = 30000,
+                                bufferForPlaybackMs = 5000,
+                                bufferForPlaybackAfterRebufferMs = 10000,
+                            ),
+                    )
+
+                NetworkSimulation.VERY_POOR ->
+                    MediaPlayerConfig(
+                        autoPlay = true,
+                        showControls = true,
+                        retryOnError = true,
+                        maxRetryCount = 10,
+                        autoQualityOnError = true,
+                        preferSoftwareDecoder = true,
+                        bufferDurations =
+                            MediaPlayerConfig.BufferDurations(
+                                minBufferMs = 5000,
+                                maxBufferMs = 20000,
+                                bufferForPlaybackMs = 8000,
+                                bufferForPlaybackAfterRebufferMs = 15000,
+                            ),
+                    )
+
+                NetworkSimulation.OFFLINE ->
+                    MediaPlayerConfig(
+                        autoPlay = false,
+                        showControls = true,
+                        retryOnError = true,
+                        maxRetryCount = 5,
+                    )
+            }
         }
-    }
 
     LaunchedEffect(currentSimulation) {
-        simulationEvents = simulationEvents + "[${System.currentTimeMillis()}] Switched to ${currentSimulation.name}"
+        simulationEvents =
+            simulationEvents + "[${System.currentTimeMillis()}] Switched to ${currentSimulation.name}"
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        ExoBoostPlayer(
+        exoBoostPlayer(
             videoUrl = url,
             mediaConfig = config,
             onBack = onBack,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         )
 
         if (showSimulator) {
@@ -155,20 +176,21 @@ fun NetworkSimulationDemo(url: String, onBack: () -> Unit) {
                     viewModel.loadMedia(url, config)
                 },
                 onClearEvents = { simulationEvents = emptyList() },
-                onDismiss = { showSimulator = false }
+                onDismiss = { showSimulator = false },
             )
         }
 
         FloatingActionButton(
             onClick = { showSimulator = !showSimulator },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            containerColor = MaterialTheme.colorScheme.primary
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+            containerColor = MaterialTheme.colorScheme.primary,
         ) {
             Icon(
                 if (showSimulator) Icons.Filled.VisibilityOff else Icons.Filled.NetworkCheck,
-                contentDescription = "Toggle simulator"
+                contentDescription = "Toggle simulator",
             )
         }
     }
@@ -180,30 +202,32 @@ private fun NetworkSimulatorPanel(
     simulationEvents: List<String>,
     onSimulationChange: (NetworkSimulation) -> Unit,
     onClearEvents: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Black.copy(alpha = 0.95f)
-        ),
-        shape = RoundedCornerShape(16.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = Color.Black.copy(alpha = 0.95f),
+            ),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "Network Simulator",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 IconButton(onClick = onDismiss) {
                     Icon(Icons.Filled.Close, "Close", tint = Color.White)
@@ -215,19 +239,20 @@ private fun NetworkSimulatorPanel(
             // Current simulation indicator
             Surface(
                 color = getSimulationColor(currentSimulation).copy(alpha = 0.2f),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         imageVector = getSimulationIcon(currentSimulation),
                         contentDescription = null,
                         tint = getSimulationColor(currentSimulation),
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(32.dp),
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
@@ -235,12 +260,12 @@ private fun NetworkSimulatorPanel(
                             text = "Current: ${currentSimulation.name.replace("_", " ")}",
                             style = MaterialTheme.typography.titleMedium,
                             color = Color.White,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                         Text(
                             text = getSimulationDescription(currentSimulation),
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.7f)
+                            color = Color.White.copy(alpha = 0.7f),
                         )
                     }
                 }
@@ -252,7 +277,7 @@ private fun NetworkSimulatorPanel(
             Text(
                 text = "Select Network Condition",
                 style = MaterialTheme.typography.labelLarge,
-                color = Color.White.copy(alpha = 0.7f)
+                color = Color.White.copy(alpha = 0.7f),
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -261,7 +286,7 @@ private fun NetworkSimulatorPanel(
                     SimulationButton(
                         simulation = simulation,
                         isSelected = simulation == currentSimulation,
-                        onClick = { onSimulationChange(simulation) }
+                        onClick = { onSimulationChange(simulation) },
                     )
                 }
             }
@@ -272,12 +297,12 @@ private fun NetworkSimulatorPanel(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "Events (${simulationEvents.size})",
                     style = MaterialTheme.typography.labelLarge,
-                    color = Color.White.copy(alpha = 0.7f)
+                    color = Color.White.copy(alpha = 0.7f),
                 )
                 if (simulationEvents.isNotEmpty()) {
                     TextButton(onClick = onClearEvents) {
@@ -292,24 +317,24 @@ private fun NetworkSimulatorPanel(
                 Text(
                     text = "No events yet",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.5f)
+                    color = Color.White.copy(alpha = 0.5f),
                 )
             } else {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            Color.White.copy(alpha = 0.05f),
-                            RoundedCornerShape(8.dp)
-                        )
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Color.White.copy(alpha = 0.05f),
+                                RoundedCornerShape(8.dp),
+                            ).padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     simulationEvents.reversed().forEach { event ->
                         Text(
                             text = event,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.7f)
+                            color = Color.White.copy(alpha = 0.7f),
                         )
                     }
                 }
@@ -320,19 +345,20 @@ private fun NetworkSimulatorPanel(
             // Info card
             Surface(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.Top
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                    verticalAlignment = Alignment.Top,
                 ) {
                     Icon(
                         Icons.Filled.Info,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
@@ -340,12 +366,12 @@ private fun NetworkSimulatorPanel(
                             text = "How It Works",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.White,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
                         )
                         Text(
                             text = "ExoBoost adapts buffer sizes, retry strategies, and quality settings based on network conditions.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.7f)
+                            color = Color.White.copy(alpha = 0.7f),
                         )
                     }
                 }
@@ -358,37 +384,39 @@ private fun NetworkSimulatorPanel(
 private fun SimulationButton(
     simulation: NetworkSimulation,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) {
-                getSimulationColor(simulation)
-            } else {
-                Color.White.copy(alpha = 0.1f)
-            }
-        ),
-        shape = RoundedCornerShape(12.dp)
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor =
+                    if (isSelected) {
+                        getSimulationColor(simulation)
+                    } else {
+                        Color.White.copy(alpha = 0.1f)
+                    },
+            ),
+        shape = RoundedCornerShape(12.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = getSimulationIcon(simulation),
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = simulation.name.replace("_", " "),
                     color = Color.White,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                 )
             }
             if (isSelected) {
@@ -396,15 +424,15 @@ private fun SimulationButton(
                     Icons.Filled.CheckCircle,
                     contentDescription = "Selected",
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }
     }
 }
 
-private fun getSimulationColor(simulation: NetworkSimulation): Color {
-    return when (simulation) {
+private fun getSimulationColor(simulation: NetworkSimulation): Color =
+    when (simulation) {
         NetworkSimulation.PERFECT -> Color(0xFF4CAF50)
         NetworkSimulation.GOOD -> Color(0xFF8BC34A)
         NetworkSimulation.MODERATE -> Color(0xFFFFEB3B)
@@ -412,10 +440,9 @@ private fun getSimulationColor(simulation: NetworkSimulation): Color {
         NetworkSimulation.VERY_POOR -> Color(0xFFF44336)
         NetworkSimulation.OFFLINE -> Color(0xFF9E9E9E)
     }
-}
 
-private fun getSimulationIcon(simulation: NetworkSimulation): androidx.compose.ui.graphics.vector.ImageVector {
-    return when (simulation) {
+private fun getSimulationIcon(simulation: NetworkSimulation): androidx.compose.ui.graphics.vector.ImageVector =
+    when (simulation) {
         NetworkSimulation.PERFECT -> Icons.Filled.SignalCellularAlt
         NetworkSimulation.GOOD -> Icons.Filled.SignalCellular4Bar
         NetworkSimulation.MODERATE -> Icons.Filled.SignalCellularAlt
@@ -423,10 +450,9 @@ private fun getSimulationIcon(simulation: NetworkSimulation): androidx.compose.u
         NetworkSimulation.VERY_POOR -> Icons.Filled.SignalCellularAlt1Bar
         NetworkSimulation.OFFLINE -> Icons.Filled.SignalCellularConnectedNoInternet0Bar
     }
-}
 
-private fun getSimulationDescription(simulation: NetworkSimulation): String {
-    return when (simulation) {
+private fun getSimulationDescription(simulation: NetworkSimulation): String =
+    when (simulation) {
         NetworkSimulation.PERFECT -> "Optimal conditions, minimal buffering"
         NetworkSimulation.GOOD -> "Stable connection, smooth playback"
         NetworkSimulation.MODERATE -> "Occasional delays, auto-retry enabled"
@@ -434,4 +460,3 @@ private fun getSimulationDescription(simulation: NetworkSimulation): String {
         NetworkSimulation.VERY_POOR -> "Severe instability, aggressive recovery"
         NetworkSimulation.OFFLINE -> "No connection, testing offline behavior"
     }
-}

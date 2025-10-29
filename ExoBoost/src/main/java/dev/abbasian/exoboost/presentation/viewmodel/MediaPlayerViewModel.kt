@@ -1,6 +1,5 @@
 package dev.abbasian.exoboost.presentation.viewmodel
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
@@ -10,14 +9,8 @@ import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.PlayerError
 import dev.abbasian.exoboost.domain.model.VideoQuality
-import dev.abbasian.exoboost.domain.usecase.AnalyzeVideoUseCase
-import dev.abbasian.exoboost.domain.usecase.GenerateThumbnailsUseCase
-import dev.abbasian.exoboost.domain.usecase.GetBestThumbnailUseCase
 import dev.abbasian.exoboost.domain.usecase.PlayMediaUseCase
 import dev.abbasian.exoboost.domain.usecase.RetryMediaUseCase
-import dev.abbasian.exoboost.presentation.state.MediaPlayerUiState
-import dev.abbasian.exoboost.presentation.state.ThumbnailState
-import dev.abbasian.exoboost.presentation.state.VideoAnalysisState
 import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -32,9 +25,6 @@ import kotlin.coroutines.cancellation.CancellationException
 class MediaPlayerViewModel(
     private val playMediaUseCase: PlayMediaUseCase,
     private val retryMediaUseCase: RetryMediaUseCase,
-    private val generateThumbnailsUseCase: GenerateThumbnailsUseCase,
-    private val getBestThumbnailUseCase: GetBestThumbnailUseCase,
-    private val analyzeVideoUseCase: AnalyzeVideoUseCase,
     private val errorClassifier: ErrorClassifier,
     private val logger: ExoBoostLogger,
 ) : ViewModel() {
@@ -50,12 +40,6 @@ class MediaPlayerViewModel(
 
     private val _showEqualizer = MutableStateFlow(false)
     val showEqualizer: StateFlow<Boolean> = _showEqualizer.asStateFlow()
-
-    private val _thumbnailsState = MutableStateFlow<ThumbnailState>(ThumbnailState.Idle)
-    val thumbnailsState: StateFlow<ThumbnailState> = _thumbnailsState.asStateFlow()
-
-    private val _videoAnalysisState = MutableStateFlow<VideoAnalysisState>(VideoAnalysisState.Idle)
-    val videoAnalysisState: StateFlow<VideoAnalysisState> = _videoAnalysisState.asStateFlow()
 
     private var retryCount = 0
     private var maxRetryCount = 3
@@ -109,103 +93,6 @@ class MediaPlayerViewModel(
                         )
                 }
             }
-    }
-
-    fun generateThumbnails(
-        videoUri: Uri,
-        count: Int = 5,
-        useAI: Boolean = true,
-    ) {
-        viewModelScope.launch {
-            try {
-                _thumbnailsState.value = ThumbnailState.Loading(0)
-                logger.info(TAG, "Generating thumbnails: count=$count, useAI=$useAI")
-
-                generateThumbnailsUseCase(videoUri, count, useAI)
-                    .onSuccess { thumbnails ->
-                        _thumbnailsState.value = ThumbnailState.Success(thumbnails)
-                        logger.info(TAG, "Successfully generated ${thumbnails.size} thumbnails")
-                    }.onFailure { error ->
-                        _thumbnailsState.value =
-                            ThumbnailState.Error(
-                                message = error.message ?: "Unknown error",
-                                throwable = error,
-                            )
-                        logger.error(TAG, "Thumbnail generation failed", error)
-                    }
-            } catch (e: Exception) {
-                _thumbnailsState.value =
-                    ThumbnailState.Error(
-                        message = e.message ?: "Unknown error",
-                        throwable = e,
-                    )
-                logger.error(TAG, "Thumbnail generation exception", e)
-            }
-        }
-    }
-
-    fun getBestThumbnail(videoUri: Uri) {
-        viewModelScope.launch {
-            try {
-                _thumbnailsState.value = ThumbnailState.Loading(0)
-
-                getBestThumbnailUseCase(videoUri)
-                    .onSuccess { thumbnail ->
-                        if (thumbnail != null) {
-                            _thumbnailsState.value = ThumbnailState.Success(listOf(thumbnail))
-                        } else {
-                            _thumbnailsState.value = ThumbnailState.Error("No thumbnail found")
-                        }
-                    }.onFailure { error ->
-                        _thumbnailsState.value =
-                            ThumbnailState.Error(
-                                message = error.message ?: "Unknown error",
-                                throwable = error,
-                            )
-                    }
-            } catch (e: Exception) {
-                _thumbnailsState.value =
-                    ThumbnailState.Error(
-                        message = e.message ?: "Unknown error",
-                        throwable = e,
-                    )
-            }
-        }
-    }
-
-    fun analyzeVideo(videoUri: Uri) {
-        viewModelScope.launch {
-            try {
-                _videoAnalysisState.value = VideoAnalysisState.Loading(0)
-                logger.info(TAG, "Analyzing video: $videoUri")
-
-                analyzeVideoUseCase(videoUri)
-                    .onSuccess { analysis ->
-                        _videoAnalysisState.value = VideoAnalysisState.Success(analysis)
-                        logger.info(
-                            TAG,
-                            "Video analysis complete: ${analysis.scenes.size} scenes found",
-                        )
-                    }.onFailure { error ->
-                        _videoAnalysisState.value =
-                            VideoAnalysisState.Error(
-                                message = error.message ?: "Analysis failed",
-                            )
-                        logger.error(TAG, "Video analysis failed", error)
-                    }
-            } catch (e: Exception) {
-                _videoAnalysisState.value =
-                    VideoAnalysisState.Error(
-                        message = e.message ?: "Unknown error",
-                    )
-                logger.error(TAG, "Video analysis exception", e)
-            }
-        }
-    }
-
-    fun resetThumbnailState() {
-        _thumbnailsState.value = ThumbnailState.Idle
-        logger.debug(TAG, "Thumbnail state reset")
     }
 
     fun toggleEqualizer() {
@@ -398,8 +285,6 @@ class MediaPlayerViewModel(
         retryCount = 0
         isMediaLoaded = false
         _uiState.value = MediaPlayerUiState()
-        _thumbnailsState.value = ThumbnailState.Idle
-        _videoAnalysisState.value = VideoAnalysisState.Idle
     }
 
     override fun onCleared() {
@@ -407,9 +292,22 @@ class MediaPlayerViewModel(
         try {
             currentJob?.cancel()
             playMediaUseCase.release()
-            generateThumbnailsUseCase.release()
         } catch (e: Exception) {
             logger.error(TAG, "Error releasing resources", e)
         }
     }
 }
+
+data class MediaPlayerUiState(
+    val mediaState: MediaState = MediaState.Idle,
+    val mediaInfo: MediaInfo = MediaInfo(),
+    val showControls: Boolean = true,
+    val volume: Float = 1f,
+    val brightness: Float = 0.5f,
+    val isLoading: Boolean = false,
+    val currentUrl: String = "",
+    val showEqualizer: Boolean = false,
+    val currentTrackIndex: Int = 0,
+    val hasNext: Boolean = false,
+    val hasPrevious: Boolean = false,
+)

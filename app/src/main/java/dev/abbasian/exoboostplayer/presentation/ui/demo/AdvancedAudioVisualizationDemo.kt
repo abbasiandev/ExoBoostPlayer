@@ -50,12 +50,17 @@ import androidx.compose.ui.unit.dp
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.VisualizationColorScheme
 import dev.abbasian.exoboost.domain.model.VisualizationType
-import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostAudioPlayer
+import dev.abbasian.exoboost.presentation.ui.screen.exoBoostAudioPlayer
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun AdvancedAudioVisualizationDemo(url: String, title: String, artist: String, onBack: () -> Unit) {
+fun AdvancedAudioVisualizationDemo(
+    url: String,
+    title: String,
+    artist: String,
+    onBack: () -> Unit,
+) {
     val viewModel: MediaPlayerViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
 
@@ -66,33 +71,36 @@ fun AdvancedAudioVisualizationDemo(url: String, title: String, artist: String, o
     var showSettings by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        ExoBoostAudioPlayer(
+        exoBoostAudioPlayer(
             audioUrl = url,
             trackTitle = title,
             artistName = artist,
-            mediaConfig = MediaPlayerConfig(
-                autoPlay = true,
-                audioVisualization = MediaPlayerConfig.AudioVisualizationConfig(
-                    enableVisualization = true,
-                    colorScheme = colorScheme,
-                    sensitivity = sensitivity,
-                    smoothingFactor = smoothingFactor
+            mediaConfig =
+                MediaPlayerConfig(
+                    autoPlay = true,
+                    audioVisualization =
+                        MediaPlayerConfig.AudioVisualizationConfig(
+                            enableVisualization = true,
+                            colorScheme = colorScheme,
+                            sensitivity = sensitivity,
+                            smoothingFactor = smoothingFactor,
+                        ),
+                    glassyUI =
+                        MediaPlayerConfig.GlassyUIConfig(
+                            blurRadius = 35f,
+                            borderOpacity = 0.45f,
+                        ),
                 ),
-                glassyUI = MediaPlayerConfig.GlassyUIConfig(
-                    blurRadius = 35f,
-                    borderOpacity = 0.45f
-                )
-            ),
             currentVisualizationType = visualizationType,
             onVisualizationTypeChange = { visualizationType = it },
             onBack = onBack,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         )
 
         AnimatedContent(
             targetState = showSettings,
             transitionSpec = { fadeIn() togetherWith fadeOut() },
-            label = "settings"
+            label = "settings",
         ) { isVisible ->
             if (isVisible) {
                 VisualizationSettingsPanel(
@@ -102,21 +110,22 @@ fun AdvancedAudioVisualizationDemo(url: String, title: String, artist: String, o
                     onColorSchemeChange = { colorScheme = it },
                     onSensitivityChange = { sensitivity = it },
                     onSmoothingChange = { smoothingFactor = it },
-                    onDismiss = { showSettings = false }
+                    onDismiss = { showSettings = false },
                 )
             }
         }
 
         FloatingActionButton(
             onClick = { showSettings = !showSettings },
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(16.dp),
-            containerColor = MaterialTheme.colorScheme.primary
+            modifier =
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp),
+            containerColor = MaterialTheme.colorScheme.primary,
         ) {
             Icon(
                 if (showSettings) Icons.Filled.Close else Icons.Filled.Tune,
-                contentDescription = "Visualization settings"
+                contentDescription = "Visualization settings",
             )
         }
     }
@@ -130,30 +139,32 @@ private fun VisualizationSettingsPanel(
     onColorSchemeChange: (VisualizationColorScheme) -> Unit,
     onSensitivityChange: (Float) -> Unit,
     onSmoothingChange: (Float) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Black.copy(alpha = 0.95f)
-        ),
-        shape = RoundedCornerShape(16.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = Color.Black.copy(alpha = 0.95f),
+            ),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "Visualization Settings",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 IconButton(onClick = onDismiss) {
                     Icon(Icons.Filled.Close, "Close", tint = Color.White)
@@ -165,34 +176,34 @@ private fun VisualizationSettingsPanel(
             Text(
                 text = "Color Scheme",
                 style = MaterialTheme.typography.labelLarge,
-                color = Color.White.copy(alpha = 0.7f)
+                color = Color.White.copy(alpha = 0.7f),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 ColorSchemeButton(
                     scheme = VisualizationColorScheme.DYNAMIC,
                     currentScheme = colorScheme,
-                    onClick = { onColorSchemeChange(VisualizationColorScheme.DYNAMIC) }
+                    onClick = { onColorSchemeChange(VisualizationColorScheme.DYNAMIC) },
                 )
                 ColorSchemeButton(
                     scheme = VisualizationColorScheme.MONOCHROME,
                     currentScheme = colorScheme,
-                    onClick = { onColorSchemeChange(VisualizationColorScheme.MONOCHROME) }
+                    onClick = { onColorSchemeChange(VisualizationColorScheme.MONOCHROME) },
                 )
                 ColorSchemeButton(
                     scheme = VisualizationColorScheme.RAINBOW,
                     currentScheme = colorScheme,
-                    onClick = { onColorSchemeChange(VisualizationColorScheme.RAINBOW) }
+                    onClick = { onColorSchemeChange(VisualizationColorScheme.RAINBOW) },
                 )
                 ColorSchemeButton(
                     scheme = VisualizationColorScheme.DYNAMIC,
                     currentScheme = colorScheme,
-                    onClick = { onColorSchemeChange(VisualizationColorScheme.DYNAMIC) }
+                    onClick = { onColorSchemeChange(VisualizationColorScheme.DYNAMIC) },
                 )
             }
 
@@ -201,7 +212,7 @@ private fun VisualizationSettingsPanel(
             Text(
                 text = "Sensitivity: ${String.format("%.1f", sensitivity)}x",
                 style = MaterialTheme.typography.labelLarge,
-                color = Color.White.copy(alpha = 0.7f)
+                color = Color.White.copy(alpha = 0.7f),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -210,10 +221,11 @@ private fun VisualizationSettingsPanel(
                 value = sensitivity,
                 onValueChange = onSensitivityChange,
                 valueRange = 0.5f..3.0f,
-                colors = SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.primary,
-                    activeTrackColor = MaterialTheme.colorScheme.primary
-                )
+                colors =
+                    SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                    ),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -221,36 +233,38 @@ private fun VisualizationSettingsPanel(
             Text(
                 text = "Smoothing: ${(smoothingFactor * 100).toInt()}%",
                 style = MaterialTheme.typography.labelLarge,
-                color = Color.White.copy(alpha = 0.7f)
+                color = Color.White.copy(alpha = 0.7f),
             )
             Spacer(modifier = Modifier.height(8.dp))
             Slider(
                 value = smoothingFactor,
                 onValueChange = onSmoothingChange,
                 valueRange = 0.5f..0.95f,
-                colors = SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.primary,
-                    activeTrackColor = MaterialTheme.colorScheme.primary
-                )
+                colors =
+                    SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                    ),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Surface(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.Top
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                    verticalAlignment = Alignment.Top,
                 ) {
                     Icon(
                         Icons.Filled.Lightbulb,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
 
                     Spacer(modifier = Modifier.width(12.dp))
@@ -260,12 +274,12 @@ private fun VisualizationSettingsPanel(
                             text = "Pro Tip",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.White,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
                         )
                         Text(
                             text = "Increase sensitivity for quiet tracks. Higher smoothing reduces jitter.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.7f)
+                            color = Color.White.copy(alpha = 0.7f),
                         )
                     }
                 }
@@ -278,59 +292,62 @@ private fun VisualizationSettingsPanel(
 private fun ColorSchemeButton(
     scheme: VisualizationColorScheme,
     currentScheme: VisualizationColorScheme,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val isSelected = scheme == currentScheme
-    val gradientColors = when (scheme) {
-        VisualizationColorScheme.DYNAMIC -> listOf(Color(0xFF2196F3), Color(0xFF9C27B0))
-        VisualizationColorScheme.MONOCHROME -> listOf(Color.White, Color.Gray)
-        VisualizationColorScheme.RAINBOW -> listOf(
-            Color(0xFFFF0000),
-            Color(0xFFFFFF00),
-            Color(0xFF00FF00),
-            Color(0xFF00FFFF),
-            Color(0xFF0000FF)
-        )
+    val gradientColors =
+        when (scheme) {
+            VisualizationColorScheme.DYNAMIC -> listOf(Color(0xFF2196F3), Color(0xFF9C27B0))
+            VisualizationColorScheme.MONOCHROME -> listOf(Color.White, Color.Gray)
+            VisualizationColorScheme.RAINBOW ->
+                listOf(
+                    Color(0xFFFF0000),
+                    Color(0xFFFFFF00),
+                    Color(0xFF00FF00),
+                    Color(0xFF00FFFF),
+                    Color(0xFF0000FF),
+                )
 
-        VisualizationColorScheme.DYNAMIC -> listOf(Color(0xFFFFFF00), Color(0xFFFF0000))
-        VisualizationColorScheme.MATERIAL_YOU -> TODO()
-    }
+            VisualizationColorScheme.DYNAMIC -> listOf(Color(0xFFFFFF00), Color(0xFFFF0000))
+            VisualizationColorScheme.MATERIAL_YOU -> TODO()
+        }
 
     Box(
-        modifier = Modifier
-            .height(48.dp)
-            .background(
-                brush = Brush.horizontalGradient(gradientColors),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .then(
-                if (isSelected) {
-                    Modifier.border(
-                        2.dp,
-                        Color.White,
-                        RoundedCornerShape(12.dp)
-                    )
-                } else Modifier
-            )
+        modifier =
+            Modifier
+                .height(48.dp)
+                .background(
+                    brush = Brush.horizontalGradient(gradientColors),
+                    shape = RoundedCornerShape(12.dp),
+                ).then(
+                    if (isSelected) {
+                        Modifier.border(
+                            2.dp,
+                            Color.White,
+                            RoundedCornerShape(12.dp),
+                        )
+                    } else {
+                        Modifier
+                    },
+                ),
     ) {
         Button(
             onClick = onClick,
             modifier = Modifier.fillMaxSize(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent
-            ),
-            contentPadding = PaddingValues(0.dp)
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                ),
+            contentPadding = PaddingValues(0.dp),
         ) {
             Text(
                 text = scheme.name.lowercase().capitalize(),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             )
         }
     }
 }
 
-private fun String.capitalize(): String {
-    return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-}
+private fun String.capitalize(): String = this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }

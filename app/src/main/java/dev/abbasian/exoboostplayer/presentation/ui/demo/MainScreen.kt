@@ -33,23 +33,21 @@ fun MainScreen() {
             is Demo.CacheDemo -> BasicVideoPlayerDemo(demo.url) { currentDemo = null }
             is Demo.NetworkSimulation -> NetworkSimulationDemo(demo.url) { currentDemo = null }
 
-            is Demo.AudioVisualization -> AdvancedAudioVisualizationDemo(
-                demo.url,
-                demo.title,
-                demo.artist
-            ) { currentDemo = null }
+            is Demo.AudioVisualization ->
+                AdvancedAudioVisualizationDemo(
+                    demo.url,
+                    demo.title,
+                    demo.artist,
+                ) { currentDemo = null }
 
-            is Demo.AudioEqualizer -> AudioEqualizerDemo(
-                demo.url,
-                demo.title,
-                demo.artist
-            ) { currentDemo = null }
+            is Demo.AudioEqualizer ->
+                AudioEqualizerDemo(
+                    demo.url,
+                    demo.title,
+                    demo.artist,
+                ) { currentDemo = null }
 
-            is Demo.AudioPlaylist -> PlaylistDemo() { currentDemo = null }
-
-            is Demo.AIThumbnails -> AIThumbnailDemo(demo.url) { currentDemo = null }
-            is Demo.VideoAnalysis -> VideoAnalysisDemo(demo.url) { currentDemo = null }
+            is Demo.AudioPlaylist -> PlaylistDemo { currentDemo = null }
         }
-
     } ?: DemoList(onDemoSelected = { currentDemo = it })
 }
