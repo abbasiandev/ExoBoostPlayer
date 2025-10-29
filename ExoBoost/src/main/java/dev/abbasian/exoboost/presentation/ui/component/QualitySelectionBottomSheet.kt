@@ -30,57 +30,58 @@ import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.VideoQuality
 
 @Composable
-fun QualitySelectionBottomSheet(
+fun qualitySelectionBottomSheet(
     availableQualities: List<VideoQuality>,
     currentQuality: VideoQuality?,
     onQualitySelected: (VideoQuality) -> Unit,
     onDismiss: () -> Unit,
-    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig()
+    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig(),
 ) {
     val context = LocalContext.current
 
-    GlassyContainer(
+    glassyContainer(
         modifier = Modifier.fillMaxWidth(),
         config = config,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {
         Column {
             // header
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.HighQuality,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = context.getString(R.string.video_quality),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
 
             // quality options
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(availableQualities) { quality ->
-                    QualityItem(
+                    qualityItem(
                         quality = quality,
                         isSelected = quality == currentQuality,
                         onClick = {
                             onQualitySelected(quality)
                             onDismiss()
                         },
-                        config = config
+                        config = config,
                     )
                 }
             }
@@ -89,52 +90,56 @@ fun QualitySelectionBottomSheet(
 }
 
 @Composable
-private fun QualityItem(
+private fun qualityItem(
     quality: VideoQuality,
     isSelected: Boolean,
     onClick: () -> Unit,
-    config: MediaPlayerConfig.GlassyUIConfig
+    config: MediaPlayerConfig.GlassyUIConfig,
 ) {
-    val itemConfig = if (isSelected) {
-        config.copy(
-            backgroundOpacity = 0.3f,
-            borderOpacity = 0.5f
-        )
-    } else {
-        config
-    }
+    val itemConfig =
+        if (isSelected) {
+            config.copy(
+                backgroundOpacity = 0.3f,
+                borderOpacity = 0.5f,
+            )
+        } else {
+            config
+        }
 
-    GlassyContainer(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+    glassyContainer(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable { onClick() },
         config = itemConfig,
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
                 text = quality.getQualityLabel(),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                }
+                color =
+                    if (isSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
             )
 
             Icon(
                 imageVector = if (isSelected) Icons.Default.RadioButtonChecked else Icons.Default.RadioButtonUnchecked,
                 contentDescription = null,
-                tint = if (isSelected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
+                tint =
+                    if (isSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
         }
     }

@@ -3,6 +3,7 @@ package dev.abbasian.exoboost
 import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
+import dev.abbasian.exoboost.di.aiModule
 import dev.abbasian.exoboost.di.cacheModule
 import dev.abbasian.exoboost.di.dataModule
 import dev.abbasian.exoboost.di.networkModule
@@ -15,7 +16,6 @@ import org.koin.core.context.startKoin
 import org.koin.dsl.module
 
 object ExoBoost {
-
     private const val TAG = "ExoBoost"
     private var isInitialized = false
     private var customLogger: ExoBoostLogger? = null
@@ -40,19 +40,22 @@ object ExoBoost {
     }
 
     @UnstableApi
-    private fun getModules() = listOf(
-        createLoggingModule(),
-        networkModule,
-        cacheModule,
-        dataModule,
-        playerModule,
-    )
+    private fun getModules() =
+        listOf(
+            createLoggingModule(),
+            networkModule,
+            cacheModule,
+            dataModule,
+            playerModule,
+            aiModule,
+        )
 
     @UnstableApi
-    private fun createLoggingModule() = module {
-        single<ExoBoostLogger> {
-            customLogger ?: DefaultLogger()
+    private fun createLoggingModule() =
+        module {
+            single<ExoBoostLogger> {
+                customLogger ?: DefaultLogger()
+            }
+            single { ErrorClassifier(context = androidContext(), logger = get()) }
         }
-        single { ErrorClassifier(context = androidContext(), logger = get()) }
-    }
 }

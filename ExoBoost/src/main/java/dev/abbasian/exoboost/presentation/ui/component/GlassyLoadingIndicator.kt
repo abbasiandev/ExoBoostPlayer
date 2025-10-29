@@ -23,42 +23,43 @@ import androidx.compose.ui.unit.dp
 import dev.abbasian.exoboost.R
 
 @Composable
-fun GlassyLoadingIndicator(
-    modifier: Modifier = Modifier
-) {
+fun glassyLoadingIndicator(modifier: Modifier = Modifier) {
     val context = LocalContext.current
 
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(24.dp))
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.15f),
-                        Color.White.copy(alpha = 0.05f)
-                    )
-                )
-            )
-            .border(
-                width = 1.dp,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.3f),
-                        Color.White.copy(alpha = 0.1f)
-                    )
-                ),
-                shape = RoundedCornerShape(24.dp)
-            )
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(24.dp))
+                .background(
+                    brush =
+                        Brush.radialGradient(
+                            colors =
+                                listOf(
+                                    Color.White.copy(alpha = 0.15f),
+                                    Color.White.copy(alpha = 0.05f),
+                                ),
+                        ),
+                ).border(
+                    width = 1.dp,
+                    brush =
+                        Brush.linearGradient(
+                            colors =
+                                listOf(
+                                    Color.White.copy(alpha = 0.3f),
+                                    Color.White.copy(alpha = 0.1f),
+                                ),
+                        ),
+                    shape = RoundedCornerShape(24.dp),
+                ).padding(32.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             CircularProgressIndicator(
                 modifier = Modifier.size(56.dp),
                 color = Color(0xFF4C8AFF).copy(alpha = 0.8f),
-                strokeWidth = 4.dp
+                strokeWidth = 4.dp,
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -66,7 +67,7 @@ fun GlassyLoadingIndicator(
             Text(
                 text = context.getString(R.string.loading),
                 color = Color.White.copy(alpha = 0.9f),
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
             )
         }
     }

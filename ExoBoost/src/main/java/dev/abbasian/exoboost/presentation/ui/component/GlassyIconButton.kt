@@ -15,36 +15,39 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun GlassyIconButton(
+fun glassyIconButton(
     onClick: () -> Unit,
     icon: ImageVector,
     contentDescription: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     IconButton(
         onClick = onClick,
-        modifier = modifier
-            .size(40.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.1f),
-                        Color.White.copy(alpha = 0.05f)
-                    )
+        modifier =
+            modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    brush =
+                        Brush.radialGradient(
+                            colors =
+                                listOf(
+                                    Color.White.copy(alpha = 0.1f),
+                                    Color.White.copy(alpha = 0.05f),
+                                ),
+                        ),
                 )
-            )
-            .border(
-                width = 0.5.dp,
-                color = Color.White.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(12.dp)
-            )
+                .border(
+                    width = 0.5.dp,
+                    color = Color.White.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(12.dp),
+                ),
     ) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
             tint = Color.White.copy(alpha = 0.9f),
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(20.dp),
         )
     }
 }

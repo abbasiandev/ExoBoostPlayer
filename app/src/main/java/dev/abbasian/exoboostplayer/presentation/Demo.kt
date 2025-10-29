@@ -16,6 +16,9 @@ sealed class Demo {
     data class AudioVisualization(val url: String, val title: String, val artist: String) : Demo()
     data class AudioEqualizer(val url: String, val title: String, val artist: String) : Demo()
     object AudioPlaylist : Demo()
+
+    data class AIThumbnails(val url: String) : Demo()
+    data class VideoAnalysis(val url: String) : Demo()
 }
 
 data class Track(val url: String, val title: String, val artist: String)

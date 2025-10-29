@@ -30,58 +30,59 @@ import dev.abbasian.exoboost.R
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 
 @Composable
-fun SpeedControlBottomSheet(
+fun speedControlBottomSheet(
     currentSpeed: Float,
     availableSpeeds: List<Float>,
     onSpeedSelected: (Float) -> Unit,
     onDismiss: () -> Unit,
-    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig()
+    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig(),
 ) {
     val context = LocalContext.current
 
-    GlassyContainer(
+    glassyContainer(
         modifier = Modifier.fillMaxWidth(),
         config = config,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
     ) {
         Column {
             // header
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.Speed,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = context.getString(R.string.playback_speed),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
 
             // speed options
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 8.dp)
+                contentPadding = PaddingValues(horizontal = 8.dp),
             ) {
                 items(availableSpeeds) { speed ->
-                    SpeedChip(
+                    speedChip(
                         speed = speed,
                         isSelected = speed == currentSpeed,
                         onClick = {
                             onSpeedSelected(speed)
                             onDismiss()
                         },
-                        config = config
+                        config = config,
                     )
                 }
             }
@@ -89,26 +90,26 @@ fun SpeedControlBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             // current speed indicator
-            GlassyContainer(
+            glassyContainer(
                 config = config.copy(backgroundOpacity = 0.15f),
                 shape = RoundedCornerShape(12.dp),
-                contentPadding = 16.dp
+                contentPadding = 16.dp,
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = context.getString(R.string.current_speed),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         text = "${currentSpeed}x",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
@@ -117,40 +118,42 @@ fun SpeedControlBottomSheet(
 }
 
 @Composable
-private fun SpeedChip(
+private fun speedChip(
     speed: Float,
     isSelected: Boolean,
     onClick: () -> Unit,
-    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig()
+    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig(),
 ) {
-    val chipConfig = if (isSelected) {
-        config.copy(
-            backgroundOpacity = 0.3f,
-            borderOpacity = 0.5f
-        )
-    } else {
-        config
-    }
+    val chipConfig =
+        if (isSelected) {
+            config.copy(
+                backgroundOpacity = 0.3f,
+                borderOpacity = 0.5f,
+            )
+        } else {
+            config
+        }
 
-    GlassyContainer(
+    glassyContainer(
         modifier = Modifier.clickable { onClick() },
         config = chipConfig,
         shape = RoundedCornerShape(20.dp),
-        contentPadding = 0.dp
+        contentPadding = 0.dp,
     ) {
         Box(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = "${speed}x",
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
+                color =
+                    if (isSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             )
         }
     }

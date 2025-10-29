@@ -38,8 +38,8 @@ import dev.abbasian.exoboost.data.manager.ExoPlayerManager
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.VideoQuality
-import dev.abbasian.exoboost.presentation.ui.component.EnhancedPlayerControls
-import dev.abbasian.exoboost.presentation.ui.component.GestureHandler
+import dev.abbasian.exoboost.presentation.ui.component.enhancedPlayerControls
+import dev.abbasian.exoboost.presentation.ui.component.gestureHandler
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.delay
@@ -50,7 +50,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @OptIn(UnstableApi::class)
 @Composable
-fun ExoBoostPlayer(
+fun exoBoostPlayer(
     videoUrl: String,
     modifier: Modifier = Modifier,
     mediaConfig: MediaPlayerConfig = MediaPlayerConfig(),
@@ -60,8 +60,9 @@ fun ExoBoostPlayer(
     onSpeedChanged: ((Float) -> Unit)? = null,
     onQualityChanged: ((VideoQuality) -> Unit)? = null,
     viewModel: MediaPlayerViewModel = koinViewModel(),
-    playerManager: ExoPlayerManager = koinInject()
+    playerManager: ExoPlayerManager = koinInject(),
 ) {
+    @Suppress("ktlint:standard:property-naming")
     val TAG = "ExoBoostPlayer"
     val logger: ExoBoostLogger = koinInject()
 
@@ -119,10 +120,12 @@ fun ExoBoostPlayer(
                 logger.debug(TAG, "Player ready")
                 onPlayerReady?.invoke()
             }
+
             is MediaState.Error -> {
                 logger.error(TAG, "Player error: ${state.error.message}")
                 onError?.invoke(state.error.message)
             }
+
             else -> {}
         }
     }
@@ -137,41 +140,43 @@ fun ExoBoostPlayer(
     }
 
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            logger.debug(TAG, "Lifecycle event: $event")
-            when (event) {
-                Lifecycle.Event.ON_PAUSE -> {
-                    if (activity?.isChangingConfigurations != true) {
-                        if (uiState.mediaInfo.isPlaying) {
-                            viewModel.playPause()
+        val observer =
+            LifecycleEventObserver { _, event ->
+                logger.debug(TAG, "Lifecycle event: $event")
+                when (event) {
+                    Lifecycle.Event.ON_PAUSE -> {
+                        if (activity?.isChangingConfigurations != true) {
+                            if (uiState.mediaInfo.isPlaying) {
+                                viewModel.playPause()
+                            }
                         }
                     }
-                }
 
-                Lifecycle.Event.ON_STOP -> {
-                    if (activity?.isChangingConfigurations != true) {
-                        try {
-                            playerManager.pause()
-                        } catch (e: Exception) {
-                            logger.error(TAG, "Error pausing player", e)
+                    Lifecycle.Event.ON_STOP -> {
+                        if (activity?.isChangingConfigurations != true) {
+                            try {
+                                playerManager.pause()
+                            } catch (e: Exception) {
+                                logger.error(TAG, "Error pausing player", e)
+                            }
                         }
                     }
-                }
 
-                Lifecycle.Event.ON_DESTROY -> {
-                    if (activity?.isChangingConfigurations != true) {
-                        try {
-                            playerManager.release()
-                            isPlayerInitialized = false
-                            playerViewReady = false
-                        } catch (e: Exception) {
-                            logger.error(TAG, "Error releasing player", e)
+                    Lifecycle.Event.ON_DESTROY -> {
+                        if (activity?.isChangingConfigurations != true) {
+                            try {
+                                playerManager.release()
+                                isPlayerInitialized = false
+                                playerViewReady = false
+                            } catch (e: Exception) {
+                                logger.error(TAG, "Error releasing player", e)
+                            }
                         }
                     }
+
+                    else -> {}
                 }
-                else -> {}
             }
-        }
 
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
@@ -193,12 +198,13 @@ fun ExoBoostPlayer(
     }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .clickable {
-                controlsVisible = !controlsVisible
-            }
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .clickable {
+                    controlsVisible = !controlsVisible
+                },
     ) {
         if (isPlayerInitialized) {
             AndroidView(
@@ -208,10 +214,11 @@ fun ExoBoostPlayer(
                         try {
                             useController = false
                             setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
-                            layoutParams = ViewGroup.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.MATCH_PARENT
-                            )
+                            layoutParams =
+                                ViewGroup.LayoutParams(
+                                    ViewGroup.LayoutParams.MATCH_PARENT,
+                                    ViewGroup.LayoutParams.MATCH_PARENT,
+                                )
                             setKeepContentOnPlayerReset(true)
                             setUseArtwork(false)
                             setDefaultArtwork(null)
@@ -250,12 +257,12 @@ fun ExoBoostPlayer(
                         logger.error(TAG, "Error updating PlayerView", e)
                     }
                 },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             )
         }
 
         if (mediaConfig.enableGestures && isPlayerInitialized && playerViewReady) {
-            GestureHandler(
+            gestureHandler(
                 volume = uiState.volume,
                 brightness = uiState.brightness,
                 onVolumeChange = { volume ->
@@ -281,12 +288,12 @@ fun ExoBoostPlayer(
                 },
                 currentPosition = uiState.mediaInfo.currentPosition,
                 duration = uiState.mediaInfo.duration,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             )
         }
 
         if (mediaConfig.showControls && isPlayerInitialized && playerViewReady) {
-            EnhancedPlayerControls(
+            enhancedPlayerControls(
                 mediaState = uiState.mediaState,
                 mediaInfo = uiState.mediaInfo,
                 showControls = controlsVisible,
@@ -332,11 +339,12 @@ fun ExoBoostPlayer(
                 },
                 onFullscreen = {
                     try {
-                        val newOrientation = if (isFullscreen) {
-                            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                        } else {
-                            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                        }
+                        val newOrientation =
+                            if (isFullscreen) {
+                                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                            } else {
+                                ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                            }
                         activity?.requestedOrientation = newOrientation
                         isFullscreen = !isFullscreen
                         logger.debug(TAG, "Orientation changing to: $newOrientation")
@@ -347,7 +355,7 @@ fun ExoBoostPlayer(
                 onModalStateChanged = { isOpen ->
                     isModalOpen = isOpen
                 },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             )
         }
 
@@ -366,17 +374,18 @@ fun ExoBoostPlayer(
                         logger.error(TAG, "Error handling back button", e)
                     }
                 },
-                modifier = Modifier
-                    .padding(16.dp)
-                    .background(
-                        Color.Black.copy(alpha = 0.5f),
-                        shape = androidx.compose.foundation.shape.CircleShape
-                    )
+                modifier =
+                    Modifier
+                        .padding(16.dp)
+                        .background(
+                            Color.Black.copy(alpha = 0.5f),
+                            shape = androidx.compose.foundation.shape.CircleShape,
+                        ),
             ) {
                 Icon(
                     Icons.Filled.ArrowBack,
                     contentDescription = context.getString(R.string.cd_back),
-                    tint = Color.White
+                    tint = Color.White,
                 )
             }
         }

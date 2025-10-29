@@ -29,7 +29,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 @Composable
-fun AudioVisualization(
+fun audioVisualization(
     audioData: FloatArray,
     visualizationType: VisualizationType,
     colorScheme: VisualizationColorScheme,
@@ -37,67 +37,82 @@ fun AudioVisualization(
     isPlaying: Boolean = true,
     bassIntensity: Float = 0f,
     midIntensity: Float = 0f,
-    trebleIntensity: Float = 0f
+    trebleIntensity: Float = 0f,
 ) {
     val infiniteTransition = rememberInfiniteTransition()
 
     val colorPhase by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        )
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(4000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
     )
 
     val pulseAnimation by infiniteTransition.animateFloat(
         initialValue = 0.8f,
         targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        )
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(1000, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
     )
 
     Canvas(modifier = modifier.fillMaxSize()) {
         when (visualizationType) {
-            VisualizationType.SPECTRUM -> drawEnhancedSpectrum(
-                audioData,
-                colorScheme,
-                colorPhase,
-                isPlaying,
-                bassIntensity,
-                midIntensity,
-                trebleIntensity
-            )
+            VisualizationType.SPECTRUM ->
+                drawEnhancedSpectrum(
+                    audioData,
+                    colorScheme,
+                    colorPhase,
+                    isPlaying,
+                    bassIntensity,
+                    midIntensity,
+                    trebleIntensity,
+                )
 
-            VisualizationType.WAVEFORM -> drawEnhancedWaveform(
-                audioData, colorScheme, colorPhase, pulseAnimation, isPlaying
-            )
+            VisualizationType.WAVEFORM ->
+                drawEnhancedWaveform(
+                    audioData,
+                    colorScheme,
+                    colorPhase,
+                    pulseAnimation,
+                    isPlaying,
+                )
 
-            VisualizationType.CIRCULAR -> drawEnhancedCircular(
-                audioData,
-                colorScheme,
-                colorPhase,
-                bassIntensity,
-                midIntensity,
-                trebleIntensity,
-                isPlaying
-            )
+            VisualizationType.CIRCULAR ->
+                drawEnhancedCircular(
+                    audioData,
+                    colorScheme,
+                    colorPhase,
+                    bassIntensity,
+                    midIntensity,
+                    trebleIntensity,
+                    isPlaying,
+                )
 
-            VisualizationType.BARS -> drawEnhancedBars(
-                audioData, colorScheme, colorPhase, pulseAnimation, isPlaying
-            )
+            VisualizationType.BARS ->
+                drawEnhancedBars(
+                    audioData,
+                    colorScheme,
+                    colorPhase,
+                    pulseAnimation,
+                    isPlaying,
+                )
 
-            VisualizationType.PARTICLE_SYSTEM -> drawEnhancedParticleSystem(
-                audioData,
-                colorScheme,
-                colorPhase,
-                bassIntensity,
-                midIntensity,
-                trebleIntensity,
-                isPlaying
-            )
+            VisualizationType.PARTICLE_SYSTEM ->
+                drawEnhancedParticleSystem(
+                    audioData,
+                    colorScheme,
+                    colorPhase,
+                    bassIntensity,
+                    midIntensity,
+                    trebleIntensity,
+                    isPlaying,
+                )
         }
     }
 }
@@ -109,7 +124,7 @@ private fun DrawScope.drawEnhancedSpectrum(
     isPlaying: Boolean,
     bassIntensity: Float,
     midIntensity: Float,
-    trebleIntensity: Float
+    trebleIntensity: Float,
 ) {
     if (!isPlaying || audioData.isEmpty()) return
 
@@ -122,40 +137,42 @@ private fun DrawScope.drawEnhancedSpectrum(
         val barHeight = amplitude * maxBarHeight
         val x = index * barWidth
 
-        val intensityMultiplier = when {
-            normalizedIndex < 0.3f -> 0.7f + bassIntensity * 0.8f
-            normalizedIndex < 0.7f -> 0.6f + midIntensity * 0.9f
-            else -> 0.5f + trebleIntensity * 1.0f
-        }
+        val intensityMultiplier =
+            when {
+                normalizedIndex < 0.3f -> 0.7f + bassIntensity * 0.8f
+                normalizedIndex < 0.7f -> 0.6f + midIntensity * 0.9f
+                else -> 0.5f + trebleIntensity * 1.0f
+            }
 
         val finalBarHeight = barHeight * intensityMultiplier
 
-        val color = when (colorScheme) {
-            VisualizationColorScheme.DYNAMIC -> {
-                val hue = (colorPhase + normalizedIndex * 60f) % 360f
-                Color.hsv(hue, 0.8f, 0.7f + amplitude * 0.3f)
-            }
+        val color =
+            when (colorScheme) {
+                VisualizationColorScheme.DYNAMIC -> {
+                    val hue = (colorPhase + normalizedIndex * 60f) % 360f
+                    Color.hsv(hue, 0.8f, 0.7f + amplitude * 0.3f)
+                }
 
-            VisualizationColorScheme.RAINBOW -> {
-                Color.hsv(
-                    hue = (normalizedIndex * 300f + colorPhase * 0.5f) % 360f,
-                    saturation = 0.9f,
-                    value = 0.6f + amplitude * 0.4f
-                )
-            }
+                VisualizationColorScheme.RAINBOW -> {
+                    Color.hsv(
+                        hue = (normalizedIndex * 300f + colorPhase * 0.5f) % 360f,
+                        saturation = 0.9f,
+                        value = 0.6f + amplitude * 0.4f,
+                    )
+                }
 
-            VisualizationColorScheme.MONOCHROME -> {
-                Color.White.copy(alpha = 0.4f + amplitude * 0.6f)
-            }
+                VisualizationColorScheme.MONOCHROME -> {
+                    Color.White.copy(alpha = 0.4f + amplitude * 0.6f)
+                }
 
-            else -> Color.hsv((colorPhase + normalizedIndex * 60f) % 360f, 0.8f, amplitude)
-        }
+                else -> Color.hsv((colorPhase + normalizedIndex * 60f) % 360f, 0.8f, amplitude)
+            }
 
         drawRoundRect(
             color = color,
             topLeft = Offset(x + barWidth * 0.1f, centerY - finalBarHeight / 2),
             size = Size(barWidth * 0.8f, finalBarHeight),
-            cornerRadius = CornerRadius(2.dp.toPx())
+            cornerRadius = CornerRadius(2.dp.toPx()),
         )
 
         if (amplitude > 0.7f) {
@@ -164,7 +181,7 @@ private fun DrawScope.drawEnhancedSpectrum(
                 topLeft = Offset(x, centerY - finalBarHeight / 2 - 4.dp.toPx()),
                 size = Size(barWidth, finalBarHeight + 8.dp.toPx()),
                 cornerRadius = CornerRadius(4.dp.toPx()),
-                blendMode = BlendMode.Screen
+                blendMode = BlendMode.Screen,
             )
         }
     }
@@ -175,7 +192,7 @@ private fun DrawScope.drawEnhancedWaveform(
     colorScheme: VisualizationColorScheme,
     colorPhase: Float,
     pulseAnimation: Float,
-    isPlaying: Boolean
+    isPlaying: Boolean,
 ) {
     if (!isPlaying || audioData.isEmpty()) return
 
@@ -199,35 +216,42 @@ private fun DrawScope.drawEnhancedWaveform(
         }
     }
 
-    val gradient = when (colorScheme) {
-        VisualizationColorScheme.RAINBOW -> Brush.horizontalGradient(
-            colors = listOf(
-                Color.hsv((colorPhase) % 360f, 0.8f, 0.9f),
-                Color.hsv((colorPhase + 60f) % 360f, 0.8f, 0.9f),
-                Color.hsv((colorPhase + 120f) % 360f, 0.8f, 0.9f),
-                Color.hsv((colorPhase + 180f) % 360f, 0.8f, 0.9f)
-            )
-        )
+    val gradient =
+        when (colorScheme) {
+            VisualizationColorScheme.RAINBOW ->
+                Brush.horizontalGradient(
+                    colors =
+                        listOf(
+                            Color.hsv((colorPhase) % 360f, 0.8f, 0.9f),
+                            Color.hsv((colorPhase + 60f) % 360f, 0.8f, 0.9f),
+                            Color.hsv((colorPhase + 120f) % 360f, 0.8f, 0.9f),
+                            Color.hsv((colorPhase + 180f) % 360f, 0.8f, 0.9f),
+                        ),
+                )
 
-        VisualizationColorScheme.DYNAMIC -> Brush.horizontalGradient(
-            colors = listOf(
-                Color.hsv(colorPhase % 360f, 0.9f, 0.8f),
-                Color.hsv((colorPhase + 30f) % 360f, 0.9f, 1.0f)
-            )
-        )
+            VisualizationColorScheme.DYNAMIC ->
+                Brush.horizontalGradient(
+                    colors =
+                        listOf(
+                            Color.hsv(colorPhase % 360f, 0.9f, 0.8f),
+                            Color.hsv((colorPhase + 30f) % 360f, 0.9f, 1.0f),
+                        ),
+                )
 
-        else -> Brush.horizontalGradient(
-            colors = listOf(Color.White, Color.White.copy(alpha = 0.7f))
-        )
-    }
+            else ->
+                Brush.horizontalGradient(
+                    colors = listOf(Color.White, Color.White.copy(alpha = 0.7f)),
+                )
+        }
 
     drawPath(
         path = path,
         brush = gradient,
-        style = Stroke(
-            width = (3.dp.toPx() * pulseAnimation).coerceAtLeast(2.dp.toPx()),
-            cap = StrokeCap.Round
-        )
+        style =
+            Stroke(
+                width = (3.dp.toPx() * pulseAnimation).coerceAtLeast(2.dp.toPx()),
+                cap = StrokeCap.Round,
+            ),
     )
 }
 
@@ -238,7 +262,7 @@ private fun DrawScope.drawEnhancedCircular(
     bassIntensity: Float,
     midIntensity: Float,
     trebleIntensity: Float,
-    isPlaying: Boolean
+    isPlaying: Boolean,
 ) {
     if (!isPlaying || audioData.isEmpty()) return
 
@@ -254,11 +278,12 @@ private fun DrawScope.drawEnhancedCircular(
             val angle = (index * angleStep) * (PI / 180).toFloat()
             val normalizedIndex = index.toFloat() / audioData.size
 
-            val intensityBoost = when {
-                normalizedIndex < 0.33f -> bassIntensity
-                normalizedIndex < 0.66f -> midIntensity
-                else -> trebleIntensity
-            }
+            val intensityBoost =
+                when {
+                    normalizedIndex < 0.33f -> bassIntensity
+                    normalizedIndex < 0.66f -> midIntensity
+                    else -> trebleIntensity
+                }
 
             val radius =
                 baseRadius * ringMultiplier + (amplitude * baseRadius * 1.5f * (1f + intensityBoost))
@@ -269,32 +294,33 @@ private fun DrawScope.drawEnhancedCircular(
             val endX = center.x + (radius * cos(angle))
             val endY = center.y + (radius * sin(angle))
 
-            val color = when (colorScheme) {
-                VisualizationColorScheme.DYNAMIC -> {
-                    Color.hsv(
-                        hue = (colorPhase + normalizedIndex * 90f + ringIndex * 30f) % 360f,
-                        saturation = 0.8f,
-                        value = amplitude * ringAlpha
-                    )
-                }
+            val color =
+                when (colorScheme) {
+                    VisualizationColorScheme.DYNAMIC -> {
+                        Color.hsv(
+                            hue = (colorPhase + normalizedIndex * 90f + ringIndex * 30f) % 360f,
+                            saturation = 0.8f,
+                            value = amplitude * ringAlpha,
+                        )
+                    }
 
-                VisualizationColorScheme.RAINBOW -> {
-                    Color.hsv(
-                        hue = (normalizedIndex * 360f + colorPhase + ringIndex * 60f) % 360f,
-                        saturation = 0.9f,
-                        value = ringAlpha
-                    )
-                }
+                    VisualizationColorScheme.RAINBOW -> {
+                        Color.hsv(
+                            hue = (normalizedIndex * 360f + colorPhase + ringIndex * 60f) % 360f,
+                            saturation = 0.9f,
+                            value = ringAlpha,
+                        )
+                    }
 
-                else -> Color.White.copy(alpha = amplitude * ringAlpha * 0.8f)
-            }
+                    else -> Color.White.copy(alpha = amplitude * ringAlpha * 0.8f)
+                }
 
             drawLine(
                 color = color,
                 start = Offset(startX, startY),
                 end = Offset(endX, endY),
                 strokeWidth = (2.dp.toPx() + amplitude * 3.dp.toPx()) / (ringIndex + 1),
-                cap = StrokeCap.Round
+                cap = StrokeCap.Round,
             )
         }
     }
@@ -305,7 +331,7 @@ private fun DrawScope.drawEnhancedBars(
     colorScheme: VisualizationColorScheme,
     colorPhase: Float,
     pulseAnimation: Float,
-    isPlaying: Boolean
+    isPlaying: Boolean,
 ) {
     if (!isPlaying || audioData.isEmpty()) return
 
@@ -319,50 +345,53 @@ private fun DrawScope.drawEnhancedBars(
         val x = index * (barWidth + spacing) + spacing / 2
         val y = size.height - barHeight
 
-        val color = when (colorScheme) {
-            VisualizationColorScheme.DYNAMIC -> {
-                val baseHue = (colorPhase + normalizedIndex * 120f) % 360f
-                Color.hsv(baseHue, 0.8f, 0.7f + amplitude * 0.3f)
-            }
+        val color =
+            when (colorScheme) {
+                VisualizationColorScheme.DYNAMIC -> {
+                    val baseHue = (colorPhase + normalizedIndex * 120f) % 360f
+                    Color.hsv(baseHue, 0.8f, 0.7f + amplitude * 0.3f)
+                }
 
-            VisualizationColorScheme.RAINBOW -> {
-                Color.hsv(
-                    hue = (normalizedIndex * 280f + colorPhase * 0.8f) % 360f,
-                    saturation = 0.85f,
-                    value = 0.8f + amplitude * 0.2f
-                )
-            }
+                VisualizationColorScheme.RAINBOW -> {
+                    Color.hsv(
+                        hue = (normalizedIndex * 280f + colorPhase * 0.8f) % 360f,
+                        saturation = 0.85f,
+                        value = 0.8f + amplitude * 0.2f,
+                    )
+                }
 
-            VisualizationColorScheme.MONOCHROME -> {
-                Color.White.copy(alpha = 0.5f + amplitude * 0.5f)
-            }
+                VisualizationColorScheme.MONOCHROME -> {
+                    Color.White.copy(alpha = 0.5f + amplitude * 0.5f)
+                }
 
-            else -> Color.hsv((colorPhase + normalizedIndex * 120f) % 360f, 0.8f, amplitude)
-        }
+                else -> Color.hsv((colorPhase + normalizedIndex * 120f) % 360f, 0.8f, amplitude)
+            }
 
         drawRoundRect(
             color = color,
             topLeft = Offset(x, y),
             size = Size(barWidth, barHeight),
-            cornerRadius = CornerRadius(3.dp.toPx())
+            cornerRadius = CornerRadius(3.dp.toPx()),
         )
 
         if (amplitude > 0.3f) {
             val reflectionHeight = barHeight * 0.3f * amplitude
-            val reflectionGradient = Brush.verticalGradient(
-                colors = listOf(
-                    color.copy(alpha = 0.4f),
-                    Color.Transparent
-                ),
-                startY = size.height,
-                endY = size.height + reflectionHeight
-            )
+            val reflectionGradient =
+                Brush.verticalGradient(
+                    colors =
+                        listOf(
+                            color.copy(alpha = 0.4f),
+                            Color.Transparent,
+                        ),
+                    startY = size.height,
+                    endY = size.height + reflectionHeight,
+                )
 
             drawRoundRect(
                 brush = reflectionGradient,
                 topLeft = Offset(x, size.height),
                 size = Size(barWidth, reflectionHeight),
-                cornerRadius = CornerRadius(3.dp.toPx())
+                cornerRadius = CornerRadius(3.dp.toPx()),
             )
         }
     }
@@ -375,7 +404,7 @@ private fun DrawScope.drawEnhancedParticleSystem(
     bassIntensity: Float,
     midIntensity: Float,
     trebleIntensity: Float,
-    isPlaying: Boolean
+    isPlaying: Boolean,
 ) {
     if (!isPlaying || audioData.isEmpty()) return
 
@@ -400,35 +429,36 @@ private fun DrawScope.drawEnhancedParticleSystem(
 
         val particleSize = (amplitude * 8f * (1f + totalIntensity * 0.5f)).coerceIn(1f, 12f)
 
-        val color = when (colorScheme) {
-            VisualizationColorScheme.DYNAMIC -> {
-                Color.hsv(
-                    hue = (colorPhase + normalizedIndex * 180f) % 360f,
-                    saturation = 0.8f + amplitude * 0.2f,
-                    value = amplitude * (0.7f + totalIntensity * 0.3f)
-                )
-            }
+        val color =
+            when (colorScheme) {
+                VisualizationColorScheme.DYNAMIC -> {
+                    Color.hsv(
+                        hue = (colorPhase + normalizedIndex * 180f) % 360f,
+                        saturation = 0.8f + amplitude * 0.2f,
+                        value = amplitude * (0.7f + totalIntensity * 0.3f),
+                    )
+                }
 
-            VisualizationColorScheme.RAINBOW -> {
-                Color.hsv(
-                    hue = (normalizedIndex * 360f + colorPhase) % 360f,
-                    saturation = 1f,
-                    value = amplitude * 0.9f
-                )
-            }
+                VisualizationColorScheme.RAINBOW -> {
+                    Color.hsv(
+                        hue = (normalizedIndex * 360f + colorPhase) % 360f,
+                        saturation = 1f,
+                        value = amplitude * 0.9f,
+                    )
+                }
 
-            VisualizationColorScheme.MONOCHROME -> {
-                Color.White.copy(alpha = amplitude * 0.8f * (0.5f + totalIntensity * 0.5f))
-            }
+                VisualizationColorScheme.MONOCHROME -> {
+                    Color.White.copy(alpha = amplitude * 0.8f * (0.5f + totalIntensity * 0.5f))
+                }
 
-            else -> Color.hsv((colorPhase + normalizedIndex * 180f) % 360f, 0.8f, amplitude)
-        }
+                else -> Color.hsv((colorPhase + normalizedIndex * 180f) % 360f, 0.8f, amplitude)
+            }
 
         drawCircle(
             color = color,
             radius = particleSize,
             center = Offset(x, y),
-            blendMode = BlendMode.Screen
+            blendMode = BlendMode.Screen,
         )
 
         if (amplitude > 0.6f && totalIntensity > 0.5f) {
@@ -440,7 +470,7 @@ private fun DrawScope.drawEnhancedParticleSystem(
                 color = color.copy(alpha = 0.4f),
                 radius = particleSize * 0.6f,
                 center = Offset(trailX, trailY),
-                blendMode = BlendMode.Screen
+                blendMode = BlendMode.Screen,
             )
         }
     }

@@ -2,12 +2,20 @@ package dev.abbasian.exoboost.domain.model
 
 sealed class MediaState {
     object Idle : MediaState()
+
     object Loading : MediaState()
+
     object Ready : MediaState()
+
     object Playing : MediaState()
+
     object Paused : MediaState()
+
     object Ended : MediaState()
-    data class Error(val error: PlayerError) : MediaState()
+
+    data class Error(
+        val error: PlayerError,
+    ) : MediaState()
 }
 
 data class MediaInfo(
@@ -20,5 +28,5 @@ data class MediaInfo(
     val hasVideo: Boolean = true,
     val hasAudio: Boolean = true,
     val availableQualities: List<VideoQuality> = emptyList(),
-    val currentQuality: VideoQuality? = null
+    val currentQuality: VideoQuality? = null,
 )

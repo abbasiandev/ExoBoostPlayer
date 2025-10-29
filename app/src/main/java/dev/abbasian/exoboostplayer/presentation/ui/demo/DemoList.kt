@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AudioFile
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Speed
@@ -48,6 +49,37 @@ import dev.abbasian.exoboostplayer.presentation.DemoItem
 fun DemoList(onDemoSelected: (Demo) -> Unit) {
     val categories = remember {
         listOf(
+            DemoCategory(
+                title = "AI Features",
+                description = "Intelligent media processing with TensorFlow Lite",
+                icon = Icons.Filled.AutoAwesome,
+                demos = listOf(
+                    DemoItem(
+                        title = "AI Thumbnail Generation",
+                        description = "Smart frame selection using machine learning",
+                        features = listOf(
+                            "Quality scoring",
+                            "Scene detection",
+                            "ML-powered selection",
+                            "Best frame picking"
+                        ),
+                        difficulty = DemoDifficulty.INTERMEDIATE,
+                        demo = Demo.AIThumbnails("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
+                    ),
+                    DemoItem(
+                        title = "Video Content Analysis",
+                        description = "Automatic scene detection and key moments",
+                        features = listOf(
+                            "Scene boundaries",
+                            "Key moments",
+                            "Color analysis",
+                            "Content summary"
+                        ),
+                        difficulty = DemoDifficulty.ADVANCED,
+                        demo = Demo.VideoAnalysis("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4")
+                    )
+                )
+            ),
             DemoCategory(
                 title = "Video Playback",
                 description = "Core video player capabilities",
@@ -218,7 +250,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                         demo = Demo.NetworkSimulation("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
                     ),
                 )
-            )
+            ),
         )
     }
 

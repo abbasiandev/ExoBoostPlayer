@@ -48,9 +48,9 @@ import dev.abbasian.exoboost.data.manager.ExoPlayerManager
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.VisualizationType
-import dev.abbasian.exoboost.presentation.ui.component.AudioVisualization
-import dev.abbasian.exoboost.presentation.ui.component.GlassyAudioControls
-import dev.abbasian.exoboost.presentation.ui.component.GlassyContainer
+import dev.abbasian.exoboost.presentation.ui.component.audioVisualization
+import dev.abbasian.exoboost.presentation.ui.component.glassyAudioControls
+import dev.abbasian.exoboost.presentation.ui.component.glassyContainer
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import dev.abbasian.exoboost.util.EnhancedAudioVisualization
 import dev.abbasian.exoboost.util.ExoBoostLogger
@@ -63,7 +63,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(UnstableApi::class)
 @Composable
-fun ExoBoostAudioPlayer(
+fun exoBoostAudioPlayer(
     audioUrl: String,
     modifier: Modifier = Modifier,
     mediaConfig: MediaPlayerConfig = MediaPlayerConfig(),
@@ -79,8 +79,9 @@ fun ExoBoostAudioPlayer(
     onNext: (() -> Unit)? = null,
     onPrevious: (() -> Unit)? = null,
     currentTrackIndex: Int = 0,
-    totalTracks: Int = 1
+    totalTracks: Int = 1,
 ) {
+    @Suppress("ktlint:standard:property-naming")
     val TAG = "ExoBoostAudioPlayer"
     val logger: ExoBoostLogger = koinInject()
 
@@ -169,19 +170,20 @@ fun ExoBoostAudioPlayer(
         if (mediaConfig.audioVisualization.enableVisualization) {
             launch {
                 while (isActive && uiState.mediaInfo.isPlaying) {
-                    val audioSessionId = try {
-                        val player = playerManager.getPlayer()
-                        player?.audioSessionId?.takeIf { it > 0 } ?: 0
-                    } catch (e: Exception) {
-                        0
-                    }
+                    val audioSessionId =
+                        try {
+                            val player = playerManager.getPlayer()
+                            player?.audioSessionId?.takeIf { it > 0 } ?: 0
+                        } catch (e: Exception) {
+                            0
+                        }
 
                     audioVisualizer.updateVisualization(
                         isPlaying = true,
                         audioSessionId = audioSessionId,
                         visualizationType = selectedVisualizationType,
                         sensitivity = mediaConfig.audioVisualization.sensitivity,
-                        smoothingFactor = mediaConfig.audioVisualization.smoothingFactor
+                        smoothingFactor = mediaConfig.audioVisualization.smoothingFactor,
                     )
 
                     // Use longer delay to reduce CPU usage and crash frequency
@@ -198,43 +200,44 @@ fun ExoBoostAudioPlayer(
     }
 
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_PAUSE -> {
-                    if (activity?.isChangingConfigurations != true) {
-                        if (uiState.mediaInfo.isPlaying) {
-                            viewModel.playPause()
+        val observer =
+            LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_PAUSE -> {
+                        if (activity?.isChangingConfigurations != true) {
+                            if (uiState.mediaInfo.isPlaying) {
+                                viewModel.playPause()
+                            }
                         }
                     }
-                }
 
-                Lifecycle.Event.ON_STOP -> {
-                    if (activity?.isChangingConfigurations != true) {
-                        try {
-                            playerManager.pause()
-                            audioVisualizer.release()
-                        } catch (e: Exception) {
-                            logger.error(TAG, "Error pausing", e)
+                    Lifecycle.Event.ON_STOP -> {
+                        if (activity?.isChangingConfigurations != true) {
+                            try {
+                                playerManager.pause()
+                                audioVisualizer.release()
+                            } catch (e: Exception) {
+                                logger.error(TAG, "Error pausing", e)
+                            }
                         }
                     }
-                }
 
-                Lifecycle.Event.ON_DESTROY -> {
-                    if (activity?.isChangingConfigurations != true) {
-                        try {
-                            playerManager.release()
-                            audioVisualizer.release()
-                            isPlayerInitialized = false
-                            playerViewReady = false
-                        } catch (e: Exception) {
-                            logger.error(TAG, "Error releasing", e)
+                    Lifecycle.Event.ON_DESTROY -> {
+                        if (activity?.isChangingConfigurations != true) {
+                            try {
+                                playerManager.release()
+                                audioVisualizer.release()
+                                isPlayerInitialized = false
+                                playerViewReady = false
+                            } catch (e: Exception) {
+                                logger.error(TAG, "Error releasing", e)
+                            }
                         }
                     }
-                }
 
-                else -> {}
+                    else -> {}
+                }
             }
-        }
 
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
@@ -256,17 +259,20 @@ fun ExoBoostAudioPlayer(
     }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Black,
-                        Color(0xFF0A0A0A),
-                        Color.Black
-                    )
-                )
-            )
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(
+                    brush =
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    Color.Black,
+                                    Color(0xFF0A0A0A),
+                                    Color.Black,
+                                ),
+                        ),
+                ),
     ) {
         if (isPlayerInitialized) {
             AndroidView(
@@ -291,19 +297,21 @@ fun ExoBoostAudioPlayer(
                         }
                     }
                 },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(0f)
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .alpha(0f),
             )
         }
 
         if (mediaConfig.audioVisualization.enableVisualization && audioVisualizer.hasData()) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 32.dp, vertical = 64.dp)
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 32.dp, vertical = 64.dp),
             ) {
-                AudioVisualization(
+                audioVisualization(
                     audioData = audioVisualizer.getVisualizationData(),
                     visualizationType = selectedVisualizationType,
                     colorScheme = mediaConfig.audioVisualization.colorScheme,
@@ -311,9 +319,10 @@ fun ExoBoostAudioPlayer(
                     bassIntensity = audioVisualizer.getBassIntensity(),
                     midIntensity = audioVisualizer.getMidIntensity(),
                     trebleIntensity = audioVisualizer.getTrebleIntensity(),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .alpha(if (uiState.mediaInfo.isPlaying) 0.9f else 0.2f)
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .alpha(if (uiState.mediaInfo.isPlaying) 0.9f else 0.2f),
                 )
             }
         }
@@ -321,38 +330,41 @@ fun ExoBoostAudioPlayer(
         onBack?.let {
             IconButton(
                 onClick = it,
-                modifier = Modifier
-                    .padding(16.dp)
-                    .background(
-                        Color.Black.copy(alpha = 0.6f),
-                        shape = CircleShape
-                    )
+                modifier =
+                    Modifier
+                        .padding(16.dp)
+                        .background(
+                            Color.Black.copy(alpha = 0.6f),
+                            shape = CircleShape,
+                        ),
             ) {
                 Icon(
                     Icons.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = Color.White
+                    tint = Color.White,
                 )
             }
         }
 
         // main ui layout
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
             // visualization type selector
             if (mediaConfig.audioVisualization.enableVisualization) {
-                VisualizationTypeSelector(
+                visualizationTypeSelector(
                     currentType = selectedVisualizationType,
                     onTypeSelected = { newType ->
                         selectedVisualizationType = newType
                         onVisualizationTypeChange?.invoke(newType)
                     },
-                    modifier = Modifier
-                        .padding(top = 40.dp, bottom = 24.dp)
+                    modifier =
+                        Modifier
+                            .padding(top = 40.dp, bottom = 24.dp),
                 )
             }
 
@@ -360,7 +372,7 @@ fun ExoBoostAudioPlayer(
             Box(modifier = Modifier.weight(1f))
 
             // bottom section
-            GlassyAudioControls(
+            glassyAudioControls(
                 mediaState = uiState.mediaState,
                 isPlaying = uiState.mediaInfo.isPlaying,
                 onPlayPause = { viewModel.playPause() },
@@ -380,42 +392,42 @@ fun ExoBoostAudioPlayer(
                 onEqualizerChange = { values ->
                     viewModel.applyEqualizerValues(values)
                 },
-                modifier = Modifier.padding(top = 24.dp, bottom = 32.dp)
+                modifier = Modifier.padding(top = 24.dp, bottom = 32.dp),
             )
         }
     }
 }
 
 @Composable
-private fun VisualizationTypeSelector(
+private fun visualizationTypeSelector(
     currentType: VisualizationType,
     onTypeSelected: (VisualizationType) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    GlassyContainer(
+    glassyContainer(
         config = MediaPlayerConfig.GlassyUIConfig(),
-        modifier = modifier
+        modifier = modifier,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         ) {
             Text(
                 text = "Visualization Style",
                 color = Color.White.copy(alpha = 0.9f),
                 fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
             )
 
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(top = 12.dp)
+                modifier = Modifier.padding(top = 12.dp),
             ) {
                 items(VisualizationType.values()) { type ->
-                    VisualizationTypeButton(
+                    visualizationTypeButton(
                         type = type,
                         isSelected = currentType == type,
-                        onClick = { onTypeSelected(type) }
+                        onClick = { onTypeSelected(type) },
                     )
                 }
             }
@@ -424,52 +436,55 @@ private fun VisualizationTypeSelector(
 }
 
 @Composable
-private fun VisualizationTypeButton(
+private fun visualizationTypeButton(
     type: VisualizationType,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
-    val buttonText = when (type) {
-        VisualizationType.SPECTRUM -> "Spectrum"
-        VisualizationType.WAVEFORM -> "Waveform"
-        VisualizationType.CIRCULAR -> "Circular"
-        VisualizationType.BARS -> "Bars"
-        VisualizationType.PARTICLE_SYSTEM -> "Particles"
-    }
+    val buttonText =
+        when (type) {
+            VisualizationType.SPECTRUM -> "Spectrum"
+            VisualizationType.WAVEFORM -> "Waveform"
+            VisualizationType.CIRCULAR -> "Circular"
+            VisualizationType.BARS -> "Bars"
+            VisualizationType.PARTICLE_SYSTEM -> "Particles"
+        }
 
     Box(
-        modifier = Modifier
-            .background(
-                brush = if (isSelected) {
-                    Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.3f),
-                            Color.White.copy(alpha = 0.15f)
-                        )
-                    )
-                } else {
-                    Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.1f),
-                            Color.White.copy(alpha = 0.05f)
-                        )
-                    )
-                },
-                shape = RoundedCornerShape(12.dp)
-            )
-            .border(
-                1.dp,
-                Color.White.copy(alpha = if (isSelected) 0.4f else 0.2f),
-                RoundedCornerShape(12.dp)
-            )
-            .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier =
+            Modifier
+                .background(
+                    brush =
+                        if (isSelected) {
+                            Brush.radialGradient(
+                                colors =
+                                    listOf(
+                                        Color.White.copy(alpha = 0.3f),
+                                        Color.White.copy(alpha = 0.15f),
+                                    ),
+                            )
+                        } else {
+                            Brush.radialGradient(
+                                colors =
+                                    listOf(
+                                        Color.White.copy(alpha = 0.1f),
+                                        Color.White.copy(alpha = 0.05f),
+                                    ),
+                            )
+                        },
+                    shape = RoundedCornerShape(12.dp),
+                ).border(
+                    1.dp,
+                    Color.White.copy(alpha = if (isSelected) 0.4f else 0.2f),
+                    RoundedCornerShape(12.dp),
+                ).clickable { onClick() }
+                .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         Text(
             text = buttonText,
             color = Color.White.copy(alpha = if (isSelected) 1f else 0.7f),
             fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
+            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
         )
     }
 }

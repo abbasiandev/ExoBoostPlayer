@@ -43,7 +43,7 @@ import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 
 @Composable
-fun GlassyAudioControls(
+fun glassyAudioControls(
     mediaState: MediaState,
     isPlaying: Boolean,
     onPlayPause: () -> Unit,
@@ -62,33 +62,34 @@ fun GlassyAudioControls(
     onPrevious: (() -> Unit)? = null,
     showEqualizer: Boolean = false,
     onEqualizerChange: ((List<Float>) -> Unit)? = null,
-    onEqualizerToggle: (() -> Unit)? = null
+    onEqualizerToggle: (() -> Unit)? = null,
 ) {
     var showVolumeSlider by remember { mutableStateOf(false) }
     var currentVolume by remember { mutableFloatStateOf(volume) }
 
-    GlassyContainer(
+    glassyContainer(
         config = config,
-        modifier = modifier
+        modifier = modifier,
     ) {
         Box(modifier = Modifier.fillMaxHeight()) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(20.dp)
-                    .align(Alignment.Center)
+                modifier =
+                    Modifier
+                        .fillMaxHeight()
+                        .padding(20.dp)
+                        .align(Alignment.Center),
             ) {
                 when (mediaState) {
                     is MediaState.Loading -> {
-                        GlassyLoadingIndicator()
+                        glassyLoadingIndicator()
                     }
 
                     is MediaState.Error -> {
-                        ErrorDisplay(
+                        errorDisplay(
                             error = mediaState.error,
-                            onRetry = onRetry
+                            onRetry = onRetry,
                         )
                     }
 
@@ -97,7 +98,7 @@ fun GlassyAudioControls(
                         if (trackTitle != null || artistName != null) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 trackTitle?.let { title ->
                                     Text(
@@ -105,7 +106,7 @@ fun GlassyAudioControls(
                                         color = Color.White,
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
-                                        maxLines = 1
+                                        maxLines = 1,
                                     )
                                 }
                                 artistName?.let { artist ->
@@ -113,7 +114,7 @@ fun GlassyAudioControls(
                                         text = artist,
                                         color = Color.White.copy(alpha = 0.8f),
                                         fontSize = 14.sp,
-                                        maxLines = 1
+                                        maxLines = 1,
                                     )
                                 }
                             }
@@ -122,53 +123,53 @@ fun GlassyAudioControls(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             // seek bar
-                            GlassySeekBar(
+                            glassySeekBar(
                                 currentPosition = currentPosition,
                                 bufferedPosition = bufferedPosition,
                                 duration = duration,
                                 onSeek = onSeek,
                                 modifier = Modifier.fillMaxWidth(),
-                                config = config
+                                config = config,
                             )
 
                             // Main Control Buttons Row
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceEvenly,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 // previous
                                 onPrevious?.let { previous ->
-                                    GlassyControlButton(
+                                    glassyControlButton(
                                         onClick = previous,
                                         icon = Icons.Filled.SkipPrevious,
                                         iconSize = 24.dp,
                                         buttonSize = 48.dp,
-                                        description = "Previous"
+                                        description = "Previous",
                                     )
                                 } ?: Box(modifier = Modifier.size(48.dp))
 
                                 // play/pause
-                                GlassyControlButton(
+                                glassyControlButton(
                                     onClick = onPlayPause,
                                     icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                                     iconSize = 32.dp,
                                     buttonSize = 64.dp,
                                     description = if (isPlaying) "Pause" else "Play",
-                                    isPrimary = true
+                                    isPrimary = true,
                                 )
 
                                 // next
                                 onNext?.let { next ->
-                                    GlassyControlButton(
+                                    glassyControlButton(
                                         onClick = next,
                                         icon = Icons.Filled.SkipNext,
                                         iconSize = 24.dp,
                                         buttonSize = 48.dp,
-                                        description = "Next"
+                                        description = "Next",
                                     )
                                 } ?: Box(modifier = Modifier.size(48.dp))
                             }
@@ -177,28 +178,29 @@ fun GlassyAudioControls(
                         // volume + equalizer
                         Column(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 onVolumeChange?.let { volumeChange ->
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clickable {
-                                                showVolumeSlider = !showVolumeSlider
-                                            }
+                                        modifier =
+                                            Modifier
+                                                .weight(1f)
+                                                .clickable {
+                                                    showVolumeSlider = !showVolumeSlider
+                                                },
                                     ) {
                                         Icon(
                                             Icons.Filled.VolumeUp,
                                             contentDescription = "Volume",
                                             tint = Color.White.copy(alpha = 0.8f),
-                                            modifier = Modifier.size(20.dp)
+                                            modifier = Modifier.size(20.dp),
                                         )
 
                                         if (showVolumeSlider) {
@@ -210,31 +212,32 @@ fun GlassyAudioControls(
                                                 },
                                                 valueRange = 0f..1f,
                                                 modifier = Modifier.weight(1f),
-                                                colors = SliderDefaults.colors(
-                                                    thumbColor = Color.White,
-                                                    activeTrackColor = Color.White.copy(alpha = 0.8f),
-                                                    inactiveTrackColor = Color.White.copy(alpha = 0.3f)
-                                                )
+                                                colors =
+                                                    SliderDefaults.colors(
+                                                        thumbColor = Color.White,
+                                                        activeTrackColor = Color.White.copy(alpha = 0.8f),
+                                                        inactiveTrackColor = Color.White.copy(alpha = 0.3f),
+                                                    ),
                                             )
                                         } else {
                                             Text(
                                                 text = "${(currentVolume * 100).toInt()}%",
                                                 color = Color.White.copy(alpha = 0.8f),
-                                                fontSize = 14.sp
+                                                fontSize = 14.sp,
                                             )
                                         }
                                     }
                                 } ?: Spacer(modifier = Modifier.weight(1f))
 
                                 onEqualizerToggle?.let { equalizerToggle ->
-                                    GlassyControlButton(
+                                    glassyControlButton(
                                         onClick = equalizerToggle,
                                         icon = Icons.Filled.Equalizer,
                                         iconSize = 20.dp,
                                         buttonSize = 40.dp,
                                         description = if (showEqualizer) "Hide Equalizer" else "Show Equalizer",
                                         isPrimary = showEqualizer,
-                                        modifier = Modifier.padding(start = 8.dp)
+                                        modifier = Modifier.padding(start = 8.dp),
                                     )
                                 }
                             }
@@ -245,13 +248,13 @@ fun GlassyAudioControls(
 
             // positioned absolutely on top
             if (showEqualizer) {
-                GlassyEqualizer(
-                    isPlaying = isPlaying,
+                glassyEqualizer(
                     config = config,
                     onEqualizerChange = onEqualizerChange,
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .align(Alignment.Center)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(0.9f)
+                            .align(Alignment.Center),
                 )
             }
         }
@@ -259,43 +262,47 @@ fun GlassyAudioControls(
 }
 
 @Composable
-fun GlassyControlButton(
+fun glassyControlButton(
     onClick: () -> Unit,
     icon: ImageVector,
     iconSize: Dp,
     buttonSize: Dp,
     description: String,
     isPrimary: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val alpha = if (isPrimary) 0.4f else 0.3f
     val borderAlpha = if (isPrimary) 0.6f else 0.4f
 
     Box(
-        modifier = modifier
-            .size(buttonSize)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = if (isPrimary) 0.25f else 0.2f),
-                        Color.White.copy(alpha = if (isPrimary) 0.1f else 0.05f)
-                    )
-                ),
-                shape = CircleShape
-            )
-            .border(
-                width = 1.dp,
-                color = Color.White.copy(alpha = borderAlpha),
-                shape = CircleShape
-            )
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
+        modifier =
+            @Suppress("ktlint:standard:chain-method-continuation")
+            modifier
+                .size(buttonSize)
+                .background(
+                    brush =
+                        Brush.radialGradient(
+                            colors =
+                                listOf(
+                                    Color.White.copy(alpha = if (isPrimary) 0.25f else 0.2f),
+                                    Color.White.copy(alpha = if (isPrimary) 0.1f else 0.05f),
+                                ),
+                        ),
+                    shape = CircleShape,
+                )
+                .border(
+                    width = 1.dp,
+                    color = Color.White.copy(alpha = borderAlpha),
+                    shape = CircleShape,
+                )
+                .clickable { onClick() },
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = description,
             modifier = Modifier.size(iconSize),
-            tint = Color.White
+            tint = Color.White,
         )
     }
 }

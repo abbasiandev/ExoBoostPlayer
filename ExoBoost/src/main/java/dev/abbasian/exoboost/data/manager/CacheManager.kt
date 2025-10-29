@@ -12,9 +12,8 @@ import java.io.File
 @UnstableApi
 class CacheManager(
     private val context: Context,
-    private val logger: ExoBoostLogger
+    private val logger: ExoBoostLogger,
 ) {
-
     companion object {
         private const val TAG = "CacheManager"
     }
@@ -22,33 +21,31 @@ class CacheManager(
     private val cacheSize = 100L * 1024 * 1024 // 100MB
     private val cacheDir = File(context.cacheDir, "video_cache")
 
-    private val _internalCache: Cache by lazy {
+    private val internalCache: Cache by lazy {
         SimpleCache(
             cacheDir,
             LeastRecentlyUsedCacheEvictor(cacheSize),
-            StandaloneDatabaseProvider(context)
+            StandaloneDatabaseProvider(context),
         )
     }
 
-    fun getCache(): Cache = _internalCache
+    fun getCache(): Cache = internalCache
 
     fun clearCache() {
         try {
-            _internalCache.keys.forEach { key ->
-                _internalCache.removeResource(key)
+            internalCache.keys.forEach { key ->
+                internalCache.removeResource(key)
             }
         } catch (e: Exception) {
             logger.error(TAG, "Error clearing cache", e)
         }
     }
 
-    fun getCacheSize(): Long {
-        return _internalCache.cacheSpace
-    }
+    fun getCacheSize(): Long = internalCache.cacheSpace
 
     fun release() {
         try {
-            _internalCache.release()
+            internalCache.release()
         } catch (e: Exception) {
             logger.error(TAG, "Error releasing cache", e)
         }

@@ -6,6 +6,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.jetbrain.dokka)
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.jacoco)
 }
 
 android {
@@ -14,9 +17,16 @@ android {
 
     defaultConfig {
         minSdk = 24
-        targetSdk = 36
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    testOptions {
+        targetSdk = 36
+    }
+
+    lint {
+        targetSdk = 36
     }
 
     buildTypes {
@@ -24,8 +34,12 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
+        }
+        debug {
+            enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
         }
     }
 
@@ -41,6 +55,7 @@ android {
     buildFeatures {
         buildConfig = true
         compose = true
+        mlModelBinding = true
     }
 
     packaging {
@@ -81,6 +96,10 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.gson)
 
+    implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.support)
+    implementation(libs.tensorflow.lite.gpu)
+
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
@@ -98,7 +117,9 @@ mavenPublishing {
 
     pom {
         name.set("ExoBoost")
-        description.set("Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, and adaptive quality switching for robust media playback")
+        description.set(
+            "Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, and adaptive quality switching",
+        )
         inceptionYear.set("2025")
         url.set("https://github.com/abbasiandev/exoboost")
 
@@ -127,6 +148,96 @@ mavenPublishing {
     }
 }
 
+ktlint {
+    version.set("1.0.1")
+    android.set(true)
+    outputColorName.set("RED")
+    ignoreFailures.set(false)
+    filter {
+        exclude("**/generated/**")
+        include("**/kotlin/**")
+    }
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    baseline = file("$rootDir/config/detekt/baseline.xml")
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    jvmTarget = "17"
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+        txt.required.set(true)
+        sarif.required.set(true)
+        md.required.set(true)
+    }
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
+    jvmTarget = "17"
+}
+
+tasks.register<io.gitlab.arturbosch.detekt.Detekt>("detektAutoCorrect") {
+    description = "Runs detekt with auto-correct enabled"
+    autoCorrect = true
+    setSource(files("src/main/java", "src/main/kotlin"))
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    buildUponDefaultConfig = true
+    jvmTarget = "17"
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+
+    val fileFilter =
+        listOf(
+            "**/R.class",
+            "**/R$*.class",
+            "**/BuildConfig.*",
+            "**/Manifest*.*",
+            "**/*Test*.*",
+            "android/**/*.*",
+            "**/data/models/**",
+            "**/di/**",
+            "**/*\$Lambda$*.*",
+            "**/*\$inlined$*.*",
+            "**/*Companion.*",
+            "**/*_Factory.*",
+            "**/*_MembersInjector.*",
+        )
+
+    val javaTree =
+        fileTree("${layout.buildDirectory.get().asFile}/intermediates/javac/debug") {
+            exclude(fileFilter)
+        }
+    val kotlinTree =
+        fileTree("${layout.buildDirectory.get().asFile}/tmp/kotlin-classes/debug") {
+            exclude(fileFilter)
+        }
+
+    classDirectories.setFrom(files(javaTree, kotlinTree))
+    sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+    executionData.setFrom(
+        fileTree(layout.buildDirectory.get().asFile) {
+            include("jacoco/testDebugUnitTest.exec")
+        },
+    )
+}
+
 tasks.withType<DokkaTask>().configureEach {
     dokkaSourceSets {
         configureEach {
@@ -140,4 +251,16 @@ val javadocJar by tasks.registering(Jar::class) {
     dependsOn(dokkaHtml)
     archiveClassifier.set("javadoc")
     from(dokkaHtml.outputDirectory)
+}
+
+tasks.register("qualityCheck") {
+    dependsOn("ktlintCheck", "detekt", "jacocoTestReport")
+    group = "verification"
+    description = "Run all code quality checks"
+}
+
+tasks.register("formatCode") {
+    dependsOn("ktlintFormat", "detektAutoCorrect")
+    group = "formatting"
+    description = "Auto-format code using ktlint and detekt"
 }

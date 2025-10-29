@@ -46,6 +46,9 @@ fun MainScreen() {
             ) { currentDemo = null }
 
             is Demo.AudioPlaylist -> PlaylistDemo() { currentDemo = null }
+
+            is Demo.AIThumbnails -> AIThumbnailDemo(demo.url) { currentDemo = null }
+            is Demo.VideoAnalysis -> VideoAnalysisDemo(demo.url) { currentDemo = null }
         }
 
     } ?: DemoList(onDemoSelected = { currentDemo = it })

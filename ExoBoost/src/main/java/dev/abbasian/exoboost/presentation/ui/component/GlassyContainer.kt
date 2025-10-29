@@ -19,40 +19,41 @@ import androidx.compose.ui.unit.dp
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 
 @Composable
-fun GlassyContainer(
+fun glassyContainer(
     modifier: Modifier = Modifier,
     config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig(),
     shape: Shape = RoundedCornerShape(16.dp),
     contentPadding: Dp = 16.dp,
     alignment: Alignment = Alignment.Center,
-    content: @Composable BoxScope.() -> Unit
+    content: @Composable BoxScope.() -> Unit,
 ) {
     Box(
-        modifier = modifier
-            .clip(shape)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = config.backgroundOpacity),
-                        Color.White.copy(alpha = config.backgroundOpacity * 0.5f)
-                    )
+        modifier =
+            modifier
+                .clip(shape)
+                .background(
+                    brush =
+                        Brush.radialGradient(
+                            colors =
+                                listOf(
+                                    Color.White.copy(alpha = config.backgroundOpacity),
+                                    Color.White.copy(alpha = config.backgroundOpacity * 0.5f),
+                                ),
+                        ),
+                ).border(
+                    width = 0.5.dp,
+                    color = Color.White.copy(alpha = config.borderOpacity),
+                    shape = shape,
                 )
-            )
-            .border(
-                width = 0.5.dp,
-                color = Color.White.copy(alpha = config.borderOpacity),
-                shape = shape
-            )
-            // prevent back layer clickable
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        awaitPointerEvent()
+                // prevent back layer clickable
+                .pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            awaitPointerEvent()
+                        }
                     }
-                }
-            }
-            .padding(contentPadding),
-        contentAlignment = alignment
+                }.padding(contentPadding),
+        contentAlignment = alignment,
     ) {
         content()
     }

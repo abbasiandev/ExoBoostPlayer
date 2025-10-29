@@ -33,7 +33,7 @@ import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.util.formatTime
 
 @Composable
-fun GlassySeekBar(
+fun glassySeekBar(
     currentPosition: Long,
     bufferedPosition: Long,
     duration: Long,
@@ -41,7 +41,7 @@ fun GlassySeekBar(
     onSeekStart: () -> Unit = {},
     onSeekEnd: () -> Unit = {},
     modifier: Modifier = Modifier,
-    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig()
+    config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig(),
 ) {
     var isSeeking by remember { mutableStateOf(false) }
     var sliderPosition by remember { mutableFloatStateOf(0f) }
@@ -55,26 +55,28 @@ fun GlassySeekBar(
         }
     }
 
-    GlassyContainer(
+    glassyContainer(
         modifier = modifier,
         config = config,
-        contentPadding = 16.dp
+        contentPadding = 16.dp,
     ) {
         Column(
-            modifier = modifier.padding(16.dp)
+            modifier = modifier.padding(16.dp),
         ) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(32.dp),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(32.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 // Integrated glassy buffer and seek track
                 Canvas(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp))
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
                 ) {
                     val canvasWidth = size.width
                     val canvasHeight = size.height
@@ -84,7 +86,9 @@ fun GlassySeekBar(
                         color = Color.White.copy(alpha = 0.1f),
                         topLeft = Offset.Zero,
                         size = Size(canvasWidth, canvasHeight),
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+                        cornerRadius =
+                            androidx.compose.ui.geometry
+                                .CornerRadius(4.dp.toPx()),
                     )
 
                     // Buffered portion
@@ -93,7 +97,9 @@ fun GlassySeekBar(
                             color = Color(0xFF4C8AFF).copy(alpha = 0.3f),
                             topLeft = Offset.Zero,
                             size = Size(canvasWidth * bufferedProgress, canvasHeight),
-                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+                            cornerRadius =
+                                androidx.compose.ui.geometry
+                                    .CornerRadius(4.dp.toPx()),
                         )
                     }
 
@@ -103,7 +109,9 @@ fun GlassySeekBar(
                             color = Color(0xFF4C8AFF).copy(alpha = 0.8f),
                             topLeft = Offset.Zero,
                             size = Size(canvasWidth * progress, canvasHeight),
-                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+                            cornerRadius =
+                                androidx.compose.ui.geometry
+                                    .CornerRadius(4.dp.toPx()),
                         )
                     }
 
@@ -113,7 +121,9 @@ fun GlassySeekBar(
                             color = Color.White.copy(alpha = 0.2f),
                             topLeft = Offset(0f, 0f),
                             size = Size(canvasWidth * progress, canvasHeight * 0.3f),
-                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+                            cornerRadius =
+                                androidx.compose.ui.geometry
+                                    .CornerRadius(4.dp.toPx()),
                         )
                     }
                 }
@@ -134,12 +144,13 @@ fun GlassySeekBar(
                         isSeeking = false
                         onSeekEnd()
                     },
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color(0xFF4C8AFF).copy(alpha = 0.9f),
-                        activeTrackColor = Color.Transparent,
-                        inactiveTrackColor = Color.Transparent
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                    colors =
+                        SliderDefaults.colors(
+                            thumbColor = Color(0xFF4C8AFF).copy(alpha = 0.9f),
+                            activeTrackColor = Color.Transparent,
+                            inactiveTrackColor = Color.Transparent,
+                        ),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
 
@@ -149,14 +160,18 @@ fun GlassySeekBar(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = if (isSeeking) (sliderPosition * duration).toLong().formatTime()
-                    else currentPosition.formatTime(),
+                    text =
+                        if (isSeeking) {
+                            (sliderPosition * duration).toLong().formatTime()
+                        } else {
+                            currentPosition.formatTime()
+                        },
                     color = Color.White.copy(alpha = 0.9f),
                     fontSize = 13.sp,
-                    style = MaterialTheme.typography.labelMedium
+                    style = MaterialTheme.typography.labelMedium,
                 )
 
                 if (duration > 0) {
@@ -164,7 +179,7 @@ fun GlassySeekBar(
                         text = duration.formatTime(),
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 13.sp,
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.labelMedium,
                     )
                 }
             }

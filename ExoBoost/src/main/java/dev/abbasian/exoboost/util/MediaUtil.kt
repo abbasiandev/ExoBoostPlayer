@@ -1,21 +1,46 @@
 package dev.abbasian.exoboost.util
 
 object MediaUtil {
+    private val audioExtensions =
+        setOf(
+            "mp3",
+            "aac",
+            "flac",
+            "wav",
+            "ogg",
+            "m4a",
+            "opus",
+            "wma",
+        )
 
-    private val audioExtensions = setOf(
-        "mp3", "aac", "flac", "wav", "ogg", "m4a", "opus", "wma"
-    )
+    private val videoExtensions =
+        setOf(
+            "mp4",
+            "mkv",
+            "avi",
+            "mov",
+            "wmv",
+            "flv",
+            "webm",
+            "m4v",
+        )
 
-    private val videoExtensions = setOf(
-        "mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v"
-    )
+    private val audioMimeTypes =
+        setOf(
+            "audio/mpeg",
+            "audio/aac",
+            "audio/flac",
+            "audio/wav",
+            "audio/ogg",
+            "audio/mp4",
+            "audio/opus",
+            "audio/x-ms-wma",
+        )
 
-    private val audioMimeTypes = setOf(
-        "audio/mpeg", "audio/aac", "audio/flac", "audio/wav",
-        "audio/ogg", "audio/mp4", "audio/opus", "audio/x-ms-wma"
-    )
-
-    fun getMediaType(url: String, mimeType: String? = null): MediaType {
+    fun getMediaType(
+        url: String,
+        mimeType: String? = null,
+    ): MediaType {
         mimeType?.let { mime ->
             when {
                 mime.startsWith("audio/") -> return MediaType.AUDIO
@@ -35,33 +60,34 @@ object MediaUtil {
     fun isHLSStream(url: String): Boolean {
         val lowerUrl = url.lowercase()
         return lowerUrl.contains(".m3u8") ||
-                lowerUrl.contains("application/x-mpegurl") ||
-                lowerUrl.contains("application/vnd.apple.mpegurl")
+            lowerUrl.contains("application/x-mpegurl") ||
+            lowerUrl.contains("application/vnd.apple.mpegurl")
     }
 
     fun isMPDStream(url: String): Boolean {
         val lowerUrl = url.lowercase()
         return lowerUrl.contains(".mpd") ||
-                lowerUrl.contains("application/dash+xml")
+            lowerUrl.contains("application/dash+xml")
     }
 
-    fun isAdaptiveStream(url: String): Boolean {
-        return isHLSStream(url) || isMPDStream(url)
-    }
+    fun isAdaptiveStream(url: String): Boolean = isHLSStream(url) || isMPDStream(url)
 
-    fun getStreamType(url: String): StreamType {
-        return when {
+    fun getStreamType(url: String): StreamType =
+        when {
             isHLSStream(url) -> StreamType.HLS
             isMPDStream(url) -> StreamType.DASH
             else -> StreamType.PROGRESSIVE
         }
-    }
 }
 
 enum class StreamType {
-    HLS, DASH, PROGRESSIVE
+    HLS,
+    DASH,
+    PROGRESSIVE,
 }
 
 enum class MediaType {
-    AUDIO, VIDEO, UNKNOWN
+    AUDIO,
+    VIDEO,
+    UNKNOWN,
 }

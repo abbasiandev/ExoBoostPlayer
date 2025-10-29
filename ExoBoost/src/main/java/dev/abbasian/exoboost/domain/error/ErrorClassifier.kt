@@ -15,7 +15,7 @@ import javax.net.ssl.SSLException
 @UnstableApi
 class ErrorClassifier(
     private val context: Context,
-    private val logger: ExoBoostLogger
+    private val logger: ExoBoostLogger,
 ) {
     companion object {
         private const val TAG = "ErrorClassifier"
@@ -28,10 +28,11 @@ class ErrorClassifier(
             is PlaybackException -> classifyPlaybackException(exception)
             is IOException -> classifyIOException(exception)
             is SSLException -> classifySSLException(exception)
-            else -> PlayerError.UnknownError(
-                message = exception.message ?: context.getString(R.string.error_msg_unknown),
-                cause = exception
-            )
+            else ->
+                PlayerError.UnknownError(
+                    message = exception.message ?: context.getString(R.string.error_msg_unknown),
+                    cause = exception,
+                )
         }
     }
 
@@ -43,7 +44,7 @@ class ErrorClassifier(
                     message = getNetworkErrorMessage(networkType),
                     cause = exception,
                     retryable = true,
-                    networkErrorType = networkType
+                    networkErrorType = networkType,
                 )
             }
 
@@ -52,7 +53,7 @@ class ErrorClassifier(
                     message = context.getString(R.string.error_msg_network_timeout),
                     cause = exception,
                     retryable = true,
-                    networkErrorType = PlayerError.NetworkErrorType.CONNECTION_TIMEOUT
+                    networkErrorType = PlayerError.NetworkErrorType.CONNECTION_TIMEOUT,
                 )
             }
 
@@ -64,17 +65,18 @@ class ErrorClassifier(
                         message = context.getString(R.string.error_msg_cors),
                         sourceUrl = httpException?.dataSpec?.uri?.toString(),
                         cause = exception,
-                        sourceErrorType = PlayerError.SourceErrorType.CORS_ERROR
+                        sourceErrorType = PlayerError.SourceErrorType.CORS_ERROR,
                     )
                 }
 
                 PlayerError.LiveStreamError(
-                    message = context.getString(
-                        R.string.error_msg_http,
-                        httpException?.responseCode?.toString() ?: "Unknown"
-                    ),
+                    message =
+                        context.getString(
+                            R.string.error_msg_http,
+                            httpException?.responseCode?.toString() ?: "Unknown",
+                        ),
                     httpCode = httpException?.responseCode,
-                    cause = exception
+                    cause = exception,
                 )
             }
 
@@ -82,7 +84,7 @@ class ErrorClassifier(
                 PlayerError.SourceError(
                     message = context.getString(R.string.error_msg_file_not_found),
                     cause = exception,
-                    sourceErrorType = PlayerError.SourceErrorType.FILE_NOT_FOUND
+                    sourceErrorType = PlayerError.SourceErrorType.FILE_NOT_FOUND,
                 )
             }
 
@@ -91,7 +93,7 @@ class ErrorClassifier(
                     message = context.getString(R.string.error_msg_decoder_init),
                     exoPlayerErrorCode = 4001,
                     cause = exception,
-                    codecErrorType = PlayerError.CodecErrorType.DECODER_INIT_FAILED
+                    codecErrorType = PlayerError.CodecErrorType.DECODER_INIT_FAILED,
                 )
             }
 
@@ -99,7 +101,7 @@ class ErrorClassifier(
                 PlayerError.CodecError(
                     message = context.getString(R.string.error_msg_decoding_failed),
                     cause = exception,
-                    codecErrorType = PlayerError.CodecErrorType.DECODING_FAILED
+                    codecErrorType = PlayerError.CodecErrorType.DECODING_FAILED,
                 )
             }
 
@@ -107,7 +109,7 @@ class ErrorClassifier(
                 PlayerError.CodecError(
                     message = context.getString(R.string.error_msg_codec_unsupported),
                     cause = exception,
-                    codecErrorType = PlayerError.CodecErrorType.FORMAT_UNSUPPORTED
+                    codecErrorType = PlayerError.CodecErrorType.FORMAT_UNSUPPORTED,
                 )
             }
 
@@ -115,7 +117,7 @@ class ErrorClassifier(
                 PlayerError.SourceError(
                     message = context.getString(R.string.error_msg_file_corrupted),
                     cause = exception,
-                    sourceErrorType = PlayerError.SourceErrorType.FILE_CORRUPTED
+                    sourceErrorType = PlayerError.SourceErrorType.FILE_CORRUPTED,
                 )
             }
 
@@ -123,7 +125,7 @@ class ErrorClassifier(
                 PlayerError.SourceError(
                     message = context.getString(R.string.error_msg_container_unsupported),
                     cause = exception,
-                    sourceErrorType = PlayerError.SourceErrorType.UNSUPPORTED_FORMAT
+                    sourceErrorType = PlayerError.SourceErrorType.UNSUPPORTED_FORMAT,
                 )
             }
 
@@ -131,16 +133,17 @@ class ErrorClassifier(
                 PlayerError.SourceError(
                     message = context.getString(R.string.error_msg_manifest_malformed),
                     cause = exception,
-                    sourceErrorType = PlayerError.SourceErrorType.MANIFEST_MALFORMED
+                    sourceErrorType = PlayerError.SourceErrorType.MANIFEST_MALFORMED,
                 )
             }
 
             PlaybackException.ERROR_CODE_DRM_SYSTEM_ERROR,
-            PlaybackException.ERROR_CODE_DRM_LICENSE_ACQUISITION_FAILED -> {
+            PlaybackException.ERROR_CODE_DRM_LICENSE_ACQUISITION_FAILED,
+            -> {
                 PlayerError.DrmError(
                     message = context.getString(R.string.error_msg_drm_license),
                     cause = exception,
-                    drmErrorType = PlayerError.DrmErrorType.LICENSE_ACQUISITION_FAILED
+                    drmErrorType = PlayerError.DrmErrorType.LICENSE_ACQUISITION_FAILED,
                 )
             }
 
@@ -148,7 +151,7 @@ class ErrorClassifier(
                 PlayerError.DrmError(
                     message = context.getString(R.string.error_msg_drm_provisioning),
                     cause = exception,
-                    drmErrorType = PlayerError.DrmErrorType.PROVISIONING_FAILED
+                    drmErrorType = PlayerError.DrmErrorType.PROVISIONING_FAILED,
                 )
             }
 
@@ -156,14 +159,14 @@ class ErrorClassifier(
                 PlayerError.DrmError(
                     message = context.getString(R.string.error_msg_drm_device_revoked),
                     cause = exception,
-                    drmErrorType = PlayerError.DrmErrorType.DEVICE_REVOKED
+                    drmErrorType = PlayerError.DrmErrorType.DEVICE_REVOKED,
                 )
             }
 
             PlaybackException.ERROR_CODE_TIMEOUT -> {
                 PlayerError.TimeoutError(
                     message = context.getString(R.string.error_msg_timeout),
-                    cause = exception
+                    cause = exception,
                 )
             }
 
@@ -172,64 +175,69 @@ class ErrorClassifier(
                     return classifyError(cause)
                 } ?: PlayerError.UnknownError(
                     message = exception.message ?: context.getString(R.string.error_msg_playback),
-                    cause = exception
+                    cause = exception,
                 )
             }
         }
     }
 
-    private fun classifyIOException(exception: IOException): PlayerError {
-        return when (exception) {
-            is UnknownHostException -> PlayerError.NetworkError(
-                message = context.getString(R.string.error_msg_dns),
-                cause = exception,
-                retryable = true,
-                networkErrorType = PlayerError.NetworkErrorType.DNS_RESOLUTION_FAILED
-            )
+    private fun classifyIOException(exception: IOException): PlayerError =
+        when (exception) {
+            is UnknownHostException ->
+                PlayerError.NetworkError(
+                    message = context.getString(R.string.error_msg_dns),
+                    cause = exception,
+                    retryable = true,
+                    networkErrorType = PlayerError.NetworkErrorType.DNS_RESOLUTION_FAILED,
+                )
 
-            is SocketTimeoutException -> PlayerError.TimeoutError(
-                message = context.getString(R.string.error_msg_connection_timeout),
-                cause = exception
-            )
+            is SocketTimeoutException ->
+                PlayerError.TimeoutError(
+                    message = context.getString(R.string.error_msg_connection_timeout),
+                    cause = exception,
+                )
 
             is SSLException -> classifySSLException(exception)
 
             else -> {
-                val errorType = when {
-                    exception.message?.contains("ECONNREFUSED", ignoreCase = true) == true ->
-                        PlayerError.NetworkErrorType.CONNECTION_REFUSED
+                val errorType =
+                    when {
+                        exception.message?.contains("ECONNREFUSED", ignoreCase = true) == true ->
+                            PlayerError.NetworkErrorType.CONNECTION_REFUSED
 
-                    exception.message?.contains("ECONNRESET", ignoreCase = true) == true ->
-                        PlayerError.NetworkErrorType.CONNECTION_RESET
+                        exception.message?.contains("ECONNRESET", ignoreCase = true) == true ->
+                            PlayerError.NetworkErrorType.CONNECTION_RESET
 
-                    else -> PlayerError.NetworkErrorType.GENERIC
-                }
+                        else -> PlayerError.NetworkErrorType.GENERIC
+                    }
 
                 PlayerError.NetworkError(
-                    message = exception.message ?: context.getString(R.string.error_msg_network_generic),
+                    message =
+                        exception.message
+                            ?: context.getString(R.string.error_msg_network_generic),
                     cause = exception,
                     retryable = true,
-                    networkErrorType = errorType
+                    networkErrorType = errorType,
                 )
             }
         }
-    }
 
     private fun classifySSLException(exception: SSLException): PlayerError {
-        val message = when {
-            exception.message?.contains("certificate", ignoreCase = true) == true ->
-                context.getString(R.string.error_msg_ssl_certificate)
+        val message =
+            when {
+                exception.message?.contains("certificate", ignoreCase = true) == true ->
+                    context.getString(R.string.error_msg_ssl_certificate)
 
-            exception.message?.contains("handshake", ignoreCase = true) == true ->
-                context.getString(R.string.error_msg_ssl_handshake)
+                exception.message?.contains("handshake", ignoreCase = true) == true ->
+                    context.getString(R.string.error_msg_ssl_handshake)
 
-            else -> context.getString(R.string.error_msg_ssl_generic, exception.message ?: "")
-        }
+                else -> context.getString(R.string.error_msg_ssl_generic, exception.message ?: "")
+            }
 
         return PlayerError.SSLError(
             message = message,
             certificateInfo = extractCertificateInfo(exception),
-            cause = exception
+            cause = exception,
         )
     }
 
@@ -254,8 +262,8 @@ class ErrorClassifier(
         }
     }
 
-    private fun getNetworkErrorMessage(type: PlayerError.NetworkErrorType): String {
-        return when (type) {
+    private fun getNetworkErrorMessage(type: PlayerError.NetworkErrorType): String =
+        when (type) {
             PlayerError.NetworkErrorType.DNS_RESOLUTION_FAILED ->
                 context.getString(R.string.error_msg_dns_failed)
 
@@ -273,7 +281,6 @@ class ErrorClassifier(
 
             else -> context.getString(R.string.error_msg_network_failed)
         }
-    }
 
     private fun isCorsError(httpException: HttpDataSource.InvalidResponseCodeException?): Boolean {
         if (httpException == null) return false
@@ -282,7 +289,8 @@ class ErrorClassifier(
 
         val message = httpException.message?.lowercase() ?: ""
 
-        val hasCorsIndicators = message.contains("cors") ||
+        val hasCorsIndicators =
+            message.contains("cors") ||
                 message.contains("cross-origin") ||
                 message.contains("access-control") ||
                 message.contains("net::err_blocked_by_client")
@@ -290,8 +298,8 @@ class ErrorClassifier(
         return suspiciousCode && hasCorsIndicators
     }
 
-    private fun extractCertificateInfo(exception: SSLException): String? {
-        return try {
+    private fun extractCertificateInfo(exception: SSLException): String? =
+        try {
             exception.message?.let { msg ->
                 when {
                     msg.contains("Unable to find valid certification path") ->
@@ -310,5 +318,4 @@ class ErrorClassifier(
             logger.warning(TAG, "Failed to extract certificate info", e)
             null
         }
-    }
 }

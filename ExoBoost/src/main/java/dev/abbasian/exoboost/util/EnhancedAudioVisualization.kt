@@ -8,7 +8,7 @@ import kotlin.math.min
 import kotlin.random.Random
 
 internal class EnhancedAudioVisualization(
-    private val logger: ExoBoostLogger
+    private val logger: ExoBoostLogger,
 ) {
     private var visualizer: Visualizer? = null
     private var visualizationData = FloatArray(64) { 0f }
@@ -25,6 +25,7 @@ internal class EnhancedAudioVisualization(
     companion object {
         private const val TAG = "EnhancedAudioVisualization"
 
+        @Suppress("ktlint:standard:property-naming")
         private var REAL_AUDIO_SUPPORTED: Boolean? = null
 
         private fun isRealAudioSupported(logger: ExoBoostLogger): Boolean {
@@ -43,43 +44,43 @@ internal class EnhancedAudioVisualization(
         }
     }
 
-    private fun setupRealAudioVisualizer(audioSessionId: Int): Boolean {
-        return try {
+    private fun setupRealAudioVisualizer(audioSessionId: Int): Boolean =
+        try {
             visualizer?.release()
             if (audioSessionId != 0) {
-                visualizer = Visualizer(audioSessionId).apply {
-                    captureSize = Visualizer.getCaptureSizeRange()[1]
-                    setDataCaptureListener(
-                        object : Visualizer.OnDataCaptureListener {
-                            override fun onWaveFormDataCapture(
-                                visualizer: Visualizer,
-                                waveform: ByteArray,
-                                samplingRate: Int
-                            ) {
-                                processRealWaveformData(waveform)
-                            }
+                visualizer =
+                    Visualizer(audioSessionId).apply {
+                        captureSize = Visualizer.getCaptureSizeRange()[1]
+                        setDataCaptureListener(
+                            object : Visualizer.OnDataCaptureListener {
+                                override fun onWaveFormDataCapture(
+                                    visualizer: Visualizer,
+                                    waveform: ByteArray,
+                                    samplingRate: Int,
+                                ) {
+                                    processRealWaveformData(waveform)
+                                }
 
-                            override fun onFftDataCapture(
-                                visualizer: Visualizer,
-                                fft: ByteArray,
-                                samplingRate: Int
-                            ) {
-                                processRealFFTData(fft)
-                            }
-                        },
-                        Visualizer.getMaxCaptureRate() / 2,
-                        true,
-                        true
-                    )
-                    enabled = true
-                }
+                                override fun onFftDataCapture(
+                                    visualizer: Visualizer,
+                                    fft: ByteArray,
+                                    samplingRate: Int,
+                                ) {
+                                    processRealFFTData(fft)
+                                }
+                            },
+                            Visualizer.getMaxCaptureRate() / 2,
+                            true,
+                            true,
+                        )
+                        enabled = true
+                    }
             }
             true
         } catch (e: Exception) {
             logger.error(TAG, "Failed to setup real audio visualizer", e)
             false
         }
-    }
 
     private fun processRealWaveformData(waveform: ByteArray) {
         val dataSize = visualizationData.size
@@ -94,7 +95,11 @@ internal class EnhancedAudioVisualization(
         trebleIntensity = calculateBandIntensity(waveform, 3 * waveform.size / 4, waveform.size)
     }
 
-    private fun calculateBandIntensity(data: ByteArray, start: Int, end: Int): Float {
+    private fun calculateBandIntensity(
+        data: ByteArray,
+        start: Int,
+        end: Int,
+    ): Float {
         var sum = 0f
         var count = 0
         for (i in start until end.coerceAtMost(data.size)) {
@@ -119,16 +124,20 @@ internal class EnhancedAudioVisualization(
         }
 
         // band intensities from FFT data
-        val bassEnd = fftSize / 8      // Low frequencies
-        val midEnd = fftSize / 2       // Mid frequencies
-        val trebleEnd = fftSize        // High frequencies
+        val bassEnd = fftSize / 8 // Low frequencies
+        val midEnd = fftSize / 2 // Mid frequencies
+        val trebleEnd = fftSize // High frequencies
 
         bassIntensity = calculateFFTBandIntensity(fft, 0, bassEnd)
         midIntensity = calculateFFTBandIntensity(fft, bassEnd, midEnd)
         trebleIntensity = calculateFFTBandIntensity(fft, midEnd, trebleEnd)
     }
 
-    private fun calculateFFTBandIntensity(fft: ByteArray, startBin: Int, endBin: Int): Float {
+    private fun calculateFFTBandIntensity(
+        fft: ByteArray,
+        startBin: Int,
+        endBin: Int,
+    ): Float {
         var sum = 0f
         var count = 0
 
@@ -148,7 +157,7 @@ internal class EnhancedAudioVisualization(
         audioSessionId: Int,
         visualizationType: VisualizationType,
         sensitivity: Float,
-        smoothingFactor: Float
+        smoothingFactor: Float,
     ) {
         if (!isPlaying) {
             clearVisualization()
@@ -166,7 +175,7 @@ internal class EnhancedAudioVisualization(
             dataSize = dataSize,
             visualizationType = visualizationType,
             sensitivity = sensitivity,
-            smoothingFactor = smoothingFactor
+            smoothingFactor = smoothingFactor,
         )
 
         hasData = true
@@ -176,7 +185,7 @@ internal class EnhancedAudioVisualization(
         dataSize: Int,
         visualizationType: VisualizationType,
         sensitivity: Float,
-        smoothingFactor: Float
+        smoothingFactor: Float,
     ) {
         val currentTime = System.currentTimeMillis()
         val timeSeconds = (currentTime / 2000.0f)
@@ -195,14 +204,15 @@ internal class EnhancedAudioVisualization(
 
         for (i in 0 until dataSize) {
             val frequency = i.toFloat() / dataSize
-            val newValue = generateFrequencyResponse(
-                frequency = frequency,
-                timeSeconds = timeSeconds,
-                bassIntensity = bassIntensity,
-                midIntensity = midIntensity,
-                trebleIntensity = trebleIntensity,
-                visualizationType = visualizationType
-            )
+            val newValue =
+                generateFrequencyResponse(
+                    frequency = frequency,
+                    timeSeconds = timeSeconds,
+                    bassIntensity = bassIntensity,
+                    midIntensity = midIntensity,
+                    trebleIntensity = trebleIntensity,
+                    visualizationType = visualizationType,
+                )
 
             peakValues[i] = max(peakValues[i] * 0.95f, newValue)
             val smoothedValue =
@@ -216,48 +226,52 @@ internal class EnhancedAudioVisualization(
     private fun generateBandIntensity(
         timeSeconds: Float,
         frequency: Float,
-        energyLevel: Float
+        energyLevel: Float,
     ): Float {
         val beatTime = timeSeconds * 2.0f
 
-        val kickPattern = when {
-            frequency < 1.5f -> {
-                val beat = kotlin.math.floor(beatTime) % 4.0f
-                when (beat.toInt()) {
-                    0 -> 1.0f // strong beat
-                    2 -> 0.7f // medium beat
-                    else -> 0.2f // weak beats
+        val kickPattern =
+            when {
+                frequency < 1.5f -> {
+                    val beat = kotlin.math.floor(beatTime) % 4.0f
+                    when (beat.toInt()) {
+                        0 -> 1.0f // strong beat
+                        2 -> 0.7f // medium beat
+                        else -> 0.2f // weak beats
+                    }
                 }
+
+                else -> 0.0f
             }
 
-            else -> 0.0f
-        }
+        val snarePattern =
+            when {
+                frequency in 1.5f..2.5f -> {
+                    val beat = kotlin.math.floor(beatTime) % 4.0f
+                    if (beat.toInt() == 1 || beat.toInt() == 3) 0.8f else 0.1f
+                }
 
-        val snarePattern = when {
-            frequency in 1.5f..2.5f -> {
-                val beat = kotlin.math.floor(beatTime) % 4.0f
-                if (beat.toInt() == 1 || beat.toInt() == 3) 0.8f else 0.1f
+                else -> 0.0f
             }
 
-            else -> 0.0f
-        }
+        val hihatPattern =
+            when {
+                frequency > 2.5f -> {
+                    val subBeat = kotlin.math.floor(beatTime * 2.0f) % 8.0f
+                    if (subBeat.toInt() % 2 == 0) 0.6f else 0.3f
+                }
 
-        val hihatPattern = when {
-            frequency > 2.5f -> {
-                val subBeat = kotlin.math.floor(beatTime * 2.0f) % 8.0f
-                if (subBeat.toInt() % 2 == 0) 0.6f else 0.3f
+                else -> 0.0f
             }
-
-            else -> 0.0f
-        }
 
         val phraseLength = 32.0f
         val phrasePosition = (beatTime % phraseLength) / phraseLength
-        val phraseIntensity = when {
-            phrasePosition < 0.25f -> 0.6f
-            phrasePosition < 0.75f -> 1.0f
-            else -> 0.4f
-        }
+        val phraseIntensity =
+            when {
+                phrasePosition < 0.25f -> 0.6f
+                phrasePosition < 0.75f -> 1.0f
+                else -> 0.4f
+            }
 
         val rhythmBase = (kickPattern + snarePattern + hihatPattern) * phraseIntensity
         val musicalVariation = kotlin.math.sin(beatTime * 0.5f + frequency) * 0.15f
@@ -274,52 +288,53 @@ internal class EnhancedAudioVisualization(
         bassIntensity: Float,
         midIntensity: Float,
         trebleIntensity: Float,
-        visualizationType: VisualizationType
+        visualizationType: VisualizationType,
     ): Float {
         val randomFactor = random.nextFloat() * 0.2f
 
-        val response = when {
-            frequency < 0.3f -> {
-                // Bass frequencies
-                bassIntensity * kotlin.math.sin(timeSeconds * 4.0f + frequency * 10.0f) *
+        val response =
+            when {
+                frequency < 0.3f -> {
+                    // Bass frequencies
+                    bassIntensity * kotlin.math.sin(timeSeconds * 4.0f + frequency * 10.0f) *
                         (1f - frequency * 2f) + randomFactor
-            }
+                }
 
-            frequency < 0.7f -> {
-                // Mid frequencies
-                val midFactor = 1f - abs(frequency - 0.5f) * 2f
-                midIntensity * midFactor * kotlin.math.cos(timeSeconds * 6.0f + frequency * 15.0f) +
+                frequency < 0.7f -> {
+                    // Mid frequencies
+                    val midFactor = 1f - abs(frequency - 0.5f) * 2f
+                    midIntensity * midFactor * kotlin.math.cos(timeSeconds * 6.0f + frequency * 15.0f) +
                         randomFactor
-            }
+                }
 
-            else -> {
-                // Treble frequencies
-                trebleIntensity * kotlin.math.sin(timeSeconds * 8.0f + frequency * 20.0f) *
+                else -> {
+                    // Treble frequencies
+                    trebleIntensity * kotlin.math.sin(timeSeconds * 8.0f + frequency * 20.0f) *
                         (frequency * 1.5f) + randomFactor
+                }
             }
-        }
 
         // Add visualization-specific enhancements
-        val typeMultiplier = when (visualizationType) {
-            VisualizationType.SPECTRUM -> 1.0f
-            VisualizationType.WAVEFORM -> 0.8f + kotlin.math.sin(timeSeconds + frequency * 6.28f) * 0.2f
-            VisualizationType.CIRCULAR -> 0.9f + kotlin.math.cos(timeSeconds * 2f) * 0.1f
-            VisualizationType.BARS -> 0.7f + random.nextFloat() * 0.3f
-            VisualizationType.PARTICLE_SYSTEM -> 0.8f + kotlin.math.sin(timeSeconds * 3f + frequency * 12f) * 0.2f
-        }
+        val typeMultiplier =
+            when (visualizationType) {
+                VisualizationType.SPECTRUM -> 1.0f
+                VisualizationType.WAVEFORM -> 0.8f + kotlin.math.sin(timeSeconds + frequency * 6.28f) * 0.2f
+                VisualizationType.CIRCULAR -> 0.9f + kotlin.math.cos(timeSeconds * 2f) * 0.1f
+                VisualizationType.BARS -> 0.7f + random.nextFloat() * 0.3f
+                VisualizationType.PARTICLE_SYSTEM -> 0.8f + kotlin.math.sin(timeSeconds * 3f + frequency * 12f) * 0.2f
+            }
 
         return abs(response * typeMultiplier).coerceIn(0f, 1f)
     }
 
-    private fun getDataSize(visualizationType: VisualizationType): Int {
-        return when (visualizationType) {
+    private fun getDataSize(visualizationType: VisualizationType): Int =
+        when (visualizationType) {
             VisualizationType.SPECTRUM -> 48
             VisualizationType.WAVEFORM -> 64
             VisualizationType.CIRCULAR -> 40
             VisualizationType.BARS -> 32
             VisualizationType.PARTICLE_SYSTEM -> 24
         }
-    }
 
     fun clearVisualization() {
         visualizationData.fill(0f)
@@ -332,9 +347,13 @@ internal class EnhancedAudioVisualization(
     }
 
     fun hasData(): Boolean = hasData
+
     fun getVisualizationData(): FloatArray = visualizationData
+
     fun getBassIntensity(): Float = bassIntensity
+
     fun getMidIntensity(): Float = midIntensity
+
     fun getTrebleIntensity(): Float = trebleIntensity
 
     fun release() {

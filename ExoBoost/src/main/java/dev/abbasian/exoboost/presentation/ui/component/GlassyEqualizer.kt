@@ -55,22 +55,32 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
-fun GlassyEqualizer(
+fun glassyEqualizer(
     modifier: Modifier = Modifier,
     config: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig(),
     barCount: Int = 8,
-    isPlaying: Boolean = true,
     onEqualizerChange: ((List<Float>) -> Unit)? = null,
     preferencesManager: EqualizerPreferencesManager = koinInject(),
-    frequencyLabels: List<String> = listOf("60Hz", "170Hz", "310Hz", "600Hz", "1kHz", "3kHz", "6kHz", "12kHz")
+    frequencyLabels: List<String> =
+        listOf(
+            "60Hz",
+            "170Hz",
+            "310Hz",
+            "600Hz",
+            "1kHz",
+            "3kHz",
+            "6kHz",
+            "12kHz",
+        ),
 ) {
     val scope = rememberCoroutineScope()
 
-    val equalizerValues = remember {
-        mutableStateListOf<Float>().apply {
-            repeat(barCount) { add(0.5f) }
+    val equalizerValues =
+        remember {
+            mutableStateListOf<Float>().apply {
+                repeat(barCount) { add(0.5f) }
+            }
         }
-    }
 
     val customPresets by preferencesManager.customPresets.collectAsState(initial = emptyList())
     val currentPresetName by preferencesManager.currentPresetName.collectAsState(initial = "")
@@ -90,76 +100,80 @@ fun GlassyEqualizer(
         }
     }
 
-    GlassyContainer(
-        config = config.copy(
-            backgroundOpacity = config.backgroundOpacity * 0.8f
-        ),
+    glassyContainer(
+        config =
+            config.copy(
+                backgroundOpacity = config.backgroundOpacity * 0.8f,
+            ),
         contentPadding = 16.dp,
-        modifier = modifier
+        modifier = modifier,
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                GlassyActionButton(
+                glassyActionButton(
                     text = "Custom",
                     onClick = {
                         scope.launch {
                             preferencesManager.saveCurrentPresetName("")
                         }
                         showCustomPresetDialog = true
-                    }
+                    },
                 )
-                GlassyActionButton(
+                glassyActionButton(
                     text = "Save Preset",
                     onClick = {
                         showCustomPresetDialog = true
-                    }
+                    },
                 )
             }
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 repeat(barCount) { index ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     ) {
                         // frequency label
                         Text(
                             text = frequencyLabels.getOrElse(index) { "${index + 1}" },
                             color = Color.White.copy(alpha = 0.8f),
                             fontSize = 10.sp,
-                            maxLines = 1
+                            maxLines = 1,
                         )
 
                         // vertical slider
                         Box(
-                            modifier = Modifier
-                                .width(40.dp)
-                                .height(120.dp)
-                                .background(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.White.copy(alpha = 0.1f),
-                                            Color.White.copy(alpha = 0.05f)
-                                        )
+                            modifier =
+                                Modifier
+                                    .width(40.dp)
+                                    .height(120.dp)
+                                    .background(
+                                        brush =
+                                            Brush.verticalGradient(
+                                                colors =
+                                                    listOf(
+                                                        Color.White.copy(alpha = 0.1f),
+                                                        Color.White.copy(alpha = 0.05f),
+                                                    ),
+                                            ),
+                                        shape = RoundedCornerShape(20.dp),
+                                    ).border(
+                                        width = 0.5.dp,
+                                        color = Color.White.copy(alpha = 0.3f),
+                                        shape = RoundedCornerShape(20.dp),
                                     ),
-                                    shape = RoundedCornerShape(20.dp)
-                                )
-                                .border(
-                                    width = 0.5.dp,
-                                    color = Color.White.copy(alpha = 0.3f),
-                                    shape = RoundedCornerShape(20.dp)
-                                ),
-                            contentAlignment = Alignment.Center
+                            contentAlignment = Alignment.Center,
                         ) {
-                            VerticalSlider(
+                            verticalSlider(
                                 value = equalizerValues[index],
                                 onValueChange = { newValue ->
                                     equalizerValues[index] = newValue
@@ -170,14 +184,15 @@ fun GlassyEqualizer(
                                         preferencesManager.saveEqualizerState(
                                             presetName = "",
                                             values = updatedValues,
-                                            customPresets = customPresets
+                                            customPresets = customPresets,
                                         )
                                     }
                                 },
                                 valueRange = 0f..1f,
-                                modifier = Modifier
-                                    .height(100.dp)
-                                    .width(20.dp)
+                                modifier =
+                                    Modifier
+                                        .height(100.dp)
+                                        .width(20.dp),
                             )
                         }
 
@@ -186,7 +201,7 @@ fun GlassyEqualizer(
                         Text(
                             text = "${if (dbValue > 0) "+" else ""}${dbValue}dB",
                             color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 9.sp
+                            fontSize = 9.sp,
                         )
                     }
                 }
@@ -194,10 +209,10 @@ fun GlassyEqualizer(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 listOf("Flat", "Rock", "Pop", "Jazz").forEach { preset ->
-                    GlassyPresetButton(
+                    glassyPresetButton(
                         text = preset,
                         onClick = {
                             val presetValues = getPresetValues(preset)
@@ -213,10 +228,10 @@ fun GlassyEqualizer(
                                 preferencesManager.saveEqualizerState(
                                     presetName = preset,
                                     values = presetValues,
-                                    customPresets = customPresets
+                                    customPresets = customPresets,
                                 )
                             }
-                        }
+                        },
                     )
                 }
             }
@@ -227,15 +242,15 @@ fun GlassyEqualizer(
                     color = Color.White.copy(alpha = 0.8f),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 8.dp),
                 )
 
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 4.dp)
+                    contentPadding = PaddingValues(horizontal = 4.dp),
                 ) {
                     items(customPresets) { preset ->
-                        CustomPresetItem(
+                        customPresetItem(
                             preset = preset,
                             onApply = {
                                 preset.values.forEachIndexed { index, value ->
@@ -251,17 +266,19 @@ fun GlassyEqualizer(
                             },
                             onDelete = {
                                 scope.launch {
-                                    val updatedPresets = customPresets.toMutableList().apply {
-                                        remove(preset)
-                                    }
-                                    val newPresetName = if (currentPresetName == preset.name) "" else currentPresetName
+                                    val updatedPresets =
+                                        customPresets.toMutableList().apply {
+                                            remove(preset)
+                                        }
+                                    val newPresetName =
+                                        if (currentPresetName == preset.name) "" else currentPresetName
                                     preferencesManager.saveEqualizerState(
                                         presetName = newPresetName,
                                         values = equalizerValues.toList(),
-                                        customPresets = updatedPresets
+                                        customPresets = updatedPresets,
                                     )
                                 }
-                            }
+                            },
                         )
                     }
                 }
@@ -270,7 +287,7 @@ fun GlassyEqualizer(
     }
 
     if (showCustomPresetDialog) {
-        CustomPresetDialog(
+        customPresetDialog(
             currentValues = equalizerValues.toList(),
             existingPreset = selectedPresetForEdit,
             onSave = { name, values ->
@@ -278,7 +295,8 @@ fun GlassyEqualizer(
                     val updatedPresets = customPresets.toMutableList()
 
                     if (selectedPresetForEdit != null) {
-                        val index = updatedPresets.indexOfFirst { it.name == selectedPresetForEdit!!.name }
+                        val index =
+                            updatedPresets.indexOfFirst { it.name == selectedPresetForEdit!!.name }
                         if (index >= 0) {
                             updatedPresets[index] = CustomPreset(name, values)
                         }
@@ -289,7 +307,7 @@ fun GlassyEqualizer(
                     preferencesManager.saveEqualizerState(
                         presetName = name,
                         values = values,
-                        customPresets = updatedPresets
+                        customPresets = updatedPresets,
                     )
                 }
 
@@ -299,187 +317,198 @@ fun GlassyEqualizer(
             onDismiss = {
                 showCustomPresetDialog = false
                 selectedPresetForEdit = null
-            }
+            },
         )
     }
 }
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-private fun VerticalSlider(
+private fun verticalSlider(
     value: Float,
     onValueChange: (Float) -> Unit,
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val haptic = LocalHapticFeedback.current
     var isDragging by remember { mutableStateOf(false) }
 
     BoxWithConstraints(
-        modifier = modifier
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { offset ->
-                        isDragging = true
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        modifier =
+            modifier
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            isDragging = true
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 
+                            val heightPx = size.height.toFloat()
+                            val normalizedY = (heightPx - offset.y) / heightPx
+                            val newValue =
+                                (valueRange.start + normalizedY * (valueRange.endInclusive - valueRange.start))
+                                    .coerceIn(valueRange.start, valueRange.endInclusive)
+                            onValueChange(newValue)
+                        },
+                        onDragEnd = {
+                            isDragging = false
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        },
+                    ) { _, dragAmount ->
+                        val heightPx = size.height.toFloat()
+                        val deltaValue =
+                            -dragAmount.y / heightPx * (valueRange.endInclusive - valueRange.start)
+                        val newValue =
+                            (value + deltaValue).coerceIn(valueRange.start, valueRange.endInclusive)
+                        onValueChange(newValue)
+                    }
+                }.pointerInput(Unit) {
+                    detectTapGestures { offset ->
                         val heightPx = size.height.toFloat()
                         val normalizedY = (heightPx - offset.y) / heightPx
-                        val newValue = (valueRange.start + normalizedY * (valueRange.endInclusive - valueRange.start))
-                            .coerceIn(valueRange.start, valueRange.endInclusive)
+                        val newValue =
+                            (valueRange.start + normalizedY * (valueRange.endInclusive - valueRange.start))
+                                .coerceIn(valueRange.start, valueRange.endInclusive)
                         onValueChange(newValue)
-                    },
-                    onDragEnd = {
-                        isDragging = false
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
-                ) { _, dragAmount ->
-                    val heightPx = size.height.toFloat()
-                    val deltaValue = -dragAmount.y / heightPx * (valueRange.endInclusive - valueRange.start)
-                    val newValue = (value + deltaValue).coerceIn(valueRange.start, valueRange.endInclusive)
-                    onValueChange(newValue)
-                }
-            }
-            .pointerInput(Unit) {
-                detectTapGestures { offset ->
-                    val heightPx = size.height.toFloat()
-                    val normalizedY = (heightPx - offset.y) / heightPx
-                    val newValue = (valueRange.start + normalizedY * (valueRange.endInclusive - valueRange.start))
-                        .coerceIn(valueRange.start, valueRange.endInclusive)
-                    onValueChange(newValue)
-                }
-            }
+                },
     ) {
         // Background track
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Color.White.copy(alpha = 0.15f),
-                    RoundedCornerShape(10.dp)
-                )
-                .border(
-                    width = 0.5.dp,
-                    color = Color.White.copy(alpha = 0.3f),
-                    RoundedCornerShape(10.dp)
-                )
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Color.White.copy(alpha = 0.15f),
+                        RoundedCornerShape(10.dp),
+                    ).border(
+                        width = 0.5.dp,
+                        color = Color.White.copy(alpha = 0.3f),
+                        RoundedCornerShape(10.dp),
+                    ),
         )
 
         // Active fill
-        val normalizedValue = (value - valueRange.start) / (valueRange.endInclusive - valueRange.start)
+        val normalizedValue =
+            (value - valueRange.start) / (valueRange.endInclusive - valueRange.start)
         val thumbY = maxHeight * (1f - normalizedValue)
         val activeHeight = maxHeight - thumbY
 
         if (activeHeight > 0.dp) {
             Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .width(maxWidth)
-                    .height(activeHeight)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.6f),
-                                Color.White.copy(alpha = 0.3f)
-                            )
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .width(maxWidth)
+                        .height(activeHeight)
+                        .background(
+                            brush =
+                                Brush.verticalGradient(
+                                    colors =
+                                        listOf(
+                                            Color.White.copy(alpha = 0.6f),
+                                            Color.White.copy(alpha = 0.3f),
+                                        ),
+                                ),
+                            shape = RoundedCornerShape(10.dp),
                         ),
-                        shape = RoundedCornerShape(10.dp)
-                    )
             )
         }
 
         // Thumb
         Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .offset(y = thumbY - 12.dp)
-                .size(24.dp)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = if (isDragging) 1f else 0.9f),
-                            Color.White.copy(alpha = if (isDragging) 0.8f else 0.7f)
-                        )
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = thumbY - 12.dp)
+                    .size(24.dp)
+                    .background(
+                        brush =
+                            Brush.radialGradient(
+                                colors =
+                                    listOf(
+                                        Color.White.copy(alpha = if (isDragging) 1f else 0.9f),
+                                        Color.White.copy(alpha = if (isDragging) 0.8f else 0.7f),
+                                    ),
+                            ),
+                        shape = CircleShape,
+                    ).border(
+                        width = if (isDragging) 2.dp else 1.dp,
+                        color = Color.White.copy(alpha = if (isDragging) 1f else 0.8f),
+                        shape = CircleShape,
+                    ).shadow(
+                        elevation = if (isDragging) 8.dp else 4.dp,
+                        shape = CircleShape,
                     ),
-                    shape = CircleShape
-                )
-                .border(
-                    width = if (isDragging) 2.dp else 1.dp,
-                    color = Color.White.copy(alpha = if (isDragging) 1f else 0.8f),
-                    shape = CircleShape
-                )
-                .shadow(
-                    elevation = if (isDragging) 8.dp else 4.dp,
-                    shape = CircleShape
-                )
         )
     }
 }
 
-private fun getPresetValues(preset: String): List<Float> {
-    return when (preset) {
+private fun getPresetValues(preset: String): List<Float> =
+    when (preset) {
         "Flat" -> listOf(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f)
         "Rock" -> listOf(0.6f, 0.5f, 0.4f, 0.4f, 0.5f, 0.7f, 0.8f, 0.8f)
         "Pop" -> listOf(0.4f, 0.6f, 0.7f, 0.7f, 0.5f, 0.4f, 0.5f, 0.6f)
         "Jazz" -> listOf(0.7f, 0.6f, 0.5f, 0.4f, 0.4f, 0.5f, 0.6f, 0.7f)
         else -> listOf(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f)
     }
-}
 
 @Composable
-private fun CustomPresetItem(
+private fun customPresetItem(
     preset: CustomPreset,
     onApply: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
     Box(modifier = modifier) {
-        GlassyPresetButton(
+        glassyPresetButton(
             text = preset.name,
             onClick = onApply,
-            onLongClick = { showMenu = true }
+            onLongClick = { showMenu = true },
         )
 
         DropdownMenu(
             expanded = showMenu,
             onDismissRequest = { showMenu = false },
-            modifier = Modifier.background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Black.copy(alpha = 0.9f),
-                        Color.Black.copy(alpha = 0.8f)
-                    )
+            modifier =
+                Modifier.background(
+                    brush =
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    Color.Black.copy(alpha = 0.9f),
+                                    Color.Black.copy(alpha = 0.8f),
+                                ),
+                        ),
+                    shape = RoundedCornerShape(8.dp),
                 ),
-                shape = RoundedCornerShape(8.dp)
-            )
         ) {
             DropdownMenuItem(
                 text = { Text("Edit", color = Color.White) },
                 onClick = {
                     showMenu = false
                     onEdit()
-                }
+                },
             )
             DropdownMenuItem(
                 text = { Text("Delete", color = Color.Red.copy(alpha = 0.8f)) },
                 onClick = {
                     showMenu = false
                     onDelete()
-                }
+                },
             )
         }
     }
 }
 
 @Composable
-private fun CustomPresetDialog(
+private fun customPresetDialog(
     currentValues: List<Float>,
     existingPreset: CustomPreset?,
     onSave: (String, List<Float>) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     var presetName by remember {
         mutableStateOf(existingPreset?.name ?: "")
@@ -490,133 +519,135 @@ private fun CustomPresetDialog(
         title = {
             Text(
                 text = if (existingPreset != null) "Edit Preset" else "Save Preset",
-                color = Color.White
+                color = Color.White,
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(
                     text = "Enter a name for this equalizer preset:",
-                    color = Color.White.copy(alpha = 0.8f)
+                    color = Color.White.copy(alpha = 0.8f),
                 )
 
                 OutlinedTextField(
                     value = presetName,
                     onValueChange = { presetName = it },
                     placeholder = { Text("Preset name", color = Color.White.copy(alpha = 0.5f)) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = Color.White.copy(alpha = 0.7f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.3f)
-                    ),
-                    singleLine = true
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.White.copy(alpha = 0.7f),
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                        ),
+                    singleLine = true,
                 )
             }
         },
         confirmButton = {
-            GlassyActionButton(
+            glassyActionButton(
                 text = "Save",
                 onClick = {
                     if (presetName.isNotBlank()) {
                         onSave(presetName, currentValues)
                     }
-                }
+                },
             )
         },
         dismissButton = {
-            GlassyActionButton(
+            glassyActionButton(
                 text = "Cancel",
-                onClick = onDismiss
+                onClick = onDismiss,
             )
         },
-        containerColor = Color.Black.copy(alpha = 0.9f)
+        containerColor = Color.Black.copy(alpha = 0.9f),
     )
 }
 
 @Composable
-private fun GlassyPresetButton(
+private fun glassyPresetButton(
     text: String,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.15f),
-                        Color.White.copy(alpha = 0.05f)
-                    )
-                ),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .border(
-                width = 0.5.dp,
-                color = Color.White.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .then(
-                if (onLongClick != null) {
-                    Modifier.pointerInput(Unit) {
-                        detectTapGestures(
-                            onTap = { onClick() },
-                            onLongPress = { onLongClick() }
-                        )
-                    }
-                } else {
-                    Modifier.clickable { onClick() }
-                }
-            )
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center
+        modifier =
+            modifier
+                .background(
+                    brush =
+                        Brush.linearGradient(
+                            colors =
+                                listOf(
+                                    Color.White.copy(alpha = 0.15f),
+                                    Color.White.copy(alpha = 0.05f),
+                                ),
+                        ),
+                    shape = RoundedCornerShape(12.dp),
+                ).border(
+                    width = 0.5.dp,
+                    color = Color.White.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(12.dp),
+                ).then(
+                    if (onLongClick != null) {
+                        Modifier.pointerInput(Unit) {
+                            detectTapGestures(
+                                onTap = { onClick() },
+                                onLongPress = { onLongClick() },
+                            )
+                        }
+                    } else {
+                        Modifier.clickable { onClick() }
+                    },
+                ).padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
             color = Color.White.copy(alpha = 0.9f),
             fontSize = 12.sp,
-            maxLines = 1
+            maxLines = 1,
         )
     }
 }
 
 @Composable
-private fun GlassyActionButton(
+private fun glassyActionButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.2f),
-                        Color.White.copy(alpha = 0.1f)
-                    )
-                ),
-                shape = RoundedCornerShape(8.dp)
-            )
-            .border(
-                width = 0.5.dp,
-                color = Color.White.copy(alpha = 0.4f),
-                shape = RoundedCornerShape(8.dp)
-            )
-            .clickable { onClick() }
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center
+        modifier =
+            modifier
+                .background(
+                    brush =
+                        Brush.linearGradient(
+                            colors =
+                                listOf(
+                                    Color.White.copy(alpha = 0.2f),
+                                    Color.White.copy(alpha = 0.1f),
+                                ),
+                        ),
+                    shape = RoundedCornerShape(8.dp),
+                ).border(
+                    width = 0.5.dp,
+                    color = Color.White.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(8.dp),
+                ).clickable { onClick() }
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
             color = Color.White.copy(alpha = 0.9f),
             fontSize = 11.sp,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
         )
     }
 }
 
 data class CustomPreset(
     val name: String,
-    val values: List<Float>
+    val values: List<Float>,
 )

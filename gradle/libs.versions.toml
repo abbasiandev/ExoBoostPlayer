@@ -17,7 +17,11 @@ datastore = "1.1.7"
 okhttp3 = "4.12.0"
 coroutines = "1.7.3"
 gson = "2.10.1"
+tensorFlow = "2.14.0"
+tensorflowSupport = "0.4.4"
 koin = "3.5.0"
+ktlint = "12.1.1"
+detekt = "1.23.7"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -50,6 +54,9 @@ androidx-datastore = { group = "androidx.datastore", name = "datastore-preferenc
 okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp3" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+tensorflow-lite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tensorFlow" }
+tensorflow-lite-support = { group = "org.tensorflow", name = "tensorflow-lite-support", version.ref = "tensorflowSupport" }
+tensorflow-lite-gpu = { group = "org.tensorflow", name = "tensorflow-lite-gpu", version.ref = "tensorFlow" }
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
@@ -61,3 +68,6 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }
 jetbrain-dokka = { id = "org.jetbrains.dokka", version.ref = "jetbrain-dokka" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+jacoco = { id = "jacoco" }

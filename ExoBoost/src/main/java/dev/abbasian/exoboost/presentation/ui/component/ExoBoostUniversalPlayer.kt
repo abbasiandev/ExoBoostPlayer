@@ -12,13 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
-import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostAudioPlayer
-import dev.abbasian.exoboost.presentation.ui.screen.ExoBoostPlayer
+import dev.abbasian.exoboost.presentation.ui.screen.exoBoostAudioPlayer
+import dev.abbasian.exoboost.presentation.ui.screen.exoBoostPlayer
 import dev.abbasian.exoboost.util.MediaType
 import dev.abbasian.exoboost.util.MediaUtil
 
 @Composable
-fun ExoBoostUniversalPlayer(
+fun exoBoostUniversalPlayer(
     mediaUrl: String,
     mimeType: String? = null,
     modifier: Modifier = Modifier,
@@ -31,38 +31,43 @@ fun ExoBoostUniversalPlayer(
     onNext: (() -> Unit)? = null,
     onPrevious: (() -> Unit)? = null,
     currentTrackIndex: Int = 0,
-    totalTracks: Int = 1
+    totalTracks: Int = 1,
 ) {
-    val mediaType = remember(mediaUrl, mimeType) {
-        MediaUtil.getMediaType(mediaUrl, mimeType)
-    }
+    val mediaType =
+        remember(mediaUrl, mimeType) {
+            MediaUtil.getMediaType(mediaUrl, mimeType)
+        }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Black.copy(alpha = 0.9f),
-                        Color.Black.copy(alpha = 0.7f),
-                        Color.Black.copy(alpha = 0.9f)
-                    )
-                )
-            )
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(
+                    brush =
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    Color.Black.copy(alpha = 0.9f),
+                                    Color.Black.copy(alpha = 0.7f),
+                                    Color.Black.copy(alpha = 0.9f),
+                                ),
+                        ),
+                ),
     ) {
         when (mediaType) {
             MediaType.VIDEO -> {
-                ExoBoostPlayer(
+                exoBoostPlayer(
                     videoUrl = mediaUrl,
                     mediaConfig = mediaConfig,
                     onPlayerReady = onPlayerReady,
                     onError = onError,
                     onBack = onBack,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
+
             MediaType.AUDIO -> {
-                ExoBoostAudioPlayer(
+                exoBoostAudioPlayer(
                     audioUrl = mediaUrl,
                     mediaConfig = mediaConfig,
                     onPlayerReady = onPlayerReady,
@@ -74,17 +79,18 @@ fun ExoBoostUniversalPlayer(
                     onPrevious = onPrevious,
                     currentTrackIndex = currentTrackIndex,
                     totalTracks = totalTracks,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
+
             MediaType.UNKNOWN -> {
-                GlassyContainer(
-                    modifier = Modifier.align(Alignment.Center)
+                glassyContainer(
+                    modifier = Modifier.align(Alignment.Center),
                 ) {
                     Text(
                         "Unsupported media format",
                         color = Color.White,
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
                     )
                 }
             }

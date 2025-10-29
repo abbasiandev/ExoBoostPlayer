@@ -6,22 +6,24 @@ import dev.abbasian.exoboost.data.manager.CacheManager
 import dev.abbasian.exoboost.data.manager.ExoPlayerManager
 import dev.abbasian.exoboost.domain.model.MediaInfo
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
-import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.domain.model.MediaState
+import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.domain.repository.MediaRepository
 import kotlinx.coroutines.flow.Flow
 
 @OptIn(UnstableApi::class)
 class MediaRepositoryImpl(
     private val playerManager: ExoPlayerManager,
-    private val cacheManager: CacheManager
+    private val cacheManager: CacheManager,
 ) : MediaRepository {
-
     override fun getMediaState(): Flow<MediaState> = playerManager.mediaState
 
     override fun getMediaInfo(): Flow<MediaInfo> = playerManager.mediaInfo
 
-    override suspend fun loadMedia(url: String, config: MediaPlayerConfig) {
+    override suspend fun loadMedia(
+        url: String,
+        config: MediaPlayerConfig,
+    ) {
         playerManager.initializePlayer(config)
         playerManager.loadMedia(url)
     }
@@ -30,17 +32,11 @@ class MediaRepositoryImpl(
         playerManager.applyEqualizerValues(values)
     }
 
-    override suspend fun getEqualizerBandCount(): Int {
-        return playerManager.getEqualizerBandCount()
-    }
+    override suspend fun getEqualizerBandCount(): Int = playerManager.getEqualizerBandCount()
 
-    override suspend fun getEqualizerFrequencies(): List<String> {
-        return playerManager.getEqualizerFrequencies()
-    }
+    override suspend fun getEqualizerFrequencies(): List<String> = playerManager.getEqualizerFrequencies()
 
-    override fun getEqualizerValues(): Flow<List<Float>> {
-        return playerManager.equalizerValues
-    }
+    override fun getEqualizerValues(): Flow<List<Float>> = playerManager.equalizerValues
 
     override suspend fun play() {
         playerManager.play()
@@ -58,9 +54,7 @@ class MediaRepositoryImpl(
         playerManager.selectQuality(quality)
     }
 
-    override suspend fun getAvailableQualities(): List<VideoQuality> {
-        return playerManager.getAvailableQualities()
-    }
+    override suspend fun getAvailableQualities(): List<VideoQuality> = playerManager.getAvailableQualities()
 
     override suspend fun seekTo(position: Long) {
         playerManager.seekTo(position)

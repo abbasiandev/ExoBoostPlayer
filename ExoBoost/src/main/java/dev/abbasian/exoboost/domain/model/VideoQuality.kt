@@ -7,10 +7,10 @@ data class VideoQuality(
     val height: Int,
     val bitrate: Int,
     val label: String,
-    val isSelected: Boolean = false
+    val isSelected: Boolean = false,
 ) {
-    fun getQualityLabel(): String {
-        return when {
+    fun getQualityLabel(): String =
+        when {
             height >= 2160 -> "4K (${height}p)"
             height >= 1440 -> "2K (${height}p)"
             height >= 1080 -> "Full HD (${height}p)"
@@ -20,5 +20,4 @@ data class VideoQuality(
             height >= 240 -> "240p"
             else -> "Auto"
         }
-    }
 }

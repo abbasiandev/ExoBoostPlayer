@@ -46,9 +46,8 @@ class ExoPlayerManager(
     private val dataSourceFactory: DataSource.Factory,
     private val networkManager: NetworkManager,
     private val autoRecoveryManager: AutoRecoveryManager,
-    private val logger: ExoBoostLogger
+    private val logger: ExoBoostLogger,
 ) {
-
     companion object {
         private const val TAG = "ExoPlayerManager"
     }
@@ -79,14 +78,15 @@ class ExoPlayerManager(
     private var isMediaReady = AtomicBoolean(false)
 
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val positionUpdateRunnable = object : Runnable {
-        override fun run() {
-            if (!isReleased.get() && exoPlayer != null) {
-                updateMediaInfo()
-                mainHandler.postDelayed(this, 500)
+    private val positionUpdateRunnable =
+        object : Runnable {
+            override fun run() {
+                if (!isReleased.get() && exoPlayer != null) {
+                    updateMediaInfo()
+                    mainHandler.postDelayed(this, 500)
+                }
             }
         }
-    }
 
     fun initializePlayer(config: MediaPlayerConfig) {
         if (isInitialized.get() && !isReleased.get()) {
@@ -101,14 +101,15 @@ class ExoPlayerManager(
             currentConfig = config
             logger.debug(TAG, "Initializing ExoPlayer...")
 
-            val loadControl = DefaultLoadControl.Builder()
-                .setBufferDurationsMs(
-                    config.bufferDurations.minBufferMs,
-                    config.bufferDurations.maxBufferMs,
-                    config.bufferDurations.bufferForPlaybackMs,
-                    config.bufferDurations.bufferForPlaybackAfterRebufferMs
-                )
-                .build()
+            val loadControl =
+                DefaultLoadControl
+                    .Builder()
+                    .setBufferDurationsMs(
+                        config.bufferDurations.minBufferMs,
+                        config.bufferDurations.maxBufferMs,
+                        config.bufferDurations.bufferForPlaybackMs,
+                        config.bufferDurations.bufferForPlaybackAfterRebufferMs,
+                    ).build()
 
             val trackSelector = setupTrackSelector()
 
@@ -118,36 +119,38 @@ class ExoPlayerManager(
                 player.release()
             }
 
-            exoPlayer = ExoPlayer.Builder(context)
-                .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
-                .setLoadControl(loadControl)
-                .setTrackSelector(trackSelector)
-                .setWakeMode(C.WAKE_MODE_NETWORK)
-                .setHandleAudioBecomingNoisy(true)
-                .build()
-                .apply {
-                    addListener(playerListener)
-                    addAnalyticsListener(analyticsListener)
-                    repeatMode = Player.REPEAT_MODE_OFF
-                    setVideoScalingMode(C.VIDEO_SCALING_MODE_SCALE_TO_FIT)
-                    playWhenReady = false
+            exoPlayer =
+                ExoPlayer
+                    .Builder(context)
+                    .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+                    .setLoadControl(loadControl)
+                    .setTrackSelector(trackSelector)
+                    .setWakeMode(C.WAKE_MODE_NETWORK)
+                    .setHandleAudioBecomingNoisy(true)
+                    .build()
+                    .apply {
+                        addListener(playerListener)
+                        addAnalyticsListener(analyticsListener)
+                        repeatMode = Player.REPEAT_MODE_OFF
+                        setVideoScalingMode(C.VIDEO_SCALING_MODE_SCALE_TO_FIT)
+                        playWhenReady = false
 
-                    initializeAudioEffects()
-                }
+                        initializeAudioEffects()
+                    }
 
             isInitialized.set(true)
             startPositionUpdates()
 
             logger.debug(TAG, "ExoPlayer initialized successfully")
-
         } catch (e: Exception) {
             logger.error(TAG, "Failed to initialize player", e)
-            _mediaState.value = MediaState.Error(
-                PlayerError.UnknownError(
-                    context.getString(R.string.error_init_player) + e.message,
-                    e
+            _mediaState.value =
+                MediaState.Error(
+                    PlayerError.UnknownError(
+                        context.getString(R.string.error_init_player) + e.message,
+                        e,
+                    ),
                 )
-            )
             isInitialized.set(false)
         }
     }
@@ -161,19 +164,21 @@ class ExoPlayerManager(
                 if (audioSessionId != 0) {
                     releaseAudioEffects()
 
-                    equalizer = Equalizer(0, audioSessionId).apply {
-                        enabled = true
-                        logger.debug(TAG, "Equalizer initialized with ${numberOfBands} bands")
-                    }
+                    equalizer =
+                        Equalizer(0, audioSessionId).apply {
+                            enabled = true
+                            logger.debug(TAG, "Equalizer initialized with $numberOfBands bands")
+                        }
 
-                    bassBoost = BassBoost(0, audioSessionId).apply {
-                        enabled = true
-                    }
+                    bassBoost =
+                        BassBoost(0, audioSessionId).apply {
+                            enabled = true
+                        }
 
-                    virtualizer = Virtualizer(0, audioSessionId).apply {
-                        enabled = true
-                    }
-
+                    virtualizer =
+                        Virtualizer(0, audioSessionId).apply {
+                            enabled = true
+                        }
                 } else {
                     logger.warning(TAG, "Invalid audio session ID, cannot initialize effects")
                 }
@@ -205,9 +210,10 @@ class ExoPlayerManager(
         isMediaReady.set(false)
 
         if (!networkManager.isNetworkAvailable()) {
-            _mediaState.value = MediaState.Error(
-                PlayerError.NetworkError("اتصال اینترنت موجود نیست")
-            )
+            _mediaState.value =
+                MediaState.Error(
+                    PlayerError.NetworkError("اتصال اینترنت موجود نیست"),
+                )
             return
         }
 
@@ -215,9 +221,11 @@ class ExoPlayerManager(
             _mediaState.value = MediaState.Loading
             logger.debug(TAG, "Loading video: $url")
 
-            val mediaItem = MediaItem.Builder()
-                .setUri(Uri.parse(url))
-                .build()
+            val mediaItem =
+                MediaItem
+                    .Builder()
+                    .setUri(Uri.parse(url))
+                    .build()
 
             exoPlayer?.apply {
                 stop()
@@ -227,14 +235,16 @@ class ExoPlayerManager(
             }
 
             logger.debug(TAG, "Video preparation started")
-
         } catch (e: Exception) {
             logger.error(TAG, "Error loading video", e)
             handleLoadError(e)
         }
     }
 
-    fun setEqualizerBand(bandIndex: Int, value: Float) {
+    fun setEqualizerBand(
+        bandIndex: Int,
+        value: Float,
+    ) {
         try {
             equalizer?.let { eq ->
                 if (bandIndex >= 0 && bandIndex < eq.numberOfBands) {
@@ -243,16 +253,17 @@ class ExoPlayerManager(
                     val millibels = (dbValue * 100).toInt()
 
                     val bandLevelRange = eq.bandLevelRange
-                    val clampedLevel = millibels.coerceIn(
-                        bandLevelRange[0].toInt(),
-                        bandLevelRange[1].toInt()
-                    )
+                    val clampedLevel =
+                        millibels.coerceIn(
+                            bandLevelRange[0].toInt(),
+                            bandLevelRange[1].toInt(),
+                        )
 
                     eq.setBandLevel(bandIndex.toShort(), clampedLevel.toShort())
 
                     logger.debug(
                         TAG,
-                        "Set band $bandIndex to ${dbValue}dB ($clampedLevel millibels)"
+                        "Set band $bandIndex to ${dbValue}dB ($clampedLevel millibels)",
                     )
                 }
             }
@@ -269,12 +280,10 @@ class ExoPlayerManager(
         _equalizerValues.value = values
     }
 
-    fun getEqualizerBandCount(): Int {
-        return equalizer?.numberOfBands?.toInt() ?: 8
-    }
+    fun getEqualizerBandCount(): Int = equalizer?.numberOfBands?.toInt() ?: 8
 
-    fun getEqualizerFrequencies(): List<String> {
-        return try {
+    fun getEqualizerFrequencies(): List<String> =
+        try {
             equalizer?.let { eq ->
                 (0 until eq.numberOfBands).map { band ->
                     val centerFreq = eq.getCenterFreq(band.toShort()) / 1000
@@ -288,11 +297,8 @@ class ExoPlayerManager(
             logger.error(TAG, "Error getting frequencies", e)
             listOf("60Hz", "170Hz", "310Hz", "600Hz", "1kHz", "3kHz", "6kHz", "12kHz")
         }
-    }
 
-    fun isReadyForSurface(): Boolean {
-        return isInitialized.get() && isPrepared.get() && !isReleased.get()
-    }
+    fun isReadyForSurface(): Boolean = isInitialized.get() && isPrepared.get() && !isReleased.get()
 
     fun onSurfaceAvailable() {
         logger.debug(TAG, "Surface available")
@@ -305,218 +311,224 @@ class ExoPlayerManager(
         }
     }
 
-    private val playerListener = object : Player.Listener {
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            if (isReleased.get()) return
+    private val playerListener =
+        object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (isReleased.get()) return
 
-            val stateString = when (playbackState) {
-                Player.STATE_IDLE -> "IDLE"
-                Player.STATE_BUFFERING -> "BUFFERING"
-                Player.STATE_READY -> "READY"
-                Player.STATE_ENDED -> "ENDED"
-                else -> "UNKNOWN"
-            }
+                val stateString =
+                    when (playbackState) {
+                        Player.STATE_IDLE -> "IDLE"
+                        Player.STATE_BUFFERING -> "BUFFERING"
+                        Player.STATE_READY -> "READY"
+                        Player.STATE_ENDED -> "ENDED"
+                        else -> "UNKNOWN"
+                    }
 
-            logger.debug(TAG, "Playback state changed: $stateString")
+                logger.debug(TAG, "Playback state changed: $stateString")
 
-            when (playbackState) {
-                Player.STATE_IDLE -> {
-                    isPrepared.set(false)
-                    isMediaReady.set(false)
-                    _mediaState.value = MediaState.Idle
-                }
+                when (playbackState) {
+                    Player.STATE_IDLE -> {
+                        isPrepared.set(false)
+                        isMediaReady.set(false)
+                        _mediaState.value = MediaState.Idle
+                    }
 
-                Player.STATE_BUFFERING -> {
-                    _mediaState.value = MediaState.Loading
-                }
-
-                Player.STATE_READY -> {
-                    retryCount = 0
-                    resetRecoveryState()
-
-                    isPrepared.set(true)
-
-                    val hasVideo = exoPlayer?.videoFormat != null
-                    if (hasVideo && !isMediaReady.get()) {
+                    Player.STATE_BUFFERING -> {
                         _mediaState.value = MediaState.Loading
-                    } else {
-                        isMediaReady.set(true)
-                        _mediaState.value = MediaState.Ready
                     }
 
-                    if (equalizer == null) {
-                        initializeAudioEffects()
-                    }
-                }
+                    Player.STATE_READY -> {
+                        retryCount = 0
+                        resetRecoveryState()
 
-                Player.STATE_ENDED -> {
-                    _mediaState.value = MediaState.Ended
-                }
-            }
-        }
+                        isPrepared.set(true)
 
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            if (isReleased.get()) return
+                        val hasVideo = exoPlayer?.videoFormat != null
+                        if (hasVideo && !isMediaReady.get()) {
+                            _mediaState.value = MediaState.Loading
+                        } else {
+                            isMediaReady.set(true)
+                            _mediaState.value = MediaState.Ready
+                        }
 
-            logger.debug(TAG, "Is playing changed: $isPlaying")
-
-            _mediaState.value = if (isPlaying) {
-                MediaState.Playing
-            } else {
-                when (exoPlayer?.playbackState) {
-                    Player.STATE_ENDED -> MediaState.Ended
-                    Player.STATE_READY -> MediaState.Paused
-                    else -> MediaState.Paused
-                }
-            }
-            updateMediaInfo()
-        }
-
-        override fun onVideoSizeChanged(videoSize: VideoSize) {
-            if (isReleased.get()) return
-            logger.debug(TAG, "Video size changed: ${videoSize.width}x${videoSize.height}")
-        }
-
-        override fun onRenderedFirstFrame() {
-            if (isReleased.get()) return
-            logger.debug(TAG, "First frame rendered")
-
-            isMediaReady.set(true)
-
-            if (_mediaState.value is MediaState.Loading && isPrepared.get()) {
-                _mediaState.value = MediaState.Ready
-            }
-
-            if (currentConfig.autoPlay && exoPlayer?.playWhenReady == false && isPrepared.get()) {
-                mainHandler.postDelayed({
-                    if (!isReleased.get()) {
-                        exoPlayer?.playWhenReady = true
-                    }
-                }, 50)
-            }
-        }
-
-        override fun onPlayerError(error: PlaybackException) {
-            if (isReleased.get()) return
-
-            var logMessage =
-                "Player error: ${error.errorCodeName} (${error.errorCode}) - ${error.message}"
-
-            val cause = error.cause
-            if (cause is HttpDataSource.InvalidResponseCodeException) {
-                logMessage += "\n HTTP Status Code: ${cause.responseCode}"
-
-            } else if (cause is IOException) {
-                logMessage += "\n IO Cause: ${cause.javaClass.simpleName} - ${cause.message}"
-            } else if (cause != null) {
-                logMessage += "\n Cause: ${cause.javaClass.simpleName} - ${cause.message}"
-            }
-
-            logger.error(
-                TAG,
-                logMessage,
-                error
-            )
-
-            isPrepared.set(false)
-            isMediaReady.set(false)
-
-            val playerError = mapPlaybackException(error)
-            _mediaState.value = MediaState.Error(playerError)
-
-            if (error.errorCode == PlaybackException.ERROR_CODE_DECODING_FAILED &&
-                !hasTriedSoftwareDecoder
-            ) {
-                logger.warning(TAG, "Hardware decoder failed, attempting software decoder fallback")
-                hasTriedSoftwareDecoder = true
-
-                mainHandler.postDelayed({
-                    if (!isReleased.get()) {
-                        try {
-                            val currentPosition = exoPlayer?.currentPosition ?: 0L
-                            val wasPlaying = exoPlayer?.playWhenReady ?: false
-
-                            initializePlayer(
-                                currentConfig.copy(
-                                    preferSoftwareDecoder = true
-                                )
-                            )
-
-                            loadMedia(currentUrl)
-
-                            mainHandler.postDelayed({
-                                seekTo(currentPosition)
-                                if (wasPlaying) play()
-                            }, 1000)
-
-                            logger.info(TAG, "Switched to software decoder")
-                        } catch (e: Exception) {
-                            logger.error(TAG, "Software decoder fallback failed", e)
+                        if (equalizer == null) {
+                            initializeAudioEffects()
                         }
                     }
-                }, 1000)
-                return
+
+                    Player.STATE_ENDED -> {
+                        _mediaState.value = MediaState.Ended
+                    }
+                }
             }
 
-            if (currentConfig.autoQualityOnError &&
-                playerError is PlayerError.NetworkError &&
-                qualityDowngradeAttempts < maxQualityDowngrades
-            ) {
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (isReleased.get()) return
 
-                logger.warning(TAG, "Network issue detected, attempting quality downgrade")
+                logger.debug(TAG, "Is playing changed: $isPlaying")
 
-                mainHandler.postDelayed({
-                    if (!isReleased.get()) {
-                        try {
-                            val availableQualities = getAvailableQualities()
-                                .filter { it.label != "Auto" }
-                                .sortedBy { it.height }
+                _mediaState.value =
+                    if (isPlaying) {
+                        MediaState.Playing
+                    } else {
+                        when (exoPlayer?.playbackState) {
+                            Player.STATE_ENDED -> MediaState.Ended
+                            Player.STATE_READY -> MediaState.Paused
+                            else -> MediaState.Paused
+                        }
+                    }
+                updateMediaInfo()
+            }
 
-                            val currentQuality = getCurrentSelectedQuality(availableQualities)
-                            val currentIndex = availableQualities.indexOfFirst {
-                                it.height == currentQuality?.height
-                            }
+            override fun onVideoSizeChanged(videoSize: VideoSize) {
+                if (isReleased.get()) return
+                logger.debug(TAG, "Video size changed: ${videoSize.width}x${videoSize.height}")
+            }
 
-                            if (currentIndex > 0) {
-                                val lowerQuality = availableQualities[currentIndex - 1]
-                                logger.info(
-                                    TAG,
-                                    "Auto-downgrading: ${currentQuality?.label} -> ${lowerQuality.label}"
+            override fun onRenderedFirstFrame() {
+                if (isReleased.get()) return
+                logger.debug(TAG, "First frame rendered")
+
+                isMediaReady.set(true)
+
+                if (_mediaState.value is MediaState.Loading && isPrepared.get()) {
+                    _mediaState.value = MediaState.Ready
+                }
+
+                if (currentConfig.autoPlay && exoPlayer?.playWhenReady == false && isPrepared.get()) {
+                    mainHandler.postDelayed({
+                        if (!isReleased.get()) {
+                            exoPlayer?.playWhenReady = true
+                        }
+                    }, 50)
+                }
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                if (isReleased.get()) return
+
+                var logMessage =
+                    "Player error: ${error.errorCodeName} (${error.errorCode}) - ${error.message}"
+
+                val cause = error.cause
+                if (cause is HttpDataSource.InvalidResponseCodeException) {
+                    logMessage += "\n HTTP Status Code: ${cause.responseCode}"
+                } else if (cause is IOException) {
+                    logMessage += "\n IO Cause: ${cause.javaClass.simpleName} - ${cause.message}"
+                } else if (cause != null) {
+                    logMessage += "\n Cause: ${cause.javaClass.simpleName} - ${cause.message}"
+                }
+
+                logger.error(
+                    TAG,
+                    logMessage,
+                    error,
+                )
+
+                isPrepared.set(false)
+                isMediaReady.set(false)
+
+                val playerError = mapPlaybackException(error)
+                _mediaState.value = MediaState.Error(playerError)
+
+                if (error.errorCode == PlaybackException.ERROR_CODE_DECODING_FAILED &&
+                    !hasTriedSoftwareDecoder
+                ) {
+                    logger.warning(TAG, "Hardware decoder failed, attempting software decoder fallback")
+                    hasTriedSoftwareDecoder = true
+
+                    mainHandler.postDelayed({
+                        if (!isReleased.get()) {
+                            try {
+                                val currentPosition = exoPlayer?.currentPosition ?: 0L
+                                val wasPlaying = exoPlayer?.playWhenReady ?: false
+
+                                initializePlayer(
+                                    currentConfig.copy(
+                                        preferSoftwareDecoder = true,
+                                    ),
                                 )
 
-                                selectQuality(lowerQuality)
-                                qualityDowngradeAttempts++
+                                loadMedia(currentUrl)
 
                                 mainHandler.postDelayed({
-                                    if (!isReleased.get()) {
-                                        retry()
+                                    seekTo(currentPosition)
+                                    if (wasPlaying) play()
+                                }, 1000)
+
+                                logger.info(TAG, "Switched to software decoder")
+                            } catch (e: Exception) {
+                                logger.error(TAG, "Software decoder fallback failed", e)
+                            }
+                        }
+                    }, 1000)
+                    return
+                }
+
+                if (currentConfig.autoQualityOnError &&
+                    playerError is PlayerError.NetworkError &&
+                    qualityDowngradeAttempts < maxQualityDowngrades
+                ) {
+                    logger.warning(TAG, "Network issue detected, attempting quality downgrade")
+
+                    mainHandler.postDelayed({
+                        if (!isReleased.get()) {
+                            try {
+                                val availableQualities =
+                                    getAvailableQualities()
+                                        .filter { it.label != "Auto" }
+                                        .sortedBy { it.height }
+
+                                val currentQuality = getCurrentSelectedQuality(availableQualities)
+                                val currentIndex =
+                                    availableQualities.indexOfFirst {
+                                        it.height == currentQuality?.height
                                     }
-                                }, 1500)
-                            } else {
-                                logger.warning(
-                                    TAG,
-                                    "Already at lowest quality, cannot downgrade further"
-                                )
+
+                                if (currentIndex > 0) {
+                                    val lowerQuality = availableQualities[currentIndex - 1]
+                                    logger.info(
+                                        TAG,
+                                        "Auto-downgrading: ${currentQuality?.label} -> ${lowerQuality.label}",
+                                    )
+
+                                    selectQuality(lowerQuality)
+                                    qualityDowngradeAttempts++
+
+                                    mainHandler.postDelayed({
+                                        if (!isReleased.get()) {
+                                            retry()
+                                        }
+                                    }, 1500)
+                                } else {
+                                    logger.warning(
+                                        TAG,
+                                        "Already at lowest quality, cannot downgrade further",
+                                    )
+                                    scheduleNormalRetry(playerError)
+                                }
+                            } catch (e: Exception) {
+                                logger.error(TAG, "Quality downgrade failed", e)
                                 scheduleNormalRetry(playerError)
                             }
-                        } catch (e: Exception) {
-                            logger.error(TAG, "Quality downgrade failed", e)
-                            scheduleNormalRetry(playerError)
                         }
-                    }
-                }, 1000)
-                return
+                    }, 1000)
+                    return
+                }
+
+                scheduleNormalRetry(playerError)
             }
 
-            scheduleNormalRetry(playerError)
+            override fun onMediaItemTransition(
+                mediaItem: MediaItem?,
+                reason: Int,
+            ) {
+                if (isReleased.get()) return
+                logger.debug(TAG, "Media item transition")
+                updateMediaInfo()
+            }
         }
-
-        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            if (isReleased.get()) return
-            logger.debug(TAG, "Media item transition")
-            updateMediaInfo()
-        }
-    }
 
     private fun scheduleNormalRetry(playerError: PlayerError) {
         if (!currentConfig.retryOnError || !isRetryableError(playerError)) {
@@ -604,9 +616,10 @@ class ExoPlayerManager(
         }
 
         if (retryCount >= currentConfig.maxRetryCount) {
-            _mediaState.value = MediaState.Error(
-                PlayerError.UnknownError(context.getString(R.string.error_retry_limit))
-            )
+            _mediaState.value =
+                MediaState.Error(
+                    PlayerError.UnknownError(context.getString(R.string.error_retry_limit)),
+                )
 
             hasTriedSoftwareDecoder = false
             qualityDowngradeAttempts = 0
@@ -618,9 +631,10 @@ class ExoPlayerManager(
         isMediaReady.set(false)
 
         if (!networkManager.isNetworkAvailable()) {
-            _mediaState.value = MediaState.Error(
-                PlayerError.NetworkError(context.getString(R.string.help_check_network))
-            )
+            _mediaState.value =
+                MediaState.Error(
+                    PlayerError.NetworkError(context.getString(R.string.help_check_network)),
+                )
             return
         }
 
@@ -680,7 +694,6 @@ class ExoPlayerManager(
             _mediaState.value = MediaState.Idle
 
             logger.debug(TAG, "ExoPlayer released successfully")
-
         } catch (e: Exception) {
             logger.error(TAG, "Error during release", e)
         }
@@ -698,87 +711,95 @@ class ExoPlayerManager(
         mainHandler.removeCallbacks(positionUpdateRunnable)
     }
 
-    private val analyticsListener = object : AnalyticsListener {
-        override fun onLoadError(
-            eventTime: AnalyticsListener.EventTime,
-            loadEventInfo: LoadEventInfo,
-            mediaLoadData: MediaLoadData,
-            error: IOException,
-            wasCanceled: Boolean
-        ) {
-            if (!wasCanceled) {
-                handleLoadError(error)
+    private val analyticsListener =
+        object : AnalyticsListener {
+            override fun onLoadError(
+                eventTime: AnalyticsListener.EventTime,
+                loadEventInfo: LoadEventInfo,
+                mediaLoadData: MediaLoadData,
+                error: IOException,
+                wasCanceled: Boolean,
+            ) {
+                if (!wasCanceled) {
+                    handleLoadError(error)
+                }
             }
         }
-    }
 
     private fun handleLoadError(error: Throwable) {
-        val playerError = when (error) {
-            is SSLException -> PlayerError.SSLError(
-                context.getString(R.string.error_security_certificate_with_message) + error.message,
-                error.message,
-                error
-            )
+        val playerError =
+            when (error) {
+                is SSLException ->
+                    PlayerError.SSLError(
+                        context.getString(R.string.error_security_certificate_with_message) + error.message,
+                        error.message,
+                        error,
+                    )
 
-            is SocketTimeoutException -> PlayerError.NetworkError(
-                context.getString(R.string.error_timeout),
-                error,
-                retryable = true
-            )
+                is SocketTimeoutException ->
+                    PlayerError.NetworkError(
+                        context.getString(R.string.error_timeout),
+                        error,
+                        retryable = true,
+                    )
 
-            is IOException -> PlayerError.NetworkError(
-                context.getString(R.string.error_network) + error.message,
-                error,
-                retryable = true
-            )
+                is IOException ->
+                    PlayerError.NetworkError(
+                        context.getString(R.string.error_network) + error.message,
+                        error,
+                        retryable = true,
+                    )
 
-            else -> PlayerError.UnknownError(
-                context.getString(R.string.error_network) + error.message,
-                error
-            )
-        }
+                else ->
+                    PlayerError.UnknownError(
+                        context.getString(R.string.error_network) + error.message,
+                        error,
+                    )
+            }
 
         _mediaState.value = MediaState.Error(playerError)
         logger.error(TAG, "Load error: ${playerError.message}", error)
     }
 
-    private fun mapPlaybackException(error: PlaybackException): PlayerError {
-        return when (error.errorCode) {
+    private fun mapPlaybackException(error: PlaybackException): PlayerError =
+        when (error.errorCode) {
             PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ->
                 PlayerError.NetworkError(
                     context.getString(R.string.error_network),
                     error,
-                    retryable = true
+                    retryable = true,
                 )
 
             PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
                 PlayerError.NetworkError(
                     context.getString(R.string.error_timeout),
                     error,
-                    retryable = true
+                    retryable = true,
                 )
 
             PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS ->
                 PlayerError.LiveStreamError(
                     context.getString(R.string.error_http) + extractHttpCode(error),
                     extractHttpCode(error),
-                    error
+                    error,
                 )
 
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
-            PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED ->
+            PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
+            ->
                 PlayerError.SourceError(
                     context.getString(R.string.error_format_not_supported),
                     currentUrl,
-                    error
+                    error,
                 )
 
             PlaybackException.ERROR_CODE_DECODING_FAILED,
-            PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED ->
+            PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED,
+            ->
                 PlayerError.CodecError(
                     context.getString(R.string.error_decoding),
-                    cause = error
+                    cause = error,
                 )
 
             else -> {
@@ -786,48 +807,50 @@ class ExoPlayerManager(
                     PlayerError.SSLError(
                         context.getString(R.string.error_ssl_certificate_with_message) + error.message,
                         error.cause?.message,
-                        error
+                        error,
                     )
                 } else {
                     PlayerError.UnknownError(
                         context.getString(R.string.error_unknown) + error.message,
-                        error
+                        error,
                     )
                 }
             }
         }
-    }
 
-    private fun extractHttpCode(error: PlaybackException): Int? {
-        return error.message?.let { message ->
-            Regex("HTTP (\\d{3})").find(message)?.groupValues?.get(1)?.toIntOrNull()
+    private fun extractHttpCode(error: PlaybackException): Int? =
+        error.message?.let { message ->
+            Regex("HTTP (\\d{3})")
+                .find(message)
+                ?.groupValues
+                ?.get(1)
+                ?.toIntOrNull()
         }
-    }
 
-    private fun isRetryableError(error: PlayerError): Boolean {
-        return when (error) {
+    private fun isRetryableError(error: PlayerError): Boolean =
+        when (error) {
             is PlayerError.NetworkError -> error.isRetryable
             is PlayerError.LiveStreamError -> error.httpCode in listOf(403, 404, 500, 502, 503, 504)
             is PlayerError.SSLError -> false
             else -> false
         }
-    }
 
     private fun updateMediaInfo() {
         exoPlayer?.let { player ->
             val availableQualities = getAvailableQualities()
             val currentQuality = getCurrentSelectedQuality(availableQualities)
 
-            _mediaInfo.value = MediaInfo(
-                currentPosition = player.currentPosition.coerceAtLeast(0L),
-                duration = if (player.duration != C.TIME_UNSET) player.duration else 0L,
-                volume = player.volume,
-                isPlaying = player.isPlaying,
-                bufferedPosition = player.bufferedPosition.coerceAtLeast(0L),
-                playbackSpeed = player.playbackParameters.speed,
-                availableQualities = availableQualities,
-                currentQuality = currentQuality
-            )
+            _mediaInfo.value =
+                MediaInfo(
+                    currentPosition = player.currentPosition.coerceAtLeast(0L),
+                    duration = if (player.duration != C.TIME_UNSET) player.duration else 0L,
+                    volume = player.volume,
+                    isPlaying = player.isPlaying,
+                    bufferedPosition = player.bufferedPosition.coerceAtLeast(0L),
+                    playbackSpeed = player.playbackParameters.speed,
+                    availableQualities = availableQualities,
+                    currentQuality = currentQuality,
+                )
         }
     }
 
@@ -862,8 +885,8 @@ class ExoPlayerManager(
                         height = 0,
                         bitrate = 0,
                         label = "Auto",
-                        isSelected = trackSelectionParameters?.maxVideoWidth == Int.MAX_VALUE
-                    )
+                        isSelected = trackSelectionParameters?.maxVideoWidth == Int.MAX_VALUE,
+                    ),
                 )
 
                 for (rendererIndex in 0 until trackInfo.rendererCount) {
@@ -885,8 +908,8 @@ class ExoPlayerManager(
                                             height = format.height,
                                             bitrate = format.bitrate,
                                             label = "${format.height}p",
-                                            isSelected = false
-                                        )
+                                            isSelected = false,
+                                        ),
                                     )
                                 }
                             }
@@ -928,14 +951,13 @@ class ExoPlayerManager(
             mainHandler.postDelayed({
                 updateMediaInfo()
             }, 1000)
-
         } catch (e: Exception) {
             logger.error(TAG, "Error selecting quality", e)
         }
     }
 
-    private fun getCurrentSelectedQuality(availableQualities: List<VideoQuality>): VideoQuality? {
-        return try {
+    private fun getCurrentSelectedQuality(availableQualities: List<VideoQuality>): VideoQuality? =
+        try {
             val trackSelector = exoPlayer?.trackSelector as? DefaultTrackSelector
             val params = trackSelector?.parameters
 
@@ -950,10 +972,9 @@ class ExoPlayerManager(
         } catch (e: Exception) {
             null
         }
-    }
 
-    private fun setupTrackSelector(): DefaultTrackSelector {
-        return DefaultTrackSelector(context).apply {
+    private fun setupTrackSelector(): DefaultTrackSelector =
+        DefaultTrackSelector(context).apply {
             setParameters(
                 buildUponParameters()
                     .setForceHighestSupportedBitrate(false)
@@ -961,10 +982,9 @@ class ExoPlayerManager(
                     .setAllowVideoMixedMimeTypeAdaptiveness(true)
                     .setTunnelingEnabled(false)
                     .setPreferredAudioLanguages("en", "fa", "ar")
-                    .setRendererDisabled(C.TRACK_TYPE_TEXT, false)
+                    .setRendererDisabled(C.TRACK_TYPE_TEXT, false),
             )
         }
-    }
 
     private suspend fun handleNetworkDegradation() {
         if (qualityDowngradeAttempts >= maxQualityDowngrades) {
@@ -972,9 +992,10 @@ class ExoPlayerManager(
             return
         }
 
-        val availableQualities = getAvailableQualities()
-            .filter { it.label != "Auto" }
-            .sortedBy { it.height }
+        val availableQualities =
+            getAvailableQualities()
+                .filter { it.label != "Auto" }
+                .sortedBy { it.height }
 
         val currentQuality = getCurrentSelectedQuality(availableQualities)
         val currentIndex = availableQualities.indexOf(currentQuality)
@@ -983,7 +1004,7 @@ class ExoPlayerManager(
             val lowerQuality = availableQualities[currentIndex - 1]
             logger.info(
                 TAG,
-                "Auto-downgrading quality: ${currentQuality?.label} -> ${lowerQuality.label}"
+                "Auto-downgrading quality: ${currentQuality?.label} -> ${lowerQuality.label}",
             )
             selectQuality(lowerQuality)
             qualityDowngradeAttempts++
@@ -992,5 +1013,4 @@ class ExoPlayerManager(
             logger.warning(TAG, "Already at lowest quality")
         }
     }
-
 }
