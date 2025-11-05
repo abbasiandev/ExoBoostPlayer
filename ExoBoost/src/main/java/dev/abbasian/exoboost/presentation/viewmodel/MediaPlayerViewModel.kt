@@ -1,16 +1,23 @@
 package dev.abbasian.exoboost.presentation.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
+import dev.abbasian.exoboost.R
 import dev.abbasian.exoboost.domain.error.ErrorClassifier
+import dev.abbasian.exoboost.domain.model.HighlightConfig
 import dev.abbasian.exoboost.domain.model.MediaInfo
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.PlayerError
+import dev.abbasian.exoboost.domain.model.VideoChapter
 import dev.abbasian.exoboost.domain.model.VideoQuality
+import dev.abbasian.exoboost.domain.usecase.GenerateVideoHighlightsUseCase
 import dev.abbasian.exoboost.domain.usecase.PlayMediaUseCase
 import dev.abbasian.exoboost.domain.usecase.RetryMediaUseCase
+import dev.abbasian.exoboost.presentation.state.HighlightsState
 import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -23,8 +30,10 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @UnstableApi
 class MediaPlayerViewModel(
+    private val context: Context,
     private val playMediaUseCase: PlayMediaUseCase,
     private val retryMediaUseCase: RetryMediaUseCase,
+    private val generateHighlightsUseCase: GenerateVideoHighlightsUseCase,
     private val errorClassifier: ErrorClassifier,
     private val logger: ExoBoostLogger,
 ) : ViewModel() {
@@ -41,9 +50,13 @@ class MediaPlayerViewModel(
     private val _showEqualizer = MutableStateFlow(false)
     val showEqualizer: StateFlow<Boolean> = _showEqualizer.asStateFlow()
 
+    private val _highlightsState = MutableStateFlow<HighlightsState>(HighlightsState.Idle)
+    val highlightsState: StateFlow<HighlightsState> = _highlightsState
+
     private var retryCount = 0
     private var maxRetryCount = 3
     private var currentJob: Job? = null
+    private var highlightsJob: Job? = null
     private var isMediaLoaded = false
 
     fun loadMedia(
@@ -159,6 +172,85 @@ class MediaPlayerViewModel(
                 hasNext = currentIndex < totalTracks - 1,
                 hasPrevious = currentIndex > 0,
             )
+    }
+
+    fun generateHighlights(
+        videoUrl: String,
+        config: HighlightConfig = HighlightConfig(),
+    ) {
+        highlightsJob?.cancel()
+
+        highlightsJob =
+            viewModelScope.launch {
+                var wasPlaying = false
+
+                try {
+                    logger.info(TAG, "Starting highlight generation")
+
+                    wasPlaying = _uiState.value.mediaInfo.isPlaying
+                    if (wasPlaying) {
+                        playMediaUseCase.pause()
+                        delay(500)
+                    }
+
+                    _highlightsState.value =
+                        HighlightsState.Analyzing(
+                            context.getString(R.string.highlights_analyzing),
+                        )
+
+                    val uri = Uri.parse(videoUrl)
+                    val result = generateHighlightsUseCase.execute(uri, config)
+
+                    result.onSuccess { highlights ->
+                        logger.info(
+                            TAG,
+                            "Highlights generated successfully: ${highlights.highlights.size} segments",
+                        )
+                        _highlightsState.value = HighlightsState.Success(highlights)
+                    }
+
+                    result.onFailure { error ->
+                        logger.error(TAG, "Highlight generation failed", error)
+                        _highlightsState.value =
+                            HighlightsState.Error(
+                                error.message ?: context.getString(R.string.highlights_error),
+                            )
+                    }
+                } catch (e: CancellationException) {
+                    logger.info(TAG, "Highlight generation cancelled by user")
+                    _highlightsState.value = HighlightsState.Idle
+                    throw e
+                } catch (e: Exception) {
+                    logger.error(TAG, "Unexpected error", e)
+                    _highlightsState.value =
+                        HighlightsState.Error(
+                            e.message ?: context.getString(R.string.highlights_error),
+                        )
+                } finally {
+                    if (wasPlaying) {
+                        delay(300)
+                        try {
+                            playMediaUseCase.play()
+                        } catch (e: Exception) {
+                            logger.warning(TAG, "Failed to resume playback", e)
+                        }
+                    }
+                }
+            }
+    }
+
+    fun playHighlights() {
+        val state = _highlightsState.value
+        if (state is HighlightsState.Success) {
+            state.highlights.highlights.firstOrNull()?.let { segment ->
+                seekTo(segment.startTimeMs)
+                playPause()
+            }
+        }
+    }
+
+    fun jumpToChapter(chapter: VideoChapter) {
+        seekTo(chapter.startTimeMs)
     }
 
     fun canNavigateNext(): Boolean = _uiState.value.hasNext
@@ -287,11 +379,18 @@ class MediaPlayerViewModel(
         _uiState.value = MediaPlayerUiState()
     }
 
+    fun clearHighlights() {
+        highlightsJob?.cancel()
+        _highlightsState.value = HighlightsState.Idle
+    }
+
     override fun onCleared() {
         super.onCleared()
         try {
             currentJob?.cancel()
             playMediaUseCase.release()
+            highlightsJob?.cancel()
+            generateHighlightsUseCase.release()
         } catch (e: Exception) {
             logger.error(TAG, "Error releasing resources", e)
         }
