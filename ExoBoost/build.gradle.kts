@@ -94,7 +94,10 @@ dependencies {
     implementation(libs.androidx.datastore)
     implementation(libs.okhttp3)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.gson)
+
+    implementation(libs.mlkit)
 
     implementation(libs.koin.core)
     implementation(libs.koin.android)
