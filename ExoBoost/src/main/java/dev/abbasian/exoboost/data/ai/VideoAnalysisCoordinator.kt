@@ -2,12 +2,12 @@ package dev.abbasian.exoboost.data.ai
 
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import dev.abbasian.exoboost.domain.model.AudioScore
+import dev.abbasian.exoboost.domain.model.AnalysisProgress
+import dev.abbasian.exoboost.domain.model.AnalysisResult
 import dev.abbasian.exoboost.domain.model.HighlightConfig
 import dev.abbasian.exoboost.domain.model.HighlightSegment
 import dev.abbasian.exoboost.domain.model.MotionScore
 import dev.abbasian.exoboost.domain.model.Scene
-import dev.abbasian.exoboost.domain.model.VideoChapter
 import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -24,20 +24,6 @@ class VideoAnalysisCoordinator(
     companion object {
         private const val TAG = "VideoAnalysisCoordinator"
     }
-
-    data class AnalysisResult(
-        val scenes: List<Scene>,
-        val highlights: List<HighlightSegment>,
-        val chapters: List<VideoChapter>,
-        val audioScores: List<AudioScore>,
-        val motionScores: List<MotionScore>,
-        val faceDetections: List<Pair<Long, Boolean>>,
-    )
-
-    data class AnalysisProgress(
-        val stage: String,
-        val progress: Float,
-    )
 
     suspend fun analyzeVideo(
         videoUri: Uri,
@@ -223,7 +209,12 @@ class VideoAnalysisCoordinator(
         val motionScores =
             if (config.enableMotionAnalysis) {
                 analyzeMotionOptimized(retriever, durationMs, config) { progress ->
-                    onProgress?.invoke(AnalysisProgress("Analyzing motion", 0.25f + progress * 0.25f))
+                    onProgress?.invoke(
+                        AnalysisProgress(
+                            "Analyzing motion",
+                            0.25f + progress * 0.25f,
+                        ),
+                    )
                 }
             } else {
                 emptyList()
