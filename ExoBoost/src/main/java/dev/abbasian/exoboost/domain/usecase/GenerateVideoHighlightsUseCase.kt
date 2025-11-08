@@ -70,8 +70,11 @@ class GenerateVideoHighlightsUseCase(
                                 .extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                                 ?.toLongOrNull() ?: 0L
 
+                        retriever.release()
+
                         if (duration <= 0L) {
-                            result = Result.failure(IllegalArgumentException("Invalid video duration"))
+                            result =
+                                Result.failure(IllegalArgumentException("Invalid video duration"))
                             retriever.release()
                             return@measureTimeMillis
                         }
@@ -85,7 +88,6 @@ class GenerateVideoHighlightsUseCase(
                         val analysisResult =
                             coordinator.analyzeVideo(
                                 videoUri = videoUri,
-                                retriever = retriever,
                                 durationMs = duration,
                                 config = config,
                                 onProgress = { progress ->
@@ -103,7 +105,10 @@ class GenerateVideoHighlightsUseCase(
                         logger.info(TAG, "  - Chapters: ${analysisResult.chapters.size}")
                         logger.info(TAG, "  - Audio samples: ${analysisResult.audioScores.size}")
                         logger.info(TAG, "  - Motion samples: ${analysisResult.motionScores.size}")
-                        logger.info(TAG, "  - Face detections: ${analysisResult.faceDetections.size}")
+                        logger.info(
+                            TAG,
+                            "  - Face detections: ${analysisResult.faceDetections.size}",
+                        )
 
                         val avgScore =
                             if (analysisResult.highlights.isNotEmpty()) {
@@ -115,7 +120,8 @@ class GenerateVideoHighlightsUseCase(
                                 0f
                             }
 
-                        val totalHighlightDuration = analysisResult.highlights.sumOf { it.durationMs }
+                        val totalHighlightDuration =
+                            analysisResult.highlights.sumOf { it.durationMs }
 
                         val videoHighlights =
                             VideoHighlights(

@@ -12,22 +12,29 @@ class MotionAnalysisEngine(
 ) {
     companion object {
         private const val TAG = "MotionAnalysisEngine"
-        private const val SAMPLE_SIZE = 32
+        private const val SAMPLE_SIZE = 24
+        private const val LOW_RES_SAMPLE_SIZE = 16
         private const val MAX_RETRIES = 3
-        private const val PIXEL_SAMPLE_STEP = 4
+        private const val PIXEL_SAMPLE_STEP = 6
+        private const val LOW_RES_PIXEL_STEP = 8
         private const val MOTION_SMOOTHING_FACTOR = 0.8f
     }
 
     private var cachedPixels: IntArray? = null
     private var previousMotionScore: Float = 0f
+    private var currentSampleSize: Int = SAMPLE_SIZE
 
     fun calculateMotion(
         previousFrame: Bitmap?,
         currentFrame: Bitmap,
         timestampMs: Long,
+        quickMode: Boolean = false,
     ): MotionScore {
+        currentSampleSize = if (quickMode) LOW_RES_SAMPLE_SIZE else SAMPLE_SIZE
+        val pixelStep = if (quickMode) LOW_RES_PIXEL_STEP else PIXEL_SAMPLE_STEP
+
         if (previousFrame == null) {
-            cacheCurrentFrame(currentFrame)
+            cacheCurrentFrame(currentFrame, quickMode)
             previousMotionScore = 0f
             return MotionScore(timestampMs, 0f, MotionDirection.NONE)
         }
@@ -36,22 +43,38 @@ class MotionAnalysisEngine(
             try {
                 val prevPixels =
                     cachedPixels ?: run {
-                        val prev = downscaleBitmap(previousFrame)
-                        val pixels = IntArray(SAMPLE_SIZE * SAMPLE_SIZE)
-                        prev.getPixels(pixels, 0, SAMPLE_SIZE, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE)
+                        val prev = downscaleBitmap(previousFrame, quickMode)
+                        val pixels = IntArray(currentSampleSize * currentSampleSize)
+                        prev.getPixels(
+                            pixels,
+                            0,
+                            currentSampleSize,
+                            0,
+                            0,
+                            currentSampleSize,
+                            currentSampleSize,
+                        )
                         prev.recycle()
                         pixels
                     }
 
-                val curr = downscaleBitmap(currentFrame)
-                val currPixels = IntArray(SAMPLE_SIZE * SAMPLE_SIZE)
-                curr.getPixels(currPixels, 0, SAMPLE_SIZE, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE)
+                val curr = downscaleBitmap(currentFrame, quickMode)
+                val currPixels = IntArray(currentSampleSize * currentSampleSize)
+                curr.getPixels(
+                    currPixels,
+                    0,
+                    currentSampleSize,
+                    0,
+                    0,
+                    currentSampleSize,
+                    currentSampleSize,
+                )
                 curr.recycle()
 
                 var totalDifference = 0.0
                 var sampleCount = 0
 
-                for (i in prevPixels.indices step PIXEL_SAMPLE_STEP) {
+                for (i in prevPixels.indices step pixelStep) {
                     try {
                         val prevGray = toGrayscale(prevPixels[i])
                         val currGray = toGrayscale(currPixels[i])
@@ -100,11 +123,22 @@ class MotionAnalysisEngine(
         return MotionScore(timestampMs, 0f, MotionDirection.NONE)
     }
 
-    private fun cacheCurrentFrame(currentFrame: Bitmap) {
+    private fun cacheCurrentFrame(
+        currentFrame: Bitmap,
+        quickMode: Boolean,
+    ) {
         try {
-            val downscaled = downscaleBitmap(currentFrame)
-            val pixels = IntArray(SAMPLE_SIZE * SAMPLE_SIZE)
-            downscaled.getPixels(pixels, 0, SAMPLE_SIZE, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE)
+            val downscaled = downscaleBitmap(currentFrame, quickMode)
+            val pixels = IntArray(currentSampleSize * currentSampleSize)
+            downscaled.getPixels(
+                pixels,
+                0,
+                currentSampleSize,
+                0,
+                0,
+                currentSampleSize,
+                currentSampleSize,
+            )
             downscaled.recycle()
             cachedPixels = pixels
         } catch (e: Exception) {
@@ -112,7 +146,13 @@ class MotionAnalysisEngine(
         }
     }
 
-    private fun downscaleBitmap(bitmap: Bitmap): Bitmap = Bitmap.createScaledBitmap(bitmap, SAMPLE_SIZE, SAMPLE_SIZE, false)
+    private fun downscaleBitmap(
+        bitmap: Bitmap,
+        quickMode: Boolean,
+    ): Bitmap {
+        val size = if (quickMode) LOW_RES_SAMPLE_SIZE else SAMPLE_SIZE
+        return Bitmap.createScaledBitmap(bitmap, size, size, false)
+    }
 
     private fun toGrayscale(pixel: Int): Int {
         val r = Color.red(pixel)

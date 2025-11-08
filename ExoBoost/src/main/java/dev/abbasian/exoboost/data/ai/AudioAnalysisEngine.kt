@@ -4,6 +4,7 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
 import dev.abbasian.exoboost.domain.model.AudioScore
+import dev.abbasian.exoboost.domain.model.HighlightConfig
 import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -16,18 +17,20 @@ class AudioAnalysisEngine(
 ) {
     companion object {
         private const val TAG = "AudioAnalysisEngine"
-        private const val SAMPLE_INTERVAL_MS = 10000L
+        private const val BASE_SAMPLE_INTERVAL_MS = 15000L
         private const val LOUD_THRESHOLD = 0.5f
         private const val MAX_RETRIES = 3
         private const val RETRY_DELAY_MS = 100L
         private const val BATCH_SIZE = 5
-        private const val BATCH_DELAY_MS = 300L
+        private const val BATCH_DELAY_MS = 100L
         private const val MAX_CONSECUTIVE_FAILURES = 5
     }
 
     suspend fun analyzeAudio(
         videoUri: Uri,
         durationMs: Long,
+        config: HighlightConfig = HighlightConfig(),
+        onProgress: ((Float) -> Unit)? = null,
     ): List<AudioScore> =
         withContext(Dispatchers.IO) {
             val scores = mutableListOf<AudioScore>()
@@ -61,18 +64,29 @@ class AudioAnalysisEngine(
                 }
 
                 extractor.selectTrack(audioTrackIndex)
+
+                val sampleInterval = calculateSampleInterval(durationMs, config)
+
+                val analysisLimit =
+                    config.maxAnalysisDurationMs?.let {
+                        minOf(it, durationMs)
+                    } ?: durationMs
+
                 val buffer = java.nio.ByteBuffer.allocate(8192)
                 var currentTimeMs = 0L
                 var consecutiveFailures = 0
                 var sampleCount = 0
+                val totalSamples = (analysisLimit / sampleInterval).toInt()
 
-                while (currentTimeMs < durationMs && consecutiveFailures < MAX_CONSECUTIVE_FAILURES) {
+                while (currentTimeMs < analysisLimit && consecutiveFailures < MAX_CONSECUTIVE_FAILURES) {
                     yield()
 
                     try {
                         if (sampleCount > 0 && sampleCount % BATCH_SIZE == 0) {
                             delay(BATCH_DELAY_MS)
                         }
+
+                        onProgress?.invoke(currentTimeMs.toFloat() / analysisLimit)
 
                         var seekSuccess = false
                         for (retry in 0 until MAX_RETRIES) {
@@ -90,21 +104,22 @@ class AudioAnalysisEngine(
                         }
 
                         if (!seekSuccess) {
-                            currentTimeMs += SAMPLE_INTERVAL_MS
+                            currentTimeMs += sampleInterval
                             consecutiveFailures++
                             continue
                         }
 
                         val sampleTime = extractor.sampleTime / 1000
                         if (sampleTime < 0) {
-                            currentTimeMs += SAMPLE_INTERVAL_MS
+                            currentTimeMs += sampleInterval
                             continue
                         }
 
                         var totalAmplitude = 0.0
                         var readCount = 0
 
-                        for (i in 0 until 3) {
+                        val readsPerSample = if (config.quickMode) 2 else 3
+                        for (i in 0 until readsPerSample) {
                             buffer.clear()
                             val sampleSize =
                                 try {
@@ -114,7 +129,7 @@ class AudioAnalysisEngine(
                                 }
 
                             if (sampleSize > 0) {
-                                val amplitude = calculateRMS(buffer, sampleSize)
+                                val amplitude = calculateRMS(buffer, sampleSize, config.quickMode)
                                 if (amplitude > 0) {
                                     totalAmplitude += amplitude
                                     readCount++
@@ -145,9 +160,10 @@ class AudioAnalysisEngine(
                         delay(RETRY_DELAY_MS * consecutiveFailures)
                     }
 
-                    currentTimeMs += SAMPLE_INTERVAL_MS
+                    currentTimeMs += sampleInterval
                 }
 
+                onProgress?.invoke(1f)
                 logger.info(TAG, "Audio analysis complete: ${scores.size} samples")
                 scores
             } catch (e: Exception) {
@@ -162,6 +178,22 @@ class AudioAnalysisEngine(
             }
         }
 
+    private fun calculateSampleInterval(
+        durationMs: Long,
+        config: HighlightConfig,
+    ): Long {
+        if (!config.adaptiveSampling) {
+            return BASE_SAMPLE_INTERVAL_MS
+        }
+
+        return when {
+            durationMs < 60_000 -> 10_000L
+            durationMs < 180_000 -> 15_000L
+            durationMs < 600_000 -> 20_000L
+            else -> 30_000L
+        }
+    }
+
     private fun findAudioTrack(extractor: MediaExtractor): Int {
         for (i in 0 until extractor.trackCount) {
             val format = extractor.getTrackFormat(i)
@@ -174,6 +206,7 @@ class AudioAnalysisEngine(
     private fun calculateRMS(
         buffer: java.nio.ByteBuffer,
         size: Int,
+        quickMode: Boolean = false,
     ): Double {
         if (size < 2) return 0.0
         try {
@@ -181,7 +214,13 @@ class AudioAnalysisEngine(
             buffer.limit(size)
             var sum = 0.0
             var sampleCount = 0
-            val maxSamples = minOf(size / 2, 1000)
+
+            val maxSamples =
+                if (quickMode) {
+                    minOf(size / 2, 500)
+                } else {
+                    minOf(size / 2, 1000)
+                }
 
             while (buffer.remaining() >= 2 && sampleCount < maxSamples) {
                 val sample = buffer.short.toDouble()

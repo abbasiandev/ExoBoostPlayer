@@ -1,5 +1,6 @@
 package dev.abbasian.exoboost.data.ai
 
+import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import dev.abbasian.exoboost.domain.model.AnalysisProgress
@@ -13,6 +14,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
 class VideoAnalysisCoordinator(
+    private val context: Context,
     private val sceneDetector: SceneDetectionEngine,
     private val audioAnalyzer: AudioAnalysisEngine,
     private val motionAnalyzer: MotionAnalysisEngine,
@@ -27,7 +29,6 @@ class VideoAnalysisCoordinator(
 
     suspend fun analyzeVideo(
         videoUri: Uri,
-        retriever: MediaMetadataRetriever,
         durationMs: Long,
         config: HighlightConfig = HighlightConfig(),
         onProgress: ((AnalysisProgress) -> Unit)? = null,
@@ -37,9 +38,9 @@ class VideoAnalysisCoordinator(
                 logger.info(TAG, "Starting video analysis (parallel=${config.parallelProcessing})")
 
                 if (config.parallelProcessing) {
-                    analyzeVideoParallel(videoUri, retriever, durationMs, config, onProgress)
+                    analyzeVideoParallel(videoUri, durationMs, config, onProgress)
                 } else {
-                    analyzeVideoSequential(videoUri, retriever, durationMs, config, onProgress)
+                    analyzeVideoSequential(videoUri, durationMs, config, onProgress)
                 }
             } catch (e: Exception) {
                 logger.error(TAG, "Video analysis failed", e)
@@ -56,7 +57,6 @@ class VideoAnalysisCoordinator(
 
     private suspend fun analyzeVideoParallel(
         videoUri: Uri,
-        retriever: MediaMetadataRetriever,
         durationMs: Long,
         config: HighlightConfig,
         onProgress: ((AnalysisProgress) -> Unit)?,
@@ -75,15 +75,20 @@ class VideoAnalysisCoordinator(
 
             val scenesDeferred =
                 async {
-                    logger.info(TAG, "Starting parallel scene detection")
-                    sceneDetector.detectScenes(
-                        videoUri,
-                        retriever,
-                        durationMs,
-                        config,
-                    ) { progress ->
-                        sceneProgress = progress
-                        updateProgress()
+                    val retriever = createRetriever(videoUri)
+                    try {
+                        logger.info(TAG, "Starting parallel scene detection")
+                        sceneDetector.detectScenes(
+                            videoUri,
+                            retriever,
+                            durationMs,
+                            config,
+                        ) { progress ->
+                            sceneProgress = progress
+                            updateProgress()
+                        }
+                    } finally {
+                        safeReleaseRetriever(retriever)
                     }
                 }
 
@@ -105,10 +110,15 @@ class VideoAnalysisCoordinator(
             val motionDeferred =
                 async {
                     if (config.enableMotionAnalysis) {
-                        logger.info(TAG, "Starting parallel motion analysis")
-                        analyzeMotionOptimized(retriever, durationMs, config) { progress ->
-                            motionProgress = progress
-                            updateProgress()
+                        val retriever = createRetriever(videoUri)
+                        try {
+                            logger.info(TAG, "Starting parallel motion analysis")
+                            analyzeMotionOptimized(retriever, durationMs, config) { progress ->
+                                motionProgress = progress
+                                updateProgress()
+                            }
+                        } finally {
+                            safeReleaseRetriever(retriever)
                         }
                     } else {
                         logger.info(TAG, "Skipping motion analysis")
@@ -130,8 +140,13 @@ class VideoAnalysisCoordinator(
 
             val faceDetections =
                 if (config.includeFaceDetection && faceDetector != null) {
-                    logger.info(TAG, "Starting face detection")
-                    detectFacesOptimized(retriever, durationMs, scenes, config)
+                    val retriever = createRetriever(videoUri)
+                    try {
+                        logger.info(TAG, "Starting face detection")
+                        detectFacesOptimized(retriever, durationMs, scenes, config)
+                    } finally {
+                        safeReleaseRetriever(retriever)
+                    }
                 } else {
                     logger.info(TAG, "Skipping face detection")
                     emptyList()
@@ -187,91 +202,120 @@ class VideoAnalysisCoordinator(
 
     private suspend fun analyzeVideoSequential(
         videoUri: Uri,
-        retriever: MediaMetadataRetriever,
         durationMs: Long,
         config: HighlightConfig,
         onProgress: ((AnalysisProgress) -> Unit)?,
     ): AnalysisResult {
         logger.info(TAG, "Using sequential processing mode")
 
-        onProgress?.invoke(AnalysisProgress("Detecting scenes", 0f))
-        val scenes =
-            sceneDetector.detectScenes(
-                videoUri,
-                retriever,
-                durationMs,
-                config,
-            ) { progress ->
-                onProgress?.invoke(AnalysisProgress("Detecting scenes", progress * 0.25f))
-            }
+        val retriever = createRetriever(videoUri)
 
-        onProgress?.invoke(AnalysisProgress("Analyzing motion", 0.25f))
-        val motionScores =
-            if (config.enableMotionAnalysis) {
-                analyzeMotionOptimized(retriever, durationMs, config) { progress ->
-                    onProgress?.invoke(
-                        AnalysisProgress(
-                            "Analyzing motion",
-                            0.25f + progress * 0.25f,
-                        ),
-                    )
-                }
-            } else {
-                emptyList()
-            }
-
-        onProgress?.invoke(AnalysisProgress("Analyzing audio", 0.5f))
-        val audioScores =
-            if (config.includeAudioAnalysis) {
-                audioAnalyzer.analyzeAudio(videoUri, durationMs, config) { progress ->
-                    onProgress?.invoke(AnalysisProgress("Analyzing audio", 0.5f + progress * 0.2f))
-                }
-            } else {
-                emptyList()
-            }
-
-        onProgress?.invoke(AnalysisProgress("Detecting faces", 0.7f))
-        val faceDetections =
-            if (config.includeFaceDetection && faceDetector != null) {
-                detectFacesOptimized(retriever, durationMs, scenes, config)
-            } else {
-                emptyList()
-            }
-
-        onProgress?.invoke(AnalysisProgress("Scoring highlights", 0.85f))
-        val allSegments =
-            scoringEngine.scoreSegments(
-                scenes,
-                motionScores,
-                audioScores,
-                faceDetections,
-                config,
-            )
-
-        val selectedHighlights = selectBestHighlights(allSegments, config)
-
-        onProgress?.invoke(AnalysisProgress("Generating chapters", 0.95f))
-        val chapters =
-            if (config.generateChapters) {
-                chapterGenerator.generateChapters(
-                    scenes,
+        try {
+            onProgress?.invoke(AnalysisProgress("Detecting scenes", 0f))
+            val scenes =
+                sceneDetector.detectScenes(
+                    videoUri,
+                    retriever,
                     durationMs,
-                    config.chapterIntervalMs,
+                    config,
+                ) { progress ->
+                    onProgress?.invoke(AnalysisProgress("Detecting scenes", progress * 0.25f))
+                }
+
+            onProgress?.invoke(AnalysisProgress("Analyzing motion", 0.25f))
+            val motionScores =
+                if (config.enableMotionAnalysis) {
+                    analyzeMotionOptimized(retriever, durationMs, config) { progress ->
+                        onProgress?.invoke(
+                            AnalysisProgress(
+                                "Analyzing motion",
+                                0.25f + progress * 0.25f,
+                            ),
+                        )
+                    }
+                } else {
+                    emptyList()
+                }
+
+            onProgress?.invoke(AnalysisProgress("Analyzing audio", 0.5f))
+            val audioScores =
+                if (config.includeAudioAnalysis) {
+                    audioAnalyzer.analyzeAudio(videoUri, durationMs, config) { progress ->
+                        onProgress?.invoke(AnalysisProgress("Analyzing audio", 0.5f + progress * 0.2f))
+                    }
+                } else {
+                    emptyList()
+                }
+
+            onProgress?.invoke(AnalysisProgress("Detecting faces", 0.7f))
+            val faceDetections =
+                if (config.includeFaceDetection && faceDetector != null) {
+                    detectFacesOptimized(retriever, durationMs, scenes, config)
+                } else {
+                    emptyList()
+                }
+
+            onProgress?.invoke(AnalysisProgress("Scoring highlights", 0.85f))
+            val allSegments =
+                scoringEngine.scoreSegments(
+                    scenes,
+                    motionScores,
+                    audioScores,
+                    faceDetections,
+                    config,
                 )
+
+            val selectedHighlights = selectBestHighlights(allSegments, config)
+
+            onProgress?.invoke(AnalysisProgress("Generating chapters", 0.95f))
+            val chapters =
+                if (config.generateChapters) {
+                    chapterGenerator.generateChapters(
+                        scenes,
+                        durationMs,
+                        config.chapterIntervalMs,
+                    )
+                } else {
+                    emptyList()
+                }
+
+            onProgress?.invoke(AnalysisProgress("Complete", 1f))
+
+            return AnalysisResult(
+                scenes = scenes,
+                highlights = selectedHighlights,
+                chapters = chapters,
+                audioScores = audioScores,
+                motionScores = motionScores,
+                faceDetections = faceDetections,
+            )
+        } finally {
+            safeReleaseRetriever(retriever)
+        }
+    }
+
+    private fun createRetriever(videoUri: Uri): MediaMetadataRetriever {
+        val retriever = MediaMetadataRetriever()
+        try {
+            if (isRemoteUrl(videoUri)) {
+                retriever.setDataSource(videoUri.toString(), HashMap())
             } else {
-                emptyList()
+                retriever.setDataSource(context, videoUri)
             }
+            Thread.sleep(100)
+        } catch (e: Exception) {
+            logger.error(TAG, "Failed to create retriever", e)
+            throw e
+        }
+        return retriever
+    }
 
-        onProgress?.invoke(AnalysisProgress("Complete", 1f))
-
-        return AnalysisResult(
-            scenes = scenes,
-            highlights = selectedHighlights,
-            chapters = chapters,
-            audioScores = audioScores,
-            motionScores = motionScores,
-            faceDetections = faceDetections,
-        )
+    private fun safeReleaseRetriever(retriever: MediaMetadataRetriever) {
+        try {
+            retriever.release()
+        } catch (e: Exception) {
+            logger.warning(TAG, "Error releasing retriever", e)
+        }
     }
 
     private suspend fun analyzeMotionOptimized(
@@ -287,7 +331,6 @@ class VideoAnalysisCoordinator(
             val maxConsecutiveFailures = 5
 
             val frameInterval = calculateMotionFrameInterval(durationMs, config)
-
             val analysisLimit =
                 config.maxAnalysisDurationMs?.let {
                     minOf(it, durationMs)
@@ -304,18 +347,23 @@ class VideoAnalysisCoordinator(
                     kotlinx.coroutines.yield()
 
                     if (frameCount > 0 && frameCount % 5 == 0) {
-                        kotlinx.coroutines.delay(100)
+                        kotlinx.coroutines.delay(200)
                     }
 
                     onProgress?.invoke(currentTime.toFloat() / analysisLimit)
 
-                    kotlinx.coroutines.delay(50)
+                    kotlinx.coroutines.delay(100)
 
                     val frame =
-                        retriever.getFrameAtTime(
-                            currentTime * 1000,
-                            MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
-                        )
+                        try {
+                            retriever.getFrameAtTime(
+                                currentTime * 1000,
+                                MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                            )
+                        } catch (e: Exception) {
+                            logger.warning(TAG, "Frame extraction failed at ${currentTime}ms", e)
+                            null
+                        }
 
                     if (frame != null) {
                         val score =
@@ -344,7 +392,7 @@ class VideoAnalysisCoordinator(
                         break
                     }
 
-                    kotlinx.coroutines.delay(500L * consecutiveFailures)
+                    kotlinx.coroutines.delay(1000L * consecutiveFailures)
                 }
 
                 currentTime += frameInterval
@@ -404,13 +452,18 @@ class VideoAnalysisCoordinator(
                 checkPoints.forEach { timestamp ->
                     if (timestamp < durationMs) {
                         try {
-                            kotlinx.coroutines.delay(50)
+                            kotlinx.coroutines.delay(100)
 
                             val frame =
-                                retriever.getFrameAtTime(
-                                    timestamp * 1000,
-                                    MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
-                                )
+                                try {
+                                    retriever.getFrameAtTime(
+                                        timestamp * 1000,
+                                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                                    )
+                                } catch (e: Exception) {
+                                    logger.warning(TAG, "Frame extraction failed for face detection", e)
+                                    null
+                                }
 
                             frame?.let {
                                 val result = faceDetector?.detectFaces(it, config.lowResolutionMode)
@@ -419,7 +472,7 @@ class VideoAnalysisCoordinator(
                                 processedCount++
 
                                 if (processedCount % 5 == 0) {
-                                    kotlinx.coroutines.delay(200)
+                                    kotlinx.coroutines.delay(300)
                                 }
                             }
                         } catch (e: Exception) {
@@ -463,6 +516,11 @@ class VideoAnalysisCoordinator(
         }
 
         return selected.sortedBy { it.startTimeMs }
+    }
+
+    private fun isRemoteUrl(uri: Uri): Boolean {
+        val scheme = uri.scheme?.lowercase()
+        return scheme == "http" || scheme == "https"
     }
 
     fun clearCache() {

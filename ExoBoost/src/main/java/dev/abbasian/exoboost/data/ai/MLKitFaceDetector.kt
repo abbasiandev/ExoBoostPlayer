@@ -15,7 +15,7 @@ class MLKitFaceDetector(
 ) {
     companion object {
         private const val TAG = "MLKitFaceDetector"
-        private const val DETECTION_TIMEOUT_MS = 5000L
+        private const val DETECTION_TIMEOUT_MS = 3000L
         private const val MAX_RETRIES = 2
         private const val RETRY_DELAY_MS = 200L
     }
@@ -41,24 +41,50 @@ class MLKitFaceDetector(
         return detector!!
     }
 
-    suspend fun detectFaces(bitmap: Bitmap): FaceDetectionResult {
+    suspend fun detectFaces(
+        bitmap: Bitmap,
+        lowResMode: Boolean = false,
+    ): FaceDetectionResult {
         var lastException: Exception? = null
+
+        val processedBitmap =
+            if (lowResMode && bitmap.width > 640) {
+                Bitmap.createScaledBitmap(
+                    bitmap,
+                    640,
+                    (bitmap.height * 640 / bitmap.width),
+                    false,
+                )
+            } else {
+                bitmap
+            }
 
         for (attempt in 0 until MAX_RETRIES) {
             try {
-                val image = InputImage.fromBitmap(bitmap, 0)
+                val image = InputImage.fromBitmap(processedBitmap, 0)
                 val faces =
                     withTimeout(DETECTION_TIMEOUT_MS) {
                         getDetector().process(image).await()
                     }
 
-                return FaceDetectionResult(hasFaces = faces.isNotEmpty(), faceCount = faces.size)
+                if (processedBitmap != bitmap) {
+                    processedBitmap.recycle()
+                }
+
+                return FaceDetectionResult(
+                    hasFaces = faces.isNotEmpty(),
+                    faceCount = faces.size,
+                )
             } catch (e: Exception) {
                 lastException = e
                 if (attempt < MAX_RETRIES - 1) {
                     delay(RETRY_DELAY_MS * (attempt + 1))
                 }
             }
+        }
+
+        if (processedBitmap != bitmap) {
+            processedBitmap.recycle()
         }
 
         logger.error(TAG, "Face detection failed after retries", lastException)

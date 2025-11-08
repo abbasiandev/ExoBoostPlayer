@@ -153,11 +153,22 @@ class ChapterGenerator(
 
         chapters.sortedBy { it.startTimeMs }.forEach { chapter ->
             val adjustedStart =
-                if (chapter.startTimeMs < previousEnd) previousEnd else chapter.startTimeMs
+                if (chapter.startTimeMs < previousEnd) {
+                    previousEnd
+                } else {
+                    chapter.startTimeMs
+                }
             val adjustedEnd = minOf(chapter.endTimeMs, durationMs)
 
-            if (adjustedEnd > adjustedStart && (adjustedEnd - adjustedStart) >= MIN_CHAPTER_DURATION) {
-                validated.add(chapter.copy(startTimeMs = adjustedStart, endTimeMs = adjustedEnd))
+            if (adjustedEnd > adjustedStart &&
+                (adjustedEnd - adjustedStart) >= MIN_CHAPTER_DURATION
+            ) {
+                validated.add(
+                    chapter.copy(
+                        startTimeMs = adjustedStart,
+                        endTimeMs = adjustedEnd,
+                    ),
+                )
                 previousEnd = adjustedEnd
             }
         }
