@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -38,8 +39,10 @@ import dev.abbasian.exoboost.data.manager.ExoPlayerManager
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.VideoQuality
+import dev.abbasian.exoboost.presentation.state.HighlightsState
 import dev.abbasian.exoboost.presentation.ui.component.enhancedPlayerControls
 import dev.abbasian.exoboost.presentation.ui.component.gestureHandler
+import dev.abbasian.exoboost.presentation.ui.component.smartHighlightsDisplay
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.delay
@@ -70,6 +73,7 @@ fun exoBoostPlayer(
     val activity = context as? Activity
     val lifecycleOwner = LocalLifecycleOwner.current
     val uiState by viewModel.uiState.collectAsState()
+    val highlightsState by viewModel.highlightsState.collectAsState()
 
     var isFullscreen by rememberSaveable { mutableStateOf(false) }
     var controlsVisible by rememberSaveable { mutableStateOf(true) }
@@ -136,6 +140,19 @@ fun exoBoostPlayer(
             if (uiState.mediaInfo.isPlaying && !isModalOpen) {
                 controlsVisible = false
             }
+        }
+    }
+
+    LaunchedEffect(uiState.mediaState, mediaConfig.autoGenerateHighlights) {
+        if (mediaConfig.autoGenerateHighlights &&
+            uiState.mediaState is MediaState.Ready &&
+            highlightsState is HighlightsState.Idle
+        ) {
+            delay(1000)
+            viewModel.generateHighlights(
+                videoUrl = videoUrl,
+                config = mediaConfig.highlightConfig,
+            )
         }
     }
 
@@ -355,8 +372,46 @@ fun exoBoostPlayer(
                 onModalStateChanged = { isOpen ->
                     isModalOpen = isOpen
                 },
+                onGenerateHighlights =
+                    if (mediaConfig.enableSmartHighlights) {
+                        {
+                            try {
+                                viewModel.generateHighlights(
+                                    videoUrl = videoUrl,
+                                    config = mediaConfig.highlightConfig,
+                                )
+                            } catch (e: Exception) {
+                                logger.error(TAG, "Error generating highlights", e)
+                            }
+                        }
+                    } else {
+                        null
+                    },
+                highlightsState = highlightsState,
                 modifier = Modifier.fillMaxSize(),
             )
+        }
+
+        if (mediaConfig.enableSmartHighlights) {
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = if (controlsVisible) 100.dp else 16.dp),
+            ) {
+                smartHighlightsDisplay(
+                    highlightsState = highlightsState,
+                    onPlayHighlights = {
+                        viewModel.playHighlights()
+                        controlsVisible = false
+                    },
+                    onJumpToChapter = { chapter ->
+                        viewModel.jumpToChapter(chapter)
+                        controlsVisible = false
+                    },
+                    onClose = { viewModel.clearHighlights() },
+                )
+            }
         }
 
         if (isFullscreen || onBack != null) {
