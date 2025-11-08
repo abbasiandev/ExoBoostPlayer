@@ -42,6 +42,16 @@
 
     <string name="help_server_unavailable">Server is temporarily unavailable</string>
 
+    <string name="highlights_analyzing">AI is analyzing your content</string>
+    <string name="highlights_analyzing_description">This depending on media length</string>
+    <string name="highlights_found">AI Found %d Highlights</string>
+    <string name="highlights_summary">%ds summary of %ds video</string>
+    <string name="highlights_watch">Watch Highlights</string>
+    <string name="highlights_tab_highlights">Highlights</string>
+    <string name="highlights_tab_chapters">Chapters</string>
+    <string name="highlights_generate">Generate Smart Highlights</string>
+    <string name="highlights_error">Analysis Failed</string>
+
     <string name="error_msg_network_timeout">Network connection timed out</string>
     <string name="error_msg_http">HTTP error: %s</string>
     <string name="error_msg_cors">CORS policy blocking access to media</string>
