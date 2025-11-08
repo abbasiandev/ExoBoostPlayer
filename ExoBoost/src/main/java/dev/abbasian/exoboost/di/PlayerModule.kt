@@ -10,7 +10,6 @@ import dev.abbasian.exoboost.data.manager.AutoRecoveryManager
 import dev.abbasian.exoboost.data.manager.ExoPlayerManager
 import dev.abbasian.exoboost.data.repository.MediaRepositoryImpl
 import dev.abbasian.exoboost.domain.repository.MediaRepository
-import dev.abbasian.exoboost.domain.usecase.GenerateVideoHighlightsUseCase
 import dev.abbasian.exoboost.domain.usecase.PlayMediaUseCase
 import dev.abbasian.exoboost.domain.usecase.RetryMediaUseCase
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
@@ -39,12 +38,6 @@ val playerModule =
 
         factory { PlayMediaUseCase(get()) }
         factory { RetryMediaUseCase(get()) }
-        factory {
-            GenerateVideoHighlightsUseCase(
-                context = androidContext(),
-                logger = get(),
-            )
-        }
 
         viewModel {
             MediaPlayerViewModel(
