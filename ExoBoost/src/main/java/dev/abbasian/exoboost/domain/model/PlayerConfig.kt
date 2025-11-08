@@ -25,6 +25,10 @@ data class MediaPlayerConfig(
     val autoQualityOnError: Boolean = true,
     val preferSoftwareDecoder: Boolean = false,
     val audioVisualization: AudioVisualizationConfig = AudioVisualizationConfig(),
+    val enableSmartHighlights: Boolean = false,
+    val highlightConfig: HighlightConfig = HighlightConfig(),
+    val autoGenerateHighlights: Boolean = false,
+    val showHighlightsButton: Boolean = true,
     val glassyUI: GlassyUIConfig = GlassyUIConfig(),
 ) {
     data class BufferDurations(
