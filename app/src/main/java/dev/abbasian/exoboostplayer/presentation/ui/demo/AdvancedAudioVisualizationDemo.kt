@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.abbasian.exoboost.domain.model.HighlightConfig
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.VisualizationColorScheme
 import dev.abbasian.exoboost.domain.model.VisualizationType
@@ -90,6 +91,7 @@ fun AdvancedAudioVisualizationDemo(
                             blurRadius = 35f,
                             borderOpacity = 0.45f,
                         ),
+                    highlightConfig = HighlightConfig.audioFocused(),
                 ),
             currentVisualizationType = visualizationType,
             onVisualizationTypeChange = { visualizationType = it },
@@ -200,11 +202,6 @@ private fun VisualizationSettingsPanel(
                     currentScheme = colorScheme,
                     onClick = { onColorSchemeChange(VisualizationColorScheme.RAINBOW) },
                 )
-                ColorSchemeButton(
-                    scheme = VisualizationColorScheme.DYNAMIC,
-                    currentScheme = colorScheme,
-                    onClick = { onColorSchemeChange(VisualizationColorScheme.DYNAMIC) },
-                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -308,8 +305,7 @@ private fun ColorSchemeButton(
                     Color(0xFF0000FF),
                 )
 
-            VisualizationColorScheme.DYNAMIC -> listOf(Color(0xFFFFFF00), Color(0xFFFF0000))
-            VisualizationColorScheme.MATERIAL_YOU -> TODO()
+            VisualizationColorScheme.MATERIAL_YOU -> listOf(Color(0xFFFFFF00), Color(0xFFFF0000))
         }
 
     Box(

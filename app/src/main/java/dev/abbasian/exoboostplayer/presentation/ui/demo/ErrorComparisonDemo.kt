@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.abbasian.exoboost.domain.model.HighlightConfig
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.presentation.ui.screen.exoBoostPlayer
@@ -114,6 +115,7 @@ fun ErrorComparisonDemo(
                     retryOnError = true,
                     maxRetryCount = 5,
                     autoQualityOnError = true,
+                    highlightConfig = HighlightConfig.fast(),
                 ),
             onBack = onBack,
             modifier = Modifier.fillMaxSize(),

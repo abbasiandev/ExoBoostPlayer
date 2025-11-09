@@ -28,10 +28,6 @@ sealed class Demo {
         val url: String,
     ) : Demo()
 
-    data class CacheDemo(
-        val url: String,
-    ) : Demo()
-
     data class NetworkSimulation(
         val url: String,
     ) : Demo()

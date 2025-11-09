@@ -30,7 +30,6 @@ fun MainScreen() {
             is Demo.VideoQualityControl -> QualityControlDemo(demo.url) { currentDemo = null }
             is Demo.ErrorComparison -> ErrorComparisonDemo(demo.url) { currentDemo = null }
             is Demo.BufferVisualization -> BufferVisualizationDemo(demo.url) { currentDemo = null }
-            is Demo.CacheDemo -> BasicVideoPlayerDemo(demo.url) { currentDemo = null }
             is Demo.NetworkSimulation -> NetworkSimulationDemo(demo.url) { currentDemo = null }
 
             is Demo.AudioVisualization ->

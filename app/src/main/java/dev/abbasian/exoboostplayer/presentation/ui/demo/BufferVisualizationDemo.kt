@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.abbasian.exoboost.domain.model.HighlightConfig
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.presentation.ui.screen.exoBoostPlayer
@@ -115,6 +116,7 @@ fun BufferVisualizationDemo(
                             bufferForPlaybackMs = 3000,
                             bufferForPlaybackAfterRebufferMs = 6000,
                         ),
+                    highlightConfig = HighlightConfig.stable(),
                 ),
             onBack = onBack,
             modifier = Modifier.fillMaxSize(),

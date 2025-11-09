@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.abbasian.exoboost.domain.model.HighlightConfig
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.VideoQuality
@@ -100,6 +101,7 @@ fun QualityControlDemo(
                             bufferForPlaybackMs = 2500,
                             bufferForPlaybackAfterRebufferMs = 5000,
                         ),
+                    highlightConfig = HighlightConfig.balanced(),
                 ),
             onBack = onBack,
             modifier = Modifier.fillMaxSize(),
@@ -306,14 +308,14 @@ private fun QualityChangeItem(change: QualityChangeEvent) {
                 imageVector =
                     when {
                         change.fromQuality == null -> Icons.Filled.PlayArrow
-                        change.fromQuality!!.height > change.toQuality.height -> Icons.Filled.ArrowDownward
+                        change.fromQuality.height > change.toQuality.height -> Icons.Filled.ArrowDownward
                         else -> Icons.Filled.ArrowUpward
                     },
                 contentDescription = null,
                 tint =
                     when {
                         change.fromQuality == null -> Color(0xFF2196F3)
-                        change.fromQuality!!.height > change.toQuality.height -> Color(0xFFFF9800)
+                        change.fromQuality.height > change.toQuality.height -> Color(0xFFFF9800)
                         else -> Color(0xFF4CAF50)
                     },
                 modifier = Modifier.size(20.dp),
@@ -325,7 +327,7 @@ private fun QualityChangeItem(change: QualityChangeEvent) {
                 Text(
                     text =
                         if (change.fromQuality != null) {
-                            "${change.fromQuality!!.label} → ${change.toQuality.label}"
+                            "${change.fromQuality.label} → ${change.toQuality.label}"
                         } else {
                             change.toQuality.label
                         },

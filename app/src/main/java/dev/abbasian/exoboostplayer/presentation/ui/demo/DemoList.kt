@@ -210,22 +210,6 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.ADVANCED,
                                 demo = Demo.BufferVisualization("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"),
                             ),
-                            DemoItem(
-                                title = "Cache Management",
-                                description = "Video caching with size monitoring",
-                                features =
-                                    listOf(
-                                        "Cache size tracking",
-                                        "Cache hit rate",
-                                        "Clear cache",
-                                        "Offline playback",
-                                    ),
-                                difficulty = DemoDifficulty.INTERMEDIATE,
-                                demo =
-                                    Demo.CacheDemo(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-                                    ),
-                            ),
                         ),
                 ),
                 DemoCategory(
