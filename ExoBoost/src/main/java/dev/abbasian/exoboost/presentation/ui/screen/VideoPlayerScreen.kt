@@ -2,7 +2,9 @@ package dev.abbasian.exoboost.presentation.ui.screen
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
+import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsetsController
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,6 +31,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.util.UnstableApi
@@ -80,6 +84,82 @@ fun exoBoostPlayer(
     var isModalOpen by remember { mutableStateOf(false) }
     var isPlayerInitialized by remember { mutableStateOf(false) }
     var playerViewReady by remember { mutableStateOf(false) }
+
+    DisposableEffect(Unit) {
+        activity?.window?.let { window ->
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                window.insetsController?.let { controller ->
+                    controller.hide(WindowInsetsCompat.Type.statusBars())
+                    controller.systemBarsBehavior =
+                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility = (
+                    View.SYSTEM_UI_FLAG_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                )
+            }
+        }
+
+        onDispose {
+            activity?.window?.let { window ->
+                WindowCompat.setDecorFitsSystemWindows(window, true)
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    window.insetsController?.show(WindowInsetsCompat.Type.statusBars())
+                } else {
+                    @Suppress("DEPRECATION")
+                    window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(isFullscreen) {
+        activity?.window?.let { window ->
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                window.insetsController?.let { controller ->
+                    if (isFullscreen) {
+                        controller.hide(
+                            WindowInsetsCompat.Type.statusBars()
+                                or WindowInsetsCompat.Type.navigationBars(),
+                        )
+                        controller.systemBarsBehavior =
+                            WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    } else {
+                        controller.hide(WindowInsetsCompat.Type.statusBars())
+                        controller.show(WindowInsetsCompat.Type.navigationBars())
+                    }
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility =
+                    if (isFullscreen) {
+                        (
+                            View.SYSTEM_UI_FLAG_FULLSCREEN
+                                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        )
+                    } else {
+                        (
+                            View.SYSTEM_UI_FLAG_FULLSCREEN
+                                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        )
+                    }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         try {
@@ -315,6 +395,7 @@ fun exoBoostPlayer(
                 mediaInfo = uiState.mediaInfo,
                 showControls = controlsVisible,
                 mediaConfig = mediaConfig,
+                isFullscreen = isFullscreen,
                 onPlayPause = {
                     try {
                         viewModel.playPause()
@@ -410,6 +491,10 @@ fun exoBoostPlayer(
                         controlsVisible = false
                     },
                     onClose = { viewModel.clearHighlights() },
+                    onJumpToHighlight = {
+                        viewModel.jumpToHighlight(it)
+                        controlsVisible = false
+                    },
                 )
             }
         }
