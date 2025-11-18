@@ -13,6 +13,7 @@ import dev.abbasian.exoboost.domain.model.PlayerError
 import dev.abbasian.exoboost.domain.model.VideoChapter
 import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.domain.usecase.GenerateVideoHighlightsUseCase
+import dev.abbasian.exoboost.domain.usecase.ManageHighlightCacheUseCase
 import dev.abbasian.exoboost.domain.usecase.PlayMediaUseCase
 import dev.abbasian.exoboost.domain.usecase.RetryMediaUseCase
 import dev.abbasian.exoboost.presentation.state.HighlightsState
@@ -31,6 +32,7 @@ class MediaPlayerViewModel(
     private val playMediaUseCase: PlayMediaUseCase,
     private val retryMediaUseCase: RetryMediaUseCase,
     private val generateHighlightsUseCase: GenerateVideoHighlightsUseCase,
+    private val manageHighlightCacheUseCase: ManageHighlightCacheUseCase,
     private val errorClassifier: ErrorClassifier,
     private val logger: ExoBoostLogger,
 ) : ViewModel() {
@@ -174,6 +176,7 @@ class MediaPlayerViewModel(
     fun generateHighlights(
         videoUrl: String,
         config: HighlightConfig = HighlightConfig(),
+        useCache: Boolean = true,
     ) {
         highlightsJob?.cancel()
 
@@ -183,6 +186,15 @@ class MediaPlayerViewModel(
 
                 try {
                     logger.info(TAG, "Starting highlight generation")
+
+                    if (useCache) {
+                        val cached = manageHighlightCacheUseCase.getCachedHighlight(videoUrl)
+                        if (cached != null) {
+                            logger.info(TAG, "Using cached highlights")
+                            _highlightsState.value = HighlightsState.Success(cached)
+                            return@launch
+                        }
+                    }
 
                     wasPlaying = _uiState.value.mediaInfo.isPlaying
                     if (wasPlaying) {
@@ -202,6 +214,9 @@ class MediaPlayerViewModel(
                             "Highlights generated: ${highlights.highlights.size} segments, " +
                                 "analysis took ${highlights.analysisTimeMs}ms",
                         )
+
+                        manageHighlightCacheUseCase.saveHighlight(videoUrl, highlights)
+
                         _highlightsState.value = HighlightsState.Success(highlights)
                     }
 
@@ -410,6 +425,29 @@ class MediaPlayerViewModel(
         generateHighlightsUseCase.clearCache()
         _highlightsState.value = HighlightsState.Idle
         logger.debug(TAG, "Highlights cleared")
+    }
+
+    fun clearHighlightCache(videoUrl: String? = null) {
+        viewModelScope.launch {
+            if (videoUrl != null) {
+                manageHighlightCacheUseCase.deleteHighlight(videoUrl)
+                logger.debug(TAG, "Cleared cache for: $videoUrl")
+            } else {
+                manageHighlightCacheUseCase.clearCache()
+                logger.debug(TAG, "Cleared all highlight cache")
+            }
+        }
+    }
+
+    fun getRecentHighlights(limit: Int = 10) {
+        viewModelScope.launch {
+            try {
+                val recent = manageHighlightCacheUseCase.getRecentHighlights(limit)
+                logger.debug(TAG, "Retrieved ${recent.size} recent highlights")
+            } catch (e: Exception) {
+                logger.error(TAG, "Error getting recent highlights", e)
+            }
+        }
     }
 
     override fun onCleared() {
