@@ -44,6 +44,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.abbasian.exoboost.domain.model.HighlightConfig
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.presentation.ui.screen.exoBoostPlayer
@@ -113,6 +114,9 @@ fun NetworkRecoveryDemo(
                             bufferForPlaybackMs = 3000,
                             bufferForPlaybackAfterRebufferMs = 6000,
                         ),
+                    enableSmartHighlights = true,
+                    autoGenerateHighlights = false,
+                    highlightConfig = HighlightConfig.stable(),
                 ),
             onBack = onBack,
             modifier = Modifier.fillMaxSize(),
@@ -214,7 +218,13 @@ private fun RetryVisualizationOverlay(
 private fun StateIndicator(state: MediaState) {
     val (icon, color, text) =
         when (state) {
-            is MediaState.Loading -> Triple(Icons.Filled.CloudSync, Color(0xFFFF9800), "Connecting...")
+            is MediaState.Loading ->
+                Triple(
+                    Icons.Filled.CloudSync,
+                    Color(0xFFFF9800),
+                    "Connecting...",
+                )
+
             is MediaState.Ready, is MediaState.Playing ->
                 Triple(
                     Icons.Filled.CheckCircle,

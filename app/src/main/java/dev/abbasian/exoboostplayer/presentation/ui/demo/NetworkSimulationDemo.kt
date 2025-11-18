@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.abbasian.exoboost.domain.model.HighlightConfig
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.presentation.ui.screen.exoBoostPlayer
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
@@ -79,6 +80,9 @@ fun NetworkSimulationDemo(
                                 bufferForPlaybackMs = 2500,
                                 bufferForPlaybackAfterRebufferMs = 5000,
                             ),
+                        enableSmartHighlights = true,
+                        autoGenerateHighlights = false,
+                        highlightConfig = HighlightConfig.balanced(),
                     )
 
                 NetworkSimulation.GOOD ->
@@ -92,6 +96,9 @@ fun NetworkSimulationDemo(
                                 bufferForPlaybackMs = 3000,
                                 bufferForPlaybackAfterRebufferMs = 6000,
                             ),
+                        enableSmartHighlights = true,
+                        autoGenerateHighlights = false,
+                        highlightConfig = HighlightConfig.balanced(),
                     )
 
                 NetworkSimulation.MODERATE ->
@@ -107,6 +114,9 @@ fun NetworkSimulationDemo(
                                 bufferForPlaybackMs = 4000,
                                 bufferForPlaybackAfterRebufferMs = 8000,
                             ),
+                        enableSmartHighlights = true,
+                        autoGenerateHighlights = false,
+                        highlightConfig = HighlightConfig.fast(),
                     )
 
                 NetworkSimulation.POOR ->
@@ -123,6 +133,9 @@ fun NetworkSimulationDemo(
                                 bufferForPlaybackMs = 5000,
                                 bufferForPlaybackAfterRebufferMs = 10000,
                             ),
+                        enableSmartHighlights = true,
+                        autoGenerateHighlights = false,
+                        highlightConfig = HighlightConfig.fast(),
                     )
 
                 NetworkSimulation.VERY_POOR ->
@@ -140,6 +153,9 @@ fun NetworkSimulationDemo(
                                 bufferForPlaybackMs = 8000,
                                 bufferForPlaybackAfterRebufferMs = 15000,
                             ),
+                        enableSmartHighlights = true,
+                        autoGenerateHighlights = false,
+                        highlightConfig = HighlightConfig.minimal(),
                     )
 
                 NetworkSimulation.OFFLINE ->
@@ -148,6 +164,8 @@ fun NetworkSimulationDemo(
                         showControls = true,
                         retryOnError = true,
                         maxRetryCount = 5,
+                        enableSmartHighlights = false,
+                        autoGenerateHighlights = false,
                     )
             }
         }

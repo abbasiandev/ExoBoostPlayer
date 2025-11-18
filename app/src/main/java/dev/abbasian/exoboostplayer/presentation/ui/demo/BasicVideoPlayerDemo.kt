@@ -18,6 +18,8 @@ fun BasicVideoPlayerDemo(
             MediaPlayerConfig(
                 autoPlay = true,
                 showControls = true,
+                enableSmartHighlights = true,
+                autoGenerateHighlights = false,
                 highlightConfig = HighlightConfig.fast(),
             ),
         onBack = onBack,

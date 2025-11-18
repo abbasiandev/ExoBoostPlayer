@@ -47,6 +47,12 @@ fun MainScreen() {
                 ) { currentDemo = null }
 
             is Demo.AudioPlaylist -> PlaylistDemo { currentDemo = null }
+
+            is Demo.SmartHighlights ->
+                SmartHighlightsAutoDemo(
+                    demo.url,
+                    demo.config,
+                ) { currentDemo = null }
         }
     } ?: DemoList(onDemoSelected = { currentDemo = it })
 }

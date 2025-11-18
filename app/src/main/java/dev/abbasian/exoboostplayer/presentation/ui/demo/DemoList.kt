@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Healing
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.VideoLibrary
@@ -38,6 +39,7 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import dev.abbasian.exoboost.domain.model.HighlightConfig
 import dev.abbasian.exoboostplayer.presentation.Demo
 import dev.abbasian.exoboostplayer.presentation.DemoCategory
 import dev.abbasian.exoboostplayer.presentation.DemoDifficulty
@@ -57,8 +59,14 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                         listOf(
                             DemoItem(
                                 title = "Basic Video Player",
-                                description = "Simple video playback with minimal configuration",
-                                features = listOf("Auto-play", "Basic controls", "Buffering"),
+                                description = "Simple video playback with Smart Highlights",
+                                features =
+                                    listOf(
+                                        "Auto-play",
+                                        "Basic controls",
+                                        "Buffering",
+                                        "Smart Highlights",
+                                    ),
                                 difficulty = DemoDifficulty.BEGINNER,
                                 demo =
                                     Demo.VideoBasic(
@@ -67,18 +75,181 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                             ),
                             DemoItem(
                                 title = "Advanced Player",
-                                description = "Full-featured player with gestures & quality control",
+                                description = "Full-featured player with AI-powered highlights",
                                 features =
                                     listOf(
                                         "Swipe gestures",
                                         "Quality selection",
                                         "Speed control",
                                         "Glassy UI",
+                                        "AI Highlights",
+                                        "Chapter detection",
                                     ),
                                 difficulty = DemoDifficulty.INTERMEDIATE,
                                 demo =
                                     Demo.VideoAdvanced(
                                         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                                    ),
+                            ),
+                        ),
+                ),
+                DemoCategory(
+                    title = "Smart Highlights",
+                    description = "AI-powered video analysis and chapter generation",
+                    icon = Icons.Filled.Psychology,
+                    demos =
+                        listOf(
+                            DemoItem(
+                                title = "Auto Highlights - Balanced",
+                                description = "Automatic highlight detection with balanced analysis",
+                                features =
+                                    listOf(
+                                        "Motion detection",
+                                        "Audio analysis",
+                                        "Scene changes",
+                                        "Smart scoring",
+                                    ),
+                                difficulty = DemoDifficulty.INTERMEDIATE,
+                                demo =
+                                    Demo.SmartHighlights(
+                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                                        HighlightConfig.balanced(),
+                                    ),
+                            ),
+                            DemoItem(
+                                title = "Fast Mode",
+                                description = "Quick highlight detection for real-time analysis",
+                                features =
+                                    listOf(
+                                        "Optimized performance",
+                                        "Motion focus",
+                                        "Low resource usage",
+                                        "Adaptive sampling",
+                                    ),
+                                difficulty = DemoDifficulty.BEGINNER,
+                                demo =
+                                    Demo.SmartHighlights(
+                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                                        HighlightConfig.fast(),
+                                    ),
+                            ),
+                            DemoItem(
+                                title = "High Quality Analysis",
+                                description = "Comprehensive analysis with face detection",
+                                features =
+                                    listOf(
+                                        "Face detection",
+                                        "Full audio analysis",
+                                        "Chapter generation",
+                                        "15+ highlights",
+                                    ),
+                                difficulty = DemoDifficulty.ADVANCED,
+                                demo =
+                                    Demo.SmartHighlights(
+                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                                        HighlightConfig.highQuality(),
+                                    ),
+                            ),
+                            DemoItem(
+                                title = "Audio-Focused",
+                                description = "Detect highlights based on audio peaks and intensity",
+                                features =
+                                    listOf(
+                                        "Audio peak detection",
+                                        "60% audio weight",
+                                        "Music/speech analysis",
+                                        "Sound intensity",
+                                    ),
+                                difficulty = DemoDifficulty.INTERMEDIATE,
+                                demo =
+                                    Demo.SmartHighlights(
+                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                                        HighlightConfig.audioFocused(),
+                                    ),
+                            ),
+                            DemoItem(
+                                title = "Motion-Focused",
+                                description = "Detect action-packed moments with high motion",
+                                features =
+                                    listOf(
+                                        "High motion detection",
+                                        "60% motion weight",
+                                        "Action scenes",
+                                        "Dynamic content",
+                                    ),
+                                difficulty = DemoDifficulty.INTERMEDIATE,
+                                demo =
+                                    Demo.SmartHighlights(
+                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                                        HighlightConfig.motionFocused(),
+                                    ),
+                            ),
+                            DemoItem(
+                                title = "People-Focused",
+                                description = "Prioritize scenes with face activity and people",
+                                features =
+                                    listOf(
+                                        "Face detection",
+                                        "50% face weight",
+                                        "People tracking",
+                                        "Social moments",
+                                    ),
+                                difficulty = DemoDifficulty.ADVANCED,
+                                demo =
+                                    Demo.SmartHighlights(
+                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                                        HighlightConfig.peopleFocused(),
+                                    ),
+                            ),
+                            DemoItem(
+                                title = "Scene-Focused",
+                                description = "Detect highlights based on scene transitions",
+                                features =
+                                    listOf(
+                                        "Scene detection",
+                                        "Visual changes",
+                                        "50% visual weight",
+                                        "Cinematic moments",
+                                    ),
+                                difficulty = DemoDifficulty.INTERMEDIATE,
+                                demo =
+                                    Demo.SmartHighlights(
+                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                                        HighlightConfig.sceneFocused(),
+                                    ),
+                            ),
+                            DemoItem(
+                                title = "Short Video Mode",
+                                description = "Optimized for videos under 2 minutes",
+                                features =
+                                    listOf(
+                                        "3 highlights max",
+                                        "3-15s segments",
+                                        "60s target duration",
+                                        "Quick analysis",
+                                    ),
+                                difficulty = DemoDifficulty.BEGINNER,
+                                demo =
+                                    Demo.SmartHighlights(
+                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                                        HighlightConfig.shortVideo(),
+                                    ),
+                            ),
+                            DemoItem(
+                                title = "Long Video Mode",
+                                description = "Handle long videos with chapter generation",
+                                features =
+                                    listOf(
+                                        "15 highlights max",
+                                        "Auto chapters",
+                                        "2-min intervals",
+                                        "10-45s segments",
+                                    ),
+                                difficulty = DemoDifficulty.ADVANCED,
+                                demo =
+                                    Demo.SmartHighlights(
+                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                                        HighlightConfig.longVideo(),
                                     ),
                             ),
                         ),
@@ -98,6 +269,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                         "Exponential backoff",
                                         "Network state monitoring",
                                         "Visual retry feedback",
+                                        "Smart Highlights",
                                     ),
                                 difficulty = DemoDifficulty.INTERMEDIATE,
                                 demo = Demo.VideoErrorRecovery("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"),
@@ -111,6 +283,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                         "Error injection",
                                         "Recovery metrics",
                                         "Success rate tracking",
+                                        "Smart Highlights",
                                     ),
                                 difficulty = DemoDifficulty.ADVANCED,
                                 demo = Demo.ErrorComparison("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"),
@@ -190,6 +363,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                         "Available qualities",
                                         "Bitrate display",
                                         "Smooth transitions",
+                                        "Smart Highlights",
                                     ),
                                 difficulty = DemoDifficulty.BEGINNER,
                                 demo =
@@ -206,6 +380,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                         "Rebuffer tracking",
                                         "Custom configurations",
                                         "Performance metrics",
+                                        "Smart Highlights",
                                     ),
                                 difficulty = DemoDifficulty.ADVANCED,
                                 demo = Demo.BufferVisualization("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"),
@@ -227,12 +402,71 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                         "Packet loss",
                                         "Latency injection",
                                         "Recovery visualization",
+                                        "Smart Highlights",
                                     ),
                                 difficulty = DemoDifficulty.ADVANCED,
                                 demo =
                                     Demo.NetworkSimulation(
                                         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
                                     ),
+                            ),
+                        ),
+                ),
+                DemoCategory(
+                    title = "Audio Excellence",
+                    description = "Audio playback with visualization",
+                    icon = Icons.Filled.AudioFile,
+                    demos =
+                        listOf(
+                            DemoItem(
+                                title = "Audio Visualization",
+                                description = "5 visualization types with real-time audio analysis",
+                                features =
+                                    listOf(
+                                        "Spectrum analyzer",
+                                        "Waveform",
+                                        "Circular",
+                                        "Bars",
+                                        "Particle system",
+                                    ),
+                                difficulty = DemoDifficulty.INTERMEDIATE,
+                                demo =
+                                    Demo.AudioVisualization(
+                                        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+                                        "Soundhelix Song 1",
+                                        "Soundhelix",
+                                    ),
+                            ),
+                            DemoItem(
+                                title = "8-Band Equalizer",
+                                description = "Professional audio equalizer with presets",
+                                features =
+                                    listOf(
+                                        "8 frequency bands",
+                                        "Custom presets",
+                                        "Real-time adjustment",
+                                        "Bass/Treble boost",
+                                    ),
+                                difficulty = DemoDifficulty.INTERMEDIATE,
+                                demo =
+                                    Demo.AudioEqualizer(
+                                        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+                                        "Soundhelix Song 2",
+                                        "Soundhelix",
+                                    ),
+                            ),
+                            DemoItem(
+                                title = "Playlist Management",
+                                description = "Full playlist with navigation",
+                                features =
+                                    listOf(
+                                        "Next/Previous",
+                                        "Track info",
+                                        "Seamless transitions",
+                                        "State preservation",
+                                    ),
+                                difficulty = DemoDifficulty.BEGINNER,
+                                demo = Demo.AudioPlaylist,
                             ),
                         ),
                 ),

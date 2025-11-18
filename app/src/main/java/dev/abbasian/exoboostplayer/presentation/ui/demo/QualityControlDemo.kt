@@ -101,6 +101,8 @@ fun QualityControlDemo(
                             bufferForPlaybackMs = 2500,
                             bufferForPlaybackAfterRebufferMs = 5000,
                         ),
+                    enableSmartHighlights = true,
+                    autoGenerateHighlights = false,
                     highlightConfig = HighlightConfig.balanced(),
                 ),
             onBack = onBack,

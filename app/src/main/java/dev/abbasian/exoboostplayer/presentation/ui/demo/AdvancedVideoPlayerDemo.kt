@@ -39,6 +39,8 @@ fun AdvancedVideoPlayerDemo(
                         blurRadius = 30f,
                         borderOpacity = 0.4f,
                     ),
+                enableSmartHighlights = true,
+                autoGenerateHighlights = false,
                 highlightConfig = HighlightConfig.balanced(),
             ),
         onBack = onBack,

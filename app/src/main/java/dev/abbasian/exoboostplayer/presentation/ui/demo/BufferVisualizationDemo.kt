@@ -116,6 +116,8 @@ fun BufferVisualizationDemo(
                             bufferForPlaybackMs = 3000,
                             bufferForPlaybackAfterRebufferMs = 6000,
                         ),
+                    enableSmartHighlights = true,
+                    autoGenerateHighlights = false,
                     highlightConfig = HighlightConfig.stable(),
                 ),
             onBack = onBack,
