@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
@@ -185,4 +186,30 @@ fun glassySeekBar(
             }
         }
     }
+}
+
+@Preview(
+    name = "Glassy SeekBar - Landscape",
+    backgroundColor = 0xFF000000,
+    widthDp = 800,
+    heightDp = 360,
+)
+@Composable
+private fun GlassySeekBarLandscapePreview() {
+    val duration = 3 * 60 * 1000L
+    val currentPosition = (duration * 0.35f).toLong()
+    val bufferedPosition = (duration * 0.8f).toLong()
+
+    glassySeekBar(
+        currentPosition = currentPosition,
+        bufferedPosition = bufferedPosition,
+        duration = duration,
+        onSeek = {},
+        onSeekStart = {},
+        onSeekEnd = {},
+        modifier =
+            Modifier
+                .padding(24.dp),
+        config = MediaPlayerConfig.GlassyUIConfig(),
+    )
 }

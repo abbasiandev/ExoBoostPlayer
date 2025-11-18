@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.Pause
@@ -46,6 +47,7 @@ import dev.abbasian.exoboost.domain.model.MediaInfo
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.VideoQuality
+import dev.abbasian.exoboost.presentation.state.HighlightsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +64,8 @@ fun enhancedPlayerControls(
     onSettings: (() -> Unit)? = null,
     onFullscreen: (() -> Unit)? = null,
     onModalStateChanged: (Boolean) -> Unit = {},
+    onGenerateHighlights: (() -> Unit)? = null,
+    highlightsState: HighlightsState = HighlightsState.Idle,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -69,6 +73,7 @@ fun enhancedPlayerControls(
     val glassyConfig: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig()
     var showSpeedDialog by remember { mutableStateOf(false) }
     var showQualityDialog by remember { mutableStateOf(false) }
+    val isGenerating = highlightsState is HighlightsState.Analyzing
 
     LaunchedEffect(showSpeedDialog, showQualityDialog) {
         onModalStateChanged(showSpeedDialog || showQualityDialog)
@@ -170,6 +175,18 @@ fun enhancedPlayerControls(
                                 ).padding(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
+                        if (onGenerateHighlights != null && mediaConfig.enableSmartHighlights) {
+                            glassyIconButton(
+                                onClick = {
+                                    if (!isGenerating) {
+                                        onGenerateHighlights()
+                                    }
+                                },
+                                icon = Icons.Filled.AutoAwesome,
+                                contentDescription = context.getString(R.string.highlights_generate),
+                            )
+                        }
+
                         if (mediaConfig.enableSpeedControl) {
                             glassyIconButton(
                                 onClick = { showSpeedDialog = true },

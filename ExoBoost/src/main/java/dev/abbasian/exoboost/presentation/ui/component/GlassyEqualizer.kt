@@ -49,7 +49,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.abbasian.exoboost.data.store.EqualizerPreferencesManager
+import dev.abbasian.exoboost.data.local.store.EqualizerPreferencesManager
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
