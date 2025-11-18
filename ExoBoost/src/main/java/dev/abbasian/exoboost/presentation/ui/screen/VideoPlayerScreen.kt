@@ -1,7 +1,12 @@
 package dev.abbasian.exoboost.presentation.ui.screen
 
 import android.app.Activity
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.ActivityInfo
+import android.os.IBinder
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsetsController
@@ -43,6 +48,7 @@ import dev.abbasian.exoboost.data.manager.ExoPlayerManager
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.VideoQuality
+import dev.abbasian.exoboost.domain.service.HighlightGenerationService
 import dev.abbasian.exoboost.presentation.state.HighlightsState
 import dev.abbasian.exoboost.presentation.ui.component.enhancedPlayerControls
 import dev.abbasian.exoboost.presentation.ui.component.gestureHandler
@@ -84,6 +90,30 @@ fun exoBoostPlayer(
     var isModalOpen by remember { mutableStateOf(false) }
     var isPlayerInitialized by remember { mutableStateOf(false) }
     var playerViewReady by remember { mutableStateOf(false) }
+
+    var highlightService: HighlightGenerationService? by remember { mutableStateOf(null) }
+    var isBound by remember { mutableStateOf(false) }
+
+    val serviceConnection =
+        remember {
+            object : ServiceConnection {
+                override fun onServiceConnected(
+                    name: ComponentName?,
+                    service: IBinder?,
+                ) {
+                    val binder = service as HighlightGenerationService.LocalBinder
+                    highlightService = binder.getService()
+                    isBound = true
+                    logger.debug(TAG, "Connected to highlight service")
+                }
+
+                override fun onServiceDisconnected(name: ComponentName?) {
+                    highlightService = null
+                    isBound = false
+                    logger.debug(TAG, "Disconnected from highlight service")
+                }
+            }
+        }
 
     DisposableEffect(Unit) {
         activity?.window?.let { window ->
@@ -229,10 +259,20 @@ fun exoBoostPlayer(
             highlightsState is HighlightsState.Idle
         ) {
             delay(1000)
-            viewModel.generateHighlights(
+            HighlightGenerationService.startService(
+                context = context,
                 videoUrl = videoUrl,
                 config = mediaConfig.highlightConfig,
             )
+
+            val intent = Intent(context, HighlightGenerationService::class.java)
+            context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    LaunchedEffect(highlightService) {
+        highlightService?.highlightsState?.collect { state ->
+            logger.debug(TAG, "Service state: ${state::class.simpleName}")
         }
     }
 
@@ -262,6 +302,10 @@ fun exoBoostPlayer(
                     Lifecycle.Event.ON_DESTROY -> {
                         if (activity?.isChangingConfigurations != true) {
                             try {
+                                if (isBound) {
+                                    context.unbindService(serviceConnection)
+                                    isBound = false
+                                }
                                 playerManager.release()
                                 isPlayerInitialized = false
                                 playerViewReady = false
@@ -281,6 +325,10 @@ fun exoBoostPlayer(
                 lifecycleOwner.lifecycle.removeObserver(observer)
 
                 if (activity?.isChangingConfigurations != true) {
+                    if (isBound) {
+                        context.unbindService(serviceConnection)
+                        isBound = false
+                    }
                     playerManager.pause()
                     if (lifecycleOwner.lifecycle.currentState == Lifecycle.State.DESTROYED) {
                         playerManager.release()
@@ -395,7 +443,6 @@ fun exoBoostPlayer(
                 mediaInfo = uiState.mediaInfo,
                 showControls = controlsVisible,
                 mediaConfig = mediaConfig,
-                isFullscreen = isFullscreen,
                 onPlayPause = {
                     try {
                         viewModel.playPause()
@@ -457,12 +504,23 @@ fun exoBoostPlayer(
                     if (mediaConfig.enableSmartHighlights) {
                         {
                             try {
-                                viewModel.generateHighlights(
+                                HighlightGenerationService.startService(
+                                    context = context,
                                     videoUrl = videoUrl,
                                     config = mediaConfig.highlightConfig,
                                 )
+
+                                if (!isBound) {
+                                    val intent =
+                                        Intent(context, HighlightGenerationService::class.java)
+                                    context.bindService(
+                                        intent,
+                                        serviceConnection,
+                                        Context.BIND_AUTO_CREATE,
+                                    )
+                                }
                             } catch (e: Exception) {
-                                logger.error(TAG, "Error generating highlights", e)
+                                logger.error(TAG, "Error starting highlight service", e)
                             }
                         }
                     } else {
