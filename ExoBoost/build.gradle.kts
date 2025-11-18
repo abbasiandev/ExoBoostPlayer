@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.jetbrain.dokka)
     alias(libs.plugins.ktlint)
@@ -75,6 +77,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.core)
     implementation(libs.androidx.material.icons.extended)
+    debugImplementation(libs.androidx.ui.tooling)
 
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
@@ -92,9 +95,13 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
 
     implementation(libs.androidx.datastore)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
     implementation(libs.okhttp3)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.kotlinx.serialization)
     implementation(libs.gson)
 
     implementation(libs.mlkit)
