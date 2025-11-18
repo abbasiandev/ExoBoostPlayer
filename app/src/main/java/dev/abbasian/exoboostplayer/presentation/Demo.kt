@@ -1,6 +1,7 @@
 package dev.abbasian.exoboostplayer.presentation
 
 import androidx.compose.ui.graphics.vector.ImageVector
+import dev.abbasian.exoboost.domain.model.HighlightConfig
 import dev.abbasian.exoboost.domain.model.VideoQuality
 
 sealed class Demo {
@@ -45,6 +46,11 @@ sealed class Demo {
     ) : Demo()
 
     object AudioPlaylist : Demo()
+
+    data class SmartHighlights(
+        val url: String,
+        val config: HighlightConfig = HighlightConfig.balanced(),
+    ) : Demo()
 }
 
 data class Track(
