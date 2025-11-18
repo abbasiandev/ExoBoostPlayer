@@ -1,4 +1,4 @@
-package dev.abbasian.exoboost.data.store
+package dev.abbasian.exoboost.data.local.store
 
 import android.content.Context
 import androidx.datastore.core.DataStore

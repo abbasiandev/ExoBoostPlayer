@@ -2,4 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING"
+        android:minSdkVersion="34" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application>
+        <service
+            android:name=".domain.service.HighlightGenerationService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="mediaProcessing" />
+    </application>
 </manifest>
