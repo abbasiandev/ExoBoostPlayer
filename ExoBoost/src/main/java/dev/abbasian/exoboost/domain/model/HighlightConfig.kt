@@ -1,15 +1,19 @@
 package dev.abbasian.exoboost.domain.model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 data class HighlightConfig(
     val maxHighlights: Int = 5,
     val targetDuration: Long = 180_000L,
     val minSegmentDuration: Long = 5_000L,
     val maxSegmentDuration: Long = 30_000L,
     val minHighlightScore: Float = 0.4f,
-    val includeAudioAnalysis: Boolean = true,
+    val includeAudioAnalysis: Boolean = false,
     val includeFaceDetection: Boolean = false,
-    val enableMotionAnalysis: Boolean = true,
-    val enableSceneDetection: Boolean = true,
+    val enableMotionAnalysis: Boolean = false,
+    val enableSceneDetection: Boolean = false,
     val generateChapters: Boolean = false,
     val chapterIntervalMs: Long = 60_000L,
     val motionWeight: Float = 0.3f,
@@ -23,10 +27,10 @@ data class HighlightConfig(
     val audioBufferSize: Int = 4096,
     val quickMode: Boolean = false,
     val maxAnalysisDurationMs: Long? = null,
-    val adaptiveSampling: Boolean = true,
+    val adaptiveSampling: Boolean = false,
     val parallelProcessing: Boolean = true,
     val lowResolutionMode: Boolean = false,
-) {
+) : Parcelable {
     init {
         require(maxHighlights > 0) { "maxHighlights must be positive" }
         require(minSegmentDuration <= maxSegmentDuration) {
