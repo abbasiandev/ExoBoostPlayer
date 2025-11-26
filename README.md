@@ -1,6 +1,6 @@
 # ExoBoost
 
-Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, and adaptive quality switching for robust media playback.
+Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, adaptive quality switching, and AI-powered video analysis including scene detection, motion tracking, audio analysis, face detection, automatic highlight generation, and chapter creation.
 
 [![Maven Central](https://img.shields.io/maven-central/v/dev.abbasian/exoboost?color=blue)](https://search.maven.org/search?q=g:dev.abbasian%20AND%20a:exoboost)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Ready-brightgreen)](https://developer.android.com/jetpack/compose)
