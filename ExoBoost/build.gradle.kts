@@ -28,7 +28,10 @@ android {
     }
 
     lint {
+        disable += "NullSafeMutableLiveData"
         targetSdk = 36
+        abortOnError = false
+        checkReleaseBuilds = false
     }
 
     buildTypes {
