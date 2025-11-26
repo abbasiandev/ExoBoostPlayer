@@ -2,8 +2,6 @@ package dev.abbasian.exoboost.presentation.ui.screen
 
 import android.app.Activity
 import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.ActivityInfo
 import android.os.IBinder
@@ -29,7 +27,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -52,7 +49,7 @@ import dev.abbasian.exoboost.domain.service.HighlightGenerationService
 import dev.abbasian.exoboost.presentation.state.HighlightsState
 import dev.abbasian.exoboost.presentation.ui.component.enhancedPlayerControls
 import dev.abbasian.exoboost.presentation.ui.component.gestureHandler
-import dev.abbasian.exoboost.presentation.ui.component.smartHighlightsDisplay
+import dev.abbasian.exoboost.presentation.ui.component.highlightsBottomSheet
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.delay
@@ -93,6 +90,8 @@ fun exoBoostPlayer(
 
     var highlightService: HighlightGenerationService? by remember { mutableStateOf(null) }
     var isBound by remember { mutableStateOf(false) }
+
+    val showHighlightsBottomSheet by viewModel.showHighlightsBottomSheet.collectAsState()
 
     val serviceConnection =
         remember {
@@ -253,26 +252,25 @@ fun exoBoostPlayer(
         }
     }
 
-    LaunchedEffect(uiState.mediaState, mediaConfig.autoGenerateHighlights) {
-        if (mediaConfig.autoGenerateHighlights &&
-            uiState.mediaState is MediaState.Ready &&
-            highlightsState is HighlightsState.Idle
-        ) {
-            delay(1000)
-            HighlightGenerationService.startService(
-                context = context,
-                videoUrl = videoUrl,
-                config = mediaConfig.highlightConfig,
-            )
-
-            val intent = Intent(context, HighlightGenerationService::class.java)
-            context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-        }
-    }
-
     LaunchedEffect(highlightService) {
         highlightService?.highlightsState?.collect { state ->
             logger.debug(TAG, "Service state: ${state::class.simpleName}")
+
+            when (state) {
+                is HighlightsState.Analyzing -> {
+                    viewModel.updateHighlightsState(state)
+                }
+
+                is HighlightsState.Success -> {
+                    viewModel.updateHighlightsState(state)
+                }
+
+                is HighlightsState.Error -> {
+                    viewModel.updateHighlightsState(state)
+                }
+
+                else -> {}
+            }
         }
     }
 
@@ -347,7 +345,9 @@ fun exoBoostPlayer(
             modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .clickable {
+                .clickable(
+                    enabled = !showHighlightsBottomSheet,
+                ) {
                     controlsVisible = !controlsVisible
                 },
     ) {
@@ -504,23 +504,46 @@ fun exoBoostPlayer(
                     if (mediaConfig.enableSmartHighlights) {
                         {
                             try {
-                                HighlightGenerationService.startService(
-                                    context = context,
-                                    videoUrl = videoUrl,
-                                    config = mediaConfig.highlightConfig,
-                                )
+                                viewModel.toggleHighlightsBottomSheet(true)
 
-                                if (!isBound) {
-                                    val intent =
-                                        Intent(context, HighlightGenerationService::class.java)
-                                    context.bindService(
-                                        intent,
-                                        serviceConnection,
-                                        Context.BIND_AUTO_CREATE,
-                                    )
+                                when (val currentState = highlightsState) {
+                                    is HighlightsState.Idle -> {
+                                        logger.info(TAG, "Starting new highlight generation")
+                                        viewModel.generateHighlights(
+                                            videoUrl = videoUrl,
+                                            config = mediaConfig.highlightConfig,
+                                            useCache = true,
+                                        )
+                                    }
+
+                                    is HighlightsState.Success -> {
+                                        logger.debug(
+                                            TAG,
+                                            "Showing cached results: ${currentState.highlights.highlights.size} highlights",
+                                        )
+                                    }
+
+                                    is HighlightsState.Analyzing -> {
+                                        logger.debug(
+                                            TAG,
+                                            "Showing analysis progress: ${currentState.progressPercent}%",
+                                        )
+                                    }
+
+                                    is HighlightsState.Error -> {
+                                        logger.info(
+                                            TAG,
+                                            "Retrying after error: ${currentState.message}",
+                                        )
+                                        viewModel.generateHighlights(
+                                            videoUrl = videoUrl,
+                                            config = mediaConfig.highlightConfig,
+                                            useCache = false,
+                                        )
+                                    }
                                 }
                             } catch (e: Exception) {
-                                logger.error(TAG, "Error starting highlight service", e)
+                                logger.error(TAG, "Error in onGenerateHighlights", e)
                             }
                         }
                     } else {
@@ -532,60 +555,87 @@ fun exoBoostPlayer(
         }
 
         if (mediaConfig.enableSmartHighlights) {
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = if (controlsVisible) 100.dp else 16.dp),
-            ) {
-                smartHighlightsDisplay(
-                    highlightsState = highlightsState,
-                    onPlayHighlights = {
-                        viewModel.playHighlights()
-                        controlsVisible = false
-                    },
-                    onJumpToChapter = { chapter ->
-                        viewModel.jumpToChapter(chapter)
-                        controlsVisible = false
-                    },
-                    onClose = { viewModel.clearHighlights() },
-                    onJumpToHighlight = {
-                        viewModel.jumpToHighlight(it)
-                        controlsVisible = false
-                    },
-                )
-            }
-        }
+            highlightsBottomSheet(
+                highlightsState = highlightsState,
+                showBottomSheet = showHighlightsBottomSheet,
+                onDismiss = {
+                    logger.debug(
+                        TAG,
+                        "Bottom sheet dismiss requested - State: ${highlightsState::class.simpleName}",
+                    )
 
-        if (isFullscreen || onBack != null) {
-            IconButton(
-                onClick = {
-                    try {
-                        if (isFullscreen) {
-                            activity?.requestedOrientation =
-                                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                            isFullscreen = false
-                        } else {
-                            onBack?.invoke()
+                    when (highlightsState) {
+                        is HighlightsState.Analyzing -> {
+                            logger.info(TAG, "Cancelling analysis")
+                            viewModel.cancelHighlightGeneration()
                         }
-                    } catch (e: Exception) {
-                        logger.error(TAG, "Error handling back button", e)
+
+                        else -> {
+                            // Just close the sheet, keep the state
+                            logger.debug(TAG, "Closing bottom sheet, keeping state")
+                            viewModel.dismissHighlightsBottomSheet()
+                        }
                     }
                 },
-                modifier =
-                    Modifier
-                        .padding(16.dp)
-                        .background(
-                            Color.Black.copy(alpha = 0.5f),
-                            shape = androidx.compose.foundation.shape.CircleShape,
-                        ),
-            ) {
-                Icon(
-                    Icons.Filled.ArrowBack,
-                    contentDescription = context.getString(R.string.cd_back),
-                    tint = Color.White,
-                )
-            }
+                onPlayHighlights = {
+                    try {
+                        logger.debug(TAG, "Playing highlights")
+                        viewModel.playHighlights()
+                        controlsVisible = false
+                    } catch (e: Exception) {
+                        logger.error(TAG, "Error playing highlights", e)
+                    }
+                },
+                onJumpToHighlight = { index ->
+                    try {
+                        logger.debug(TAG, "Jumping to highlight: $index")
+                        viewModel.jumpToHighlight(index)
+                        controlsVisible = false
+                    } catch (e: Exception) {
+                        logger.error(TAG, "Error jumping to highlight", e)
+                    }
+                },
+                onJumpToChapter = { chapter ->
+                    try {
+                        logger.debug(TAG, "Jumping to chapter: ${chapter.title}")
+                        viewModel.jumpToChapter(chapter)
+                        controlsVisible = false
+                    } catch (e: Exception) {
+                        logger.error(TAG, "Error jumping to chapter", e)
+                    }
+                },
+            )
+        }
+    }
+
+    if (isFullscreen || onBack != null) {
+        IconButton(
+            onClick = {
+                try {
+                    if (isFullscreen) {
+                        activity?.requestedOrientation =
+                            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                        isFullscreen = false
+                    } else {
+                        onBack?.invoke()
+                    }
+                } catch (e: Exception) {
+                    logger.error(TAG, "Error handling back button", e)
+                }
+            },
+            modifier =
+                Modifier
+                    .padding(16.dp)
+                    .background(
+                        Color.Black.copy(alpha = 0.5f),
+                        shape = androidx.compose.foundation.shape.CircleShape,
+                    ),
+        ) {
+            Icon(
+                Icons.Filled.ArrowBack,
+                contentDescription = context.getString(R.string.cd_back),
+                tint = Color.White,
+            )
         }
     }
 }

@@ -1,6 +1,6 @@
 package dev.abbasian.exoboost.presentation.viewmodel
 
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
@@ -51,6 +51,9 @@ class MediaPlayerViewModel(
 
     private val _highlightsState = MutableStateFlow<HighlightsState>(HighlightsState.Idle)
     val highlightsState: StateFlow<HighlightsState> = _highlightsState
+
+    private val _showHighlightsBottomSheet = MutableStateFlow(false)
+    val showHighlightsBottomSheet: StateFlow<Boolean> = _showHighlightsBottomSheet.asStateFlow()
 
     private var retryCount = 0
     private var maxRetryCount = 3
@@ -173,6 +176,21 @@ class MediaPlayerViewModel(
             )
     }
 
+    fun updateHighlightsState(state: HighlightsState) {
+        _highlightsState.value = state
+        logger.debug(TAG, "Highlights state updated from service: ${state::class.simpleName}")
+    }
+
+    fun toggleHighlightsBottomSheet(show: Boolean) {
+        _showHighlightsBottomSheet.value = show
+        logger.debug(TAG, "Highlights bottom sheet: $show")
+    }
+
+    fun dismissHighlightsBottomSheet() {
+        _showHighlightsBottomSheet.value = false
+        logger.debug(TAG, "Highlights bottom sheet dismissed")
+    }
+
     fun generateHighlights(
         videoUrl: String,
         config: HighlightConfig = HighlightConfig(),
@@ -185,8 +203,6 @@ class MediaPlayerViewModel(
                 var wasPlaying = false
 
                 try {
-                    logger.info(TAG, "Starting highlight generation")
-
                     if (useCache) {
                         val cached = manageHighlightCacheUseCase.getCachedHighlight(videoUrl)
                         if (cached != null) {
@@ -202,10 +218,24 @@ class MediaPlayerViewModel(
                         delay(500)
                     }
 
-                    _highlightsState.value = HighlightsState.Analyzing("Analyzing video...")
+                    _highlightsState.value = HighlightsState.Analyzing("Initializing...", 0)
+                    delay(800)
 
-                    val uri = Uri.parse(videoUrl)
+                    _highlightsState.value = HighlightsState.Analyzing("Extracting frames...", 15)
+                    delay(800)
 
+                    _highlightsState.value = HighlightsState.Analyzing("Analyzing motion...", 35)
+                    delay(800)
+
+                    _highlightsState.value = HighlightsState.Analyzing("Processing audio...", 55)
+                    delay(800)
+
+                    _highlightsState.value = HighlightsState.Analyzing("Detecting scenes...", 75)
+                    delay(800)
+
+                    _highlightsState.value = HighlightsState.Analyzing("Finalizing highlights...", 90)
+
+                    val uri = videoUrl.toUri()
                     val result = generateHighlightsUseCase.execute(uri, config)
 
                     result.onSuccess { highlights ->
@@ -216,7 +246,6 @@ class MediaPlayerViewModel(
                         )
 
                         manageHighlightCacheUseCase.saveHighlight(videoUrl, highlights)
-
                         _highlightsState.value = HighlightsState.Success(highlights)
                     }
 
@@ -260,6 +289,7 @@ class MediaPlayerViewModel(
     fun cancelHighlightGeneration() {
         highlightsJob?.cancel()
         _highlightsState.value = HighlightsState.Idle
+        _showHighlightsBottomSheet.value = false
         logger.info(TAG, "Highlight generation cancelled")
     }
 
@@ -424,6 +454,7 @@ class MediaPlayerViewModel(
         highlightsJob?.cancel()
         generateHighlightsUseCase.clearCache()
         _highlightsState.value = HighlightsState.Idle
+        _showHighlightsBottomSheet.value = false
         logger.debug(TAG, "Highlights cleared")
     }
 
