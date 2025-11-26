@@ -125,7 +125,9 @@ mavenPublishing {
     pom {
         name.set("ExoBoost")
         description.set(
-            "Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, and adaptive quality switching",
+            "Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery," +
+                " adaptive quality switching, and AI-powered video analysis including scene" +
+                " detection, motion tracking, audio analysis, face detection, automatic highlight generation, and chapter creation",
         )
         inceptionYear.set("2025")
         url.set("https://github.com/abbasiandev/exoboost")
