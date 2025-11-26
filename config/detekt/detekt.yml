@@ -1,0 +1,121 @@
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+  weights:
+
+config:
+  validation: true
+  warningsAsErrors: false
+  checkExhaustiveness: false
+
+processors:
+  active: true
+
+console-reports:
+  active: true
+
+output-reports:
+  active: true
+
+comments:
+  active: true
+  CommentOverPrivateFunction:
+    active: false
+  CommentOverPrivateProperty:
+    active: false
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false
+
+complexity:
+  active: true
+  CyclomaticComplexMethod:
+    active: false
+  ComplexCondition:
+    active: false
+  ComplexInterface:
+    active: false
+  LargeClass:
+    active: false
+  LongMethod:
+    active: true
+    threshold: 300
+  LongParameterList:
+    active: true
+    functionThreshold: 20
+    constructorThreshold: 15
+  NestedBlockDepth:
+    active: false
+  TooManyFunctions:
+    active: true
+    thresholdInFiles: 25
+    thresholdInClasses: 35
+    thresholdInInterfaces: 20
+    thresholdInObjects: 15
+    thresholdInEnums: 15
+
+coroutines:
+  active: true
+  GlobalCoroutineUsage:
+    active: false
+  SuspendFunWithFlowReturnType:
+    active: false
+
+empty-blocks:
+  active: true
+
+exceptions:
+  active: true
+  TooGenericExceptionCaught:
+    active: false
+  SwallowedException:
+    active: false
+
+naming:
+  active: true
+  FunctionNaming:
+    active: true
+    functionPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ignoreAnnotated: ['Composable']
+  ClassNaming:
+    active: true
+    classPattern: '[A-Z][a-zA-Z0-9]*'
+  VariableNaming:
+    active: false
+
+performance:
+  active: true
+  SpreadOperator:
+    active: false
+
+potential-bugs:
+  active: true
+  UnsafeCast:
+    active: false
+  ImplicitDefaultLocale:
+    active: false
+
+style:
+  active: true
+  ForbiddenComment:
+    active: false
+  LoopWithTooManyJumpStatements:
+    active: false
+  MagicNumber:
+    active: false
+  MaxLineLength:
+    active: true
+    maxLineLength: 150
+    excludePackageStatements: true
+    excludeImportStatements: true
+    excludeCommentStatements: false
+  ReturnCount:
+    active: true
+    max: 10
+  UnusedPrivateMember:
+    active: false
+  UnusedPrivateProperty:
+    active: false
+  UnusedParameter:
+    active: false
