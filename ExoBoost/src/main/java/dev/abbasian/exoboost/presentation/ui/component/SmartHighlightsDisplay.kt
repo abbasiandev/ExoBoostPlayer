@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +37,6 @@ import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.MovieFilter
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
@@ -44,14 +44,18 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -94,6 +98,7 @@ fun smartHighlightsDisplay(
             is HighlightsState.Analyzing -> {
                 AnalyzingView(
                     progress = highlightsState.progress,
+                    progressPercent = highlightsState.progressPercent,
                     onClose = onClose,
                 )
             }
@@ -123,6 +128,7 @@ fun smartHighlightsDisplay(
 @Composable
 private fun AnalyzingView(
     progress: String,
+    progressPercent: Int = 0,
     onClose: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -148,11 +154,11 @@ private fun AnalyzingView(
                             .background(Color(0xFFFF6B6B).copy(alpha = 0.15f), CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        Icons.Default.Psychology,
-                        contentDescription = null,
-                        tint = Color(0xFFFF6B6B),
-                        modifier = Modifier.size(36.dp),
+                    Text(
+                        text = "$progressPercent%",
+                        color = Color(0xFFFF6B6B),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
 
@@ -177,6 +183,7 @@ private fun AnalyzingView(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 LinearProgressIndicator(
+                    progress = { progressPercent / 100f },
                     modifier =
                         Modifier
                             .fillMaxWidth()
@@ -214,6 +221,404 @@ private fun AnalyzingView(
                 )
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun highlightsBottomSheet(
+    highlightsState: HighlightsState,
+    showBottomSheet: Boolean,
+    onDismiss: () -> Unit,
+    onPlayHighlights: () -> Unit,
+    onJumpToHighlight: (Int) -> Unit,
+    onJumpToChapter: (VideoChapter) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val sheetState =
+        rememberModalBottomSheetState(
+            skipPartiallyExpanded = true,
+        )
+
+    LaunchedEffect(showBottomSheet, highlightsState) {
+        android.util.Log.d(
+            "HighlightsBottomSheet",
+            "showBottomSheet: $showBottomSheet, state: ${highlightsState::class.simpleName}",
+        )
+    }
+
+    if (showBottomSheet && highlightsState !is HighlightsState.Idle) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                android.util.Log.d("HighlightsBottomSheet", "onDismissRequest called")
+                onDismiss()
+            },
+            sheetState = sheetState,
+            containerColor = Color.Transparent,
+            contentColor = Color.White,
+            dragHandle = null,
+            modifier = modifier,
+        ) {
+            when (highlightsState) {
+                is HighlightsState.Analyzing -> {
+                    AnalyzingBottomSheetContent(
+                        progress = highlightsState.progress,
+                        progressPercent = highlightsState.progressPercent,
+                        onClose = onDismiss,
+                    )
+                }
+
+                is HighlightsState.Success -> {
+                    SuccessBottomSheetContent(
+                        highlights = highlightsState.highlights,
+                        onPlayHighlights = {
+                            onPlayHighlights()
+                            onDismiss()
+                        },
+                        onJumpToHighlight = { index ->
+                            onJumpToHighlight(index)
+                            onDismiss()
+                        },
+                        onJumpToChapter = { chapter ->
+                            onJumpToChapter(chapter)
+                            onDismiss()
+                        },
+                        onClose = onDismiss,
+                    )
+                }
+
+                is HighlightsState.Error -> {
+                    ErrorBottomSheetContent(
+                        message = highlightsState.message,
+                        onClose = onDismiss,
+                    )
+                }
+
+                else -> {}
+            }
+        }
+    }
+}
+
+@Composable
+private fun AnalyzingBottomSheetContent(
+    progress: String,
+    progressPercent: Int,
+    onClose: () -> Unit,
+) {
+    val context = LocalContext.current
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    brush =
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    Color(0xFF1A1A1A),
+                                    Color.Black,
+                                ),
+                        ),
+                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                ).padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // Drag handle
+        Box(
+            modifier =
+                Modifier
+                    .width(40.dp)
+                    .height(4.dp)
+                    .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(2.dp)),
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Animated circular progress
+        Box(
+            modifier =
+                Modifier
+                    .size(120.dp)
+                    .background(Color(0xFFFF6B6B).copy(alpha = 0.1f), CircleShape)
+                    .border(
+                        width = 2.dp,
+                        color = Color(0xFFFF6B6B).copy(alpha = 0.3f),
+                        shape = CircleShape,
+                    ),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator(
+                progress = { progressPercent / 100f },
+                modifier = Modifier.size(100.dp),
+                color = Color(0xFFFF6B6B),
+                strokeWidth = 8.dp,
+                trackColor = Color.White.copy(alpha = 0.1f),
+            )
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "$progressPercent%",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = "AI",
+                    color = Color(0xFFFF6B6B),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Text(
+            text = context.getString(R.string.highlights_analyzing),
+            color = Color.White,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = progress,
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 15.sp,
+            textAlign = TextAlign.Center,
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Feature indicators
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            FeatureIndicator(
+                icon = Icons.Default.FlashOn,
+                label = "Motion",
+                isActive = progressPercent > 20,
+            )
+            FeatureIndicator(
+                icon = Icons.Default.VolumeUp,
+                label = "Audio",
+                isActive = progressPercent > 50,
+            )
+            FeatureIndicator(
+                icon = Icons.Default.MovieFilter,
+                label = "Scenes",
+                isActive = progressPercent > 70,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Cancel button
+        Button(
+            onClick = onClose,
+            modifier = Modifier.fillMaxWidth(),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = Color.White.copy(alpha = 0.1f),
+                ),
+            shape = RoundedCornerShape(16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
+        ) {
+            Icon(
+                Icons.Default.Close,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.8f),
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Cancel",
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun FeatureIndicator(
+    icon: ImageVector,
+    label: String,
+    isActive: Boolean,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(56.dp)
+                    .background(
+                        color =
+                            if (isActive) {
+                                Color(0xFFFF6B6B).copy(alpha = 0.2f)
+                            } else {
+                                Color.White.copy(
+                                    alpha = 0.05f,
+                                )
+                            },
+                        shape = CircleShape,
+                    ).border(
+                        width = 2.dp,
+                        color = if (isActive) Color(0xFFFF6B6B) else Color.White.copy(alpha = 0.2f),
+                        shape = CircleShape,
+                    ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = if (isActive) Color(0xFFFF6B6B) else Color.White.copy(alpha = 0.3f),
+                modifier = Modifier.size(28.dp),
+            )
+        }
+
+        Text(
+            text = label,
+            color = if (isActive) Color.White else Color.White.copy(alpha = 0.4f),
+            fontSize = 12.sp,
+            fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
+        )
+    }
+}
+
+@Composable
+private fun SuccessBottomSheetContent(
+    highlights: VideoHighlights,
+    onPlayHighlights: () -> Unit,
+    onJumpToHighlight: (Int) -> Unit,
+    onJumpToChapter: (VideoChapter) -> Unit,
+    onClose: () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.85f)
+                .background(
+                    brush =
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    Color(0xFF1A1A1A),
+                                    Color.Black,
+                                ),
+                        ),
+                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                ),
+    ) {
+        SuccessView(
+            highlights = highlights,
+            onPlayHighlights = onPlayHighlights,
+            onJumpToHighlight = onJumpToHighlight,
+            onJumpToChapter = onJumpToChapter,
+            onClose = onClose,
+        )
+    }
+}
+
+@Composable
+private fun ErrorBottomSheetContent(
+    message: String,
+    onClose: () -> Unit,
+) {
+    val context = LocalContext.current
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    brush =
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    Color(0xFF1A1A1A),
+                                    Color.Black,
+                                ),
+                        ),
+                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                ).padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // Drag handle
+        Box(
+            modifier =
+                Modifier
+                    .width(40.dp)
+                    .height(4.dp)
+                    .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(2.dp)),
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Box(
+            modifier =
+                Modifier
+                    .size(80.dp)
+                    .background(Color(0xFFF44336).copy(alpha = 0.15f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Default.Close,
+                contentDescription = null,
+                tint = Color(0xFFF44336),
+                modifier = Modifier.size(40.dp),
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = context.getString(R.string.highlights_error),
+            color = Color.White,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = message,
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center,
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = onClose,
+            modifier = Modifier.fillMaxWidth(),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFF44336).copy(alpha = 0.2f),
+                ),
+            shape = RoundedCornerShape(16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
+        ) {
+            Text(
+                text = "Close",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
