@@ -11,6 +11,17 @@ Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, 
   <img src="https://miro.medium.com/v2/resize:fit:720/format:webp/1*leuKdAStRv2ds58NUcz-5A.png" alt="Banner">
 </p>
 
+## AI-Powered Video Analysis(NEW)
+
+- **Scene Detection**: Automatic detection of scene changes using histogram analysis
+- **Motion Analysis**: Frame-by-frame motion intensity tracking and direction detection
+- **Audio Analysis**: RMS-based audio level analysis with loudness detection
+- **Highlight Generation**: Intelligent scoring and selection of video highlights
+- **Chapter Generation**: Automatic video chapter creation based on scene boundaries
+- **Parallel Processing**: Multi-threaded analysis for faster results
+- **Adaptive Sampling**: Dynamic sampling rates based on video duration
+- **Quick Mode**: Optimized analysis for faster processing on lower-end devices
+
 ## Features
 
 - **Ready-to-use Compose Components**: Drop-in video and audio players
@@ -26,7 +37,7 @@ Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, 
 ## Installation
 
 ```toml
-exoboost = "1.0.1-alpha05"
+exoboost = "1.0.1-alpha09"
 koin = "3.5.0" # same as library version needed
 
 [libraries]
@@ -67,17 +78,21 @@ Manifest for Landscape Support and Permissions
 Add to AndroidManifest.xml:
 
 ```xml
-<application
-    android:name=".MyApplication"
-<activity
-    android:name=".presentation.MainActivity"
-    android:configChanges="orientation|screenSize"
-    android:exported="true"
-    android:theme="@style/Theme.ExoBoostPlayer" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" /> <!-- For audio visualization -->
 
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-<uses-permission android:name="android.permission.RECORD_AUDIO" /> <!-- For audio visualization -->
+    <application
+        android:name=".MyApplication">
+        <activity
+            android:name=".presentation.MainActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:theme="@style/Theme.ExoBoostPlayer">
+        </activity>
+    </application>
+</manifest>
 ```
 
 ## Quick Start
