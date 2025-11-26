@@ -25,6 +25,7 @@ koin = "3.5.0"
 androidx-collection = "1.4.4"
 ktlint = "12.1.1"
 detekt = "1.23.7"
+material3 = "1.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -68,6 +69,7 @@ koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
 androidx-collection = { group = "androidx.collection", name = "collection", version.ref = "androidx-collection" }
 androidx-collection-ktx = { group = "androidx.collection", name = "collection-ktx", version.ref = "androidx-collection" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
