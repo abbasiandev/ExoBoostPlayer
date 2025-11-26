@@ -7,6 +7,7 @@ sealed class HighlightsState {
 
     data class Analyzing(
         val progress: String,
+        val progressPercent: Int = 0,
     ) : HighlightsState()
 
     data class Success(

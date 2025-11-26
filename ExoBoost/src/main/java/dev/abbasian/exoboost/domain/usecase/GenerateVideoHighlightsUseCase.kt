@@ -27,7 +27,7 @@ class GenerateVideoHighlightsUseCase(
     suspend fun execute(
         videoUri: Uri,
         config: HighlightConfig = HighlightConfig(),
-        onProgress: ((String, Float) -> Unit)? = null,
+        onProgress: ((Int, String) -> Unit)? = null,
     ): Result<VideoHighlights> =
         withContext(Dispatchers.IO) {
             val cacheKey = "${videoUri}_${config.hashCode()}"
@@ -41,8 +41,7 @@ class GenerateVideoHighlightsUseCase(
             val analysisTime =
                 measureTimeMillis {
                     try {
-                        logger.info(TAG, "Starting video analysis with optimized pipeline")
-                        onProgress?.invoke("Initializing", 0f)
+                        onProgress?.invoke(0, "Initializing")
 
                         val retriever = MediaMetadataRetriever()
 
@@ -53,6 +52,7 @@ class GenerateVideoHighlightsUseCase(
                                 retriever.setDataSource(context, videoUri)
                             }
                             delay(500)
+                            onProgress?.invoke(5, "Video loaded")
                         } catch (e: Exception) {
                             logger.error(TAG, "Failed to set data source", e)
                             result =
@@ -70,8 +70,6 @@ class GenerateVideoHighlightsUseCase(
                                 .extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                                 ?.toLongOrNull() ?: 0L
 
-                        retriever.release()
-
                         if (duration <= 0L) {
                             result =
                                 Result.failure(IllegalArgumentException("Invalid video duration"))
@@ -84,6 +82,7 @@ class GenerateVideoHighlightsUseCase(
                             TAG,
                             "Config: parallel=${config.parallelProcessing}, quick=${config.quickMode}",
                         )
+                        onProgress?.invoke(10, "Starting analysis")
 
                         val analysisResult =
                             coordinator.analyzeVideo(
@@ -91,24 +90,19 @@ class GenerateVideoHighlightsUseCase(
                                 durationMs = duration,
                                 config = config,
                                 onProgress = { progress ->
-                                    onProgress?.invoke(progress.stage, progress.progress)
+                                    val progressPercent = (progress.progress * 100).toInt()
+
+                                    val scaledProgress = 10 + ((progressPercent * 85) / 100)
+
+                                    onProgress?.invoke(scaledProgress, progress.stage)
                                     logger.debug(
                                         TAG,
-                                        "${progress.stage}: ${(progress.progress * 100).toInt()}%",
+                                        "Analyzing video: $progressPercent%",
                                     )
                                 },
                             )
 
-                        logger.info(TAG, "Analysis results:")
-                        logger.info(TAG, "  - Scenes: ${analysisResult.scenes.size}")
-                        logger.info(TAG, "  - Highlights: ${analysisResult.highlights.size}")
-                        logger.info(TAG, "  - Chapters: ${analysisResult.chapters.size}")
-                        logger.info(TAG, "  - Audio samples: ${analysisResult.audioScores.size}")
-                        logger.info(TAG, "  - Motion samples: ${analysisResult.motionScores.size}")
-                        logger.info(
-                            TAG,
-                            "  - Face detections: ${analysisResult.faceDetections.size}",
-                        )
+                        onProgress?.invoke(95, "Finalizing results")
 
                         val avgScore =
                             if (analysisResult.highlights.isNotEmpty()) {
@@ -138,6 +132,7 @@ class GenerateVideoHighlightsUseCase(
 
                         highlightCache[cacheKey] = videoHighlights
 
+                        onProgress?.invoke(100, "Complete!")
                         logger.info(TAG, "Analysis complete! Average confidence: $avgScore")
                         result = Result.success(videoHighlights)
                     } catch (e: CancellationException) {
