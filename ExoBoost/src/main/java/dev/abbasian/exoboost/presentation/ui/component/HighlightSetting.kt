@@ -112,13 +112,13 @@ fun highlightSetting(
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Divider()
-                        StatRow("Total Videos", statistics.totalVideos.toString())
-                        StatRow("Total Segments", statistics.totalSegments.toString())
-                        StatRow(
+                        statRow("Total Videos", statistics.totalVideos.toString())
+                        statRow("Total Segments", statistics.totalSegments.toString())
+                        statRow(
                             "Total Duration",
                             "${statistics.totalDurationMs / 1000}s",
                         )
-                        StatRow(
+                        statRow(
                             "Avg Confidence",
                             "%.1f%%".format(statistics.averageConfidence * 100),
                         )
@@ -351,7 +351,7 @@ fun highlightSetting(
 }
 
 @Composable
-private fun StatRow(
+private fun statRow(
     label: String,
     value: String,
 ) {

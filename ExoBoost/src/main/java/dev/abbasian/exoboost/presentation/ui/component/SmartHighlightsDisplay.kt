@@ -96,7 +96,7 @@ fun smartHighlightsDisplay(
     ) {
         when (highlightsState) {
             is HighlightsState.Analyzing -> {
-                AnalyzingView(
+                analyzingView(
                     progress = highlightsState.progress,
                     progressPercent = highlightsState.progressPercent,
                     onClose = onClose,
@@ -104,7 +104,7 @@ fun smartHighlightsDisplay(
             }
 
             is HighlightsState.Success -> {
-                SuccessView(
+                successView(
                     highlights = highlightsState.highlights,
                     onPlayHighlights = onPlayHighlights,
                     onJumpToHighlight = onJumpToHighlight,
@@ -114,7 +114,7 @@ fun smartHighlightsDisplay(
             }
 
             is HighlightsState.Error -> {
-                ErrorView(
+                errorView(
                     message = highlightsState.message,
                     onClose = onClose,
                 )
@@ -126,7 +126,7 @@ fun smartHighlightsDisplay(
 }
 
 @Composable
-private fun AnalyzingView(
+private fun analyzingView(
     progress: String,
     progressPercent: Int = 0,
     onClose: () -> Unit,
@@ -199,9 +199,9 @@ private fun AnalyzingView(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    FeatureChip(Icons.Default.FlashOn, "Motion")
-                    FeatureChip(Icons.Default.VolumeUp, "Audio")
-                    FeatureChip(Icons.Default.MovieFilter, "Scenes")
+                    featureChip(Icons.Default.FlashOn, "Motion")
+                    featureChip(Icons.Default.VolumeUp, "Audio")
+                    featureChip(Icons.Default.MovieFilter, "Scenes")
                 }
             }
 
@@ -261,7 +261,7 @@ fun highlightsBottomSheet(
         ) {
             when (highlightsState) {
                 is HighlightsState.Analyzing -> {
-                    AnalyzingBottomSheetContent(
+                    analyzingBottomSheetContent(
                         progress = highlightsState.progress,
                         progressPercent = highlightsState.progressPercent,
                         onClose = onDismiss,
@@ -269,7 +269,7 @@ fun highlightsBottomSheet(
                 }
 
                 is HighlightsState.Success -> {
-                    SuccessBottomSheetContent(
+                    successBottomSheetContent(
                         highlights = highlightsState.highlights,
                         onPlayHighlights = {
                             onPlayHighlights()
@@ -288,7 +288,7 @@ fun highlightsBottomSheet(
                 }
 
                 is HighlightsState.Error -> {
-                    ErrorBottomSheetContent(
+                    errorBottomSheetContent(
                         message = highlightsState.message,
                         onClose = onDismiss,
                     )
@@ -301,7 +301,7 @@ fun highlightsBottomSheet(
 }
 
 @Composable
-private fun AnalyzingBottomSheetContent(
+private fun analyzingBottomSheetContent(
     progress: String,
     progressPercent: Int,
     onClose: () -> Unit,
@@ -398,17 +398,17 @@ private fun AnalyzingBottomSheetContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            FeatureIndicator(
+            featureIndicator(
                 icon = Icons.Default.FlashOn,
                 label = "Motion",
                 isActive = progressPercent > 20,
             )
-            FeatureIndicator(
+            featureIndicator(
                 icon = Icons.Default.VolumeUp,
                 label = "Audio",
                 isActive = progressPercent > 50,
             )
-            FeatureIndicator(
+            featureIndicator(
                 icon = Icons.Default.MovieFilter,
                 label = "Scenes",
                 isActive = progressPercent > 70,
@@ -448,7 +448,7 @@ private fun AnalyzingBottomSheetContent(
 }
 
 @Composable
-private fun FeatureIndicator(
+private fun featureIndicator(
     icon: ImageVector,
     label: String,
     isActive: Boolean,
@@ -496,7 +496,7 @@ private fun FeatureIndicator(
 }
 
 @Composable
-private fun SuccessBottomSheetContent(
+private fun successBottomSheetContent(
     highlights: VideoHighlights,
     onPlayHighlights: () -> Unit,
     onJumpToHighlight: (Int) -> Unit,
@@ -520,7 +520,7 @@ private fun SuccessBottomSheetContent(
                     shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
                 ),
     ) {
-        SuccessView(
+        successView(
             highlights = highlights,
             onPlayHighlights = onPlayHighlights,
             onJumpToHighlight = onJumpToHighlight,
@@ -531,7 +531,7 @@ private fun SuccessBottomSheetContent(
 }
 
 @Composable
-private fun ErrorBottomSheetContent(
+private fun errorBottomSheetContent(
     message: String,
     onClose: () -> Unit,
 ) {
@@ -623,7 +623,7 @@ private fun ErrorBottomSheetContent(
 }
 
 @Composable
-private fun FeatureChip(
+private fun featureChip(
     icon: ImageVector,
     label: String,
 ) {
@@ -653,7 +653,7 @@ private fun FeatureChip(
 }
 
 @Composable
-private fun SuccessView(
+private fun successView(
     highlights: VideoHighlights,
     onPlayHighlights: () -> Unit,
     onJumpToHighlight: (Int) -> Unit,
@@ -742,8 +742,8 @@ private fun SuccessView(
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                InfoChip("${highlights.highlightDuration / 1000}s")
-                                InfoChip("${(highlights.confidenceScore * 100).toInt()}%")
+                                infoChip("${highlights.highlightDuration / 1000}s")
+                                infoChip("${(highlights.confidenceScore * 100).toInt()}%")
                             }
                         }
 
@@ -837,16 +837,16 @@ private fun SuccessView(
                 }
 
             if (currentHighlights != null) {
-                HighlightsList(currentHighlights, onJumpToHighlight)
+                highlightsList(currentHighlights, onJumpToHighlight)
             } else {
-                ChaptersList(highlights.chapters, onJumpToChapter)
+                chaptersList(highlights.chapters, onJumpToChapter)
             }
         }
     }
 }
 
 @Composable
-private fun InfoChip(text: String) {
+private fun infoChip(text: String) {
     Surface(
         color = Color.White.copy(alpha = 0.25f),
         shape = RoundedCornerShape(6.dp),
@@ -862,7 +862,7 @@ private fun InfoChip(text: String) {
 }
 
 @Composable
-private fun HighlightsList(
+private fun highlightsList(
     highlights: List<HighlightSegment>,
     onJumpToHighlight: (Int) -> Unit,
 ) {
@@ -872,13 +872,13 @@ private fun HighlightsList(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         itemsIndexed(highlights) { index, highlight ->
-            HighlightItem(highlight, index, onJumpToHighlight)
+            highlightItem(highlight, index, onJumpToHighlight)
         }
     }
 }
 
 @Composable
-private fun HighlightItem(
+private fun highlightItem(
     highlight: HighlightSegment,
     index: Int,
     onJumpToHighlight: (Int) -> Unit,
@@ -1032,7 +1032,7 @@ private fun HighlightItem(
 }
 
 @Composable
-private fun ChaptersList(
+private fun chaptersList(
     chapters: List<VideoChapter>,
     onJumpToChapter: (VideoChapter) -> Unit,
 ) {
@@ -1042,13 +1042,13 @@ private fun ChaptersList(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(chapters) { chapter ->
-            ChapterItem(chapter, onClick = { onJumpToChapter(chapter) })
+            chapterItem(chapter, onClick = { onJumpToChapter(chapter) })
         }
     }
 }
 
 @Composable
-private fun ChapterItem(
+private fun chapterItem(
     chapter: VideoChapter,
     onClick: () -> Unit,
 ) {
@@ -1112,7 +1112,7 @@ private fun ChapterItem(
 }
 
 @Composable
-private fun ErrorView(
+private fun errorView(
     message: String,
     onClose: () -> Unit,
 ) {

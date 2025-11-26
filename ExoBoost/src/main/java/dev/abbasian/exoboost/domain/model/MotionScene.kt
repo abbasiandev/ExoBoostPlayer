@@ -7,5 +7,9 @@ data class MotionScore(
 )
 
 enum class MotionDirection {
-    NONE, MINIMAL, MODERATE, HIGH, EXTREME
+    NONE,
+    MINIMAL,
+    MODERATE,
+    HIGH,
+    EXTREME,
 }

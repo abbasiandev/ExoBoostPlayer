@@ -195,7 +195,7 @@ fun glassySeekBar(
     heightDp = 360,
 )
 @Composable
-private fun GlassySeekBarLandscapePreview() {
+private fun glassySeekBarLandscapePreview() {
     val duration = 3 * 60 * 1000L
     val currentPosition = (duration * 0.35f).toLong()
     val bufferedPosition = (duration * 0.8f).toLong()

@@ -76,11 +76,12 @@ class HighlightManager(
         val totalVideos = all.size
         val totalSegments = all.sumOf { it.highlights.size }
         val totalDuration = all.sumOf { it.highlightDuration }
-        val avgConfidence = if (all.isNotEmpty()) {
-            all.map { it.confidenceScore }.average().toFloat()
-        } else {
-            0f
-        }
+        val avgConfidence =
+            if (all.isNotEmpty()) {
+                all.map { it.confidenceScore }.average().toFloat()
+            } else {
+                0f
+            }
 
         return HighlightStats(
             totalVideos = totalVideos,

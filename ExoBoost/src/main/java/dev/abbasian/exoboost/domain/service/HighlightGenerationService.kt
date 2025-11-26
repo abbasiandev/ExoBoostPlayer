@@ -48,11 +48,12 @@ class HighlightGenerationService : Service() {
             videoUrl: String,
             config: HighlightConfig,
         ) {
-            val intent = Intent(context, HighlightGenerationService::class.java).apply {
-                action = ACTION_START
-                putExtra(EXTRA_VIDEO_URL, videoUrl)
-                putExtra(EXTRA_CONFIG, config) // Use Parcelable directly
-            }
+            val intent =
+                Intent(context, HighlightGenerationService::class.java).apply {
+                    action = ACTION_START
+                    putExtra(EXTRA_VIDEO_URL, videoUrl)
+                    putExtra(EXTRA_CONFIG, config) // Use Parcelable directly
+                }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)
             } else {
@@ -101,12 +102,13 @@ class HighlightGenerationService : Service() {
         when (intent?.action) {
             ACTION_START -> {
                 val videoUrl = intent.getStringExtra(EXTRA_VIDEO_URL)
-                val config = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    intent.getParcelableExtra(EXTRA_CONFIG, HighlightConfig::class.java)
-                } else {
-                    @Suppress("DEPRECATION")
-                    intent.getParcelableExtra(EXTRA_CONFIG)
-                } ?: HighlightConfig()
+                val config =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        intent.getParcelableExtra(EXTRA_CONFIG, HighlightConfig::class.java)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        intent.getParcelableExtra(EXTRA_CONFIG)
+                    } ?: HighlightConfig()
 
                 if (videoUrl != null) {
                     startHighlightGeneration(videoUrl, config)

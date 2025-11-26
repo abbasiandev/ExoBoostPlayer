@@ -29,7 +29,10 @@ interface VideoHighlightDao {
     suspend fun updateHighlight(highlight: VideoHighlightEntity)
 
     @Query("UPDATE video_highlights SET lastAccessedAt = :timestamp, accessCount = accessCount + 1 WHERE videoUrl = :videoUrl")
-    suspend fun updateAccessInfo(videoUrl: String, timestamp: Long = System.currentTimeMillis())
+    suspend fun updateAccessInfo(
+        videoUrl: String,
+        timestamp: Long = System.currentTimeMillis(),
+    )
 
     @Query("DELETE FROM video_highlights WHERE videoUrl = :videoUrl")
     suspend fun deleteHighlight(videoUrl: String)

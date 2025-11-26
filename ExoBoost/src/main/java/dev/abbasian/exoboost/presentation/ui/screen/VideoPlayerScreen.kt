@@ -58,6 +58,7 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import kotlin.time.Duration.Companion.seconds
 
+@Suppress("LongMethod", "LongParameterList")
 @OptIn(UnstableApi::class)
 @Composable
 fun exoBoostPlayer(
