@@ -8,7 +8,7 @@ Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, 
 [![API Level](https://img.shields.io/badge/API-24%2B-brightgreen.svg)](https://developer.android.com/guide/topics/manifest/uses-sdk-element#ApiLevels)
 
 <p align="center">
-  <img src="https://miro.medium.com/v2/resize:fit:720/format:webp/1*leuKdAStRv2ds58NUcz-5A.png" alt="Banner">
+  <img src="https://cdn-images-1.medium.com/v2/resize:fit:2400/1*rWCnzdPXbk5WHCp3kf7nkw.png" alt="Banner">
 </p>
 
 ## AI-Powered Video Analysis(NEW)
