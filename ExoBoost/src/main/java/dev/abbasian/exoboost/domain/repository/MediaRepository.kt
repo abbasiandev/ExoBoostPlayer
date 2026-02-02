@@ -38,6 +38,10 @@ interface MediaRepository {
 
     suspend fun setVolume(volume: Float)
 
+    fun setSubtitleEnabled(enabled: Boolean)
+
+    fun selectSubtitleTrack(languageCode: String)
+
     suspend fun retry()
 
     fun release()

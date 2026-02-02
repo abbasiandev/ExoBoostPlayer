@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -78,6 +79,7 @@ fun enhancedPlayerControls(
     onModalStateChanged: (Boolean) -> Unit = {},
     onGenerateHighlights: (() -> Unit)? = null,
     highlightsState: HighlightsState = HighlightsState.Idle,
+    onSubtitleClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -234,6 +236,14 @@ fun enhancedPlayerControls(
                                     onClick = { showQualityDialog = true },
                                     icon = Icons.Filled.HighQuality,
                                     contentDescription = context.getString(R.string.cd_quality_selection),
+                                )
+                            }
+
+                            onSubtitleClick?.let { subtitleClick ->
+                                glassyIconButton(
+                                    onClick = subtitleClick,
+                                    icon = Icons.Filled.Subtitles,
+                                    contentDescription = "Subtitles",
                                 )
                             }
 

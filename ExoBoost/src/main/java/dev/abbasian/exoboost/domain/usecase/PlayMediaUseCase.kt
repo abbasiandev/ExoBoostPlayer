@@ -36,5 +36,9 @@ class PlayMediaUseCase(
 
     suspend fun setVolume(volume: Float) = repository.setVolume(volume)
 
+    fun setSubtitleEnabled(enabled: Boolean) = repository.setSubtitleEnabled(enabled)
+
+    fun selectSubtitleTrack(languageCode: String) = repository.selectSubtitleTrack(languageCode)
+
     fun release() = repository.release()
 }

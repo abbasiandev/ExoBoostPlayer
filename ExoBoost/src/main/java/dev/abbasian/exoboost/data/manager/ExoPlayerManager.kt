@@ -188,7 +188,10 @@ class ExoPlayerManager(
         }
     }
 
-    fun loadMedia(url: String) {
+    fun loadMedia(
+        url: String,
+        subtitleConfigurations: List<MediaItem.SubtitleConfiguration> = emptyList(),
+    ) {
         if (isReleased.get()) {
             logger.warning(TAG, "Cannot load video: player is released")
             return
@@ -199,7 +202,7 @@ class ExoPlayerManager(
             return
         }
 
-        if (currentUrl == url && isPrepared.get()) {
+        if (currentUrl == url && isPrepared.get() && subtitleConfigurations.isEmpty()) {
             logger.debug(TAG, "Video already loaded: $url")
             return
         }
@@ -219,13 +222,18 @@ class ExoPlayerManager(
 
         try {
             _mediaState.value = MediaState.Loading
-            logger.debug(TAG, "Loading video: $url")
+            logger.debug(TAG, "Loading video: $url with ${subtitleConfigurations.size} subtitles")
 
-            val mediaItem =
+            val mediaItemBuilder =
                 MediaItem
                     .Builder()
                     .setUri(Uri.parse(url))
-                    .build()
+
+            subtitleConfigurations.forEach { subtitle ->
+                mediaItemBuilder.setSubtitleConfigurations(listOf(subtitle))
+            }
+
+            val mediaItem = mediaItemBuilder.build()
 
             exoPlayer?.apply {
                 stop()
@@ -435,7 +443,10 @@ class ExoPlayerManager(
                 if (error.errorCode == PlaybackException.ERROR_CODE_DECODING_FAILED &&
                     !hasTriedSoftwareDecoder
                 ) {
-                    logger.warning(TAG, "Hardware decoder failed, attempting software decoder fallback")
+                    logger.warning(
+                        TAG,
+                        "Hardware decoder failed, attempting software decoder fallback",
+                    )
                     hasTriedSoftwareDecoder = true
 
                     mainHandler.postDelayed({
@@ -729,32 +740,36 @@ class ExoPlayerManager(
     private fun handleLoadError(error: Throwable) {
         val playerError =
             when (error) {
-                is SSLException ->
+                is SSLException -> {
                     PlayerError.SSLError(
                         context.getString(R.string.error_security_certificate_with_message) + error.message,
                         error.message,
                         error,
                     )
+                }
 
-                is SocketTimeoutException ->
+                is SocketTimeoutException -> {
                     PlayerError.NetworkError(
                         context.getString(R.string.error_timeout),
                         error,
                         retryable = true,
                     )
+                }
 
-                is IOException ->
+                is IOException -> {
                     PlayerError.NetworkError(
                         context.getString(R.string.error_network) + error.message,
                         error,
                         retryable = true,
                     )
+                }
 
-                else ->
+                else -> {
                     PlayerError.UnknownError(
                         context.getString(R.string.error_network) + error.message,
                         error,
                     )
+                }
             }
 
         _mediaState.value = MediaState.Error(playerError)
@@ -763,44 +778,49 @@ class ExoPlayerManager(
 
     private fun mapPlaybackException(error: PlaybackException): PlayerError =
         when (error.errorCode) {
-            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ->
+            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED -> {
                 PlayerError.NetworkError(
                     context.getString(R.string.error_network),
                     error,
                     retryable = true,
                 )
+            }
 
-            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
+            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT -> {
                 PlayerError.NetworkError(
                     context.getString(R.string.error_timeout),
                     error,
                     retryable = true,
                 )
+            }
 
-            PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS ->
+            PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> {
                 PlayerError.LiveStreamError(
                     context.getString(R.string.error_http) + extractHttpCode(error),
                     extractHttpCode(error),
                     error,
                 )
+            }
 
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
             PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
             PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
-            ->
+            -> {
                 PlayerError.SourceError(
                     context.getString(R.string.error_format_not_supported),
                     currentUrl,
                     error,
                 )
+            }
 
             PlaybackException.ERROR_CODE_DECODING_FAILED,
             PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED,
-            ->
+            -> {
                 PlayerError.CodecError(
                     context.getString(R.string.error_decoding),
                     cause = error,
                 )
+            }
 
             else -> {
                 if (error.cause is SSLException) {
@@ -982,9 +1002,62 @@ class ExoPlayerManager(
                     .setAllowVideoMixedMimeTypeAdaptiveness(true)
                     .setTunnelingEnabled(false)
                     .setPreferredAudioLanguages("en", "fa", "ar")
+                    .setPreferredTextLanguages("en", "fa", "ar")
                     .setRendererDisabled(C.TRACK_TYPE_TEXT, false),
             )
         }
+
+    fun getAvailableSubtitleTracks(): List<androidx.media3.common.Tracks.Group> {
+        if (isReleased.get() || !isInitialized.get()) return emptyList()
+
+        return try {
+            exoPlayer?.currentTracks?.groups?.filter { group ->
+                group.type == C.TRACK_TYPE_TEXT
+            } ?: emptyList()
+        } catch (e: Exception) {
+            logger.error(TAG, "Error getting subtitle tracks", e)
+            emptyList()
+        }
+    }
+
+    fun setSubtitleEnabled(enabled: Boolean) {
+        if (isReleased.get() || !isInitialized.get()) return
+
+        try {
+            val trackSelector = exoPlayer?.trackSelector as? DefaultTrackSelector ?: return
+
+            trackSelector.setParameters(
+                trackSelector.parameters
+                    .buildUpon()
+                    .setRendererDisabled(C.TRACK_TYPE_TEXT, !enabled)
+                    .build(),
+            )
+
+            logger.debug(TAG, "Subtitles ${if (enabled) "enabled" else "disabled"}")
+        } catch (e: Exception) {
+            logger.error(TAG, "Error setting subtitle state", e)
+        }
+    }
+
+    fun selectSubtitleTrack(languageCode: String) {
+        if (isReleased.get() || !isInitialized.get()) return
+
+        try {
+            val trackSelector = exoPlayer?.trackSelector as? DefaultTrackSelector ?: return
+
+            trackSelector.setParameters(
+                trackSelector.parameters
+                    .buildUpon()
+                    .setPreferredTextLanguage(languageCode)
+                    .setRendererDisabled(C.TRACK_TYPE_TEXT, false)
+                    .build(),
+            )
+
+            logger.debug(TAG, "Selected subtitle track: $languageCode")
+        } catch (e: Exception) {
+            logger.error(TAG, "Error selecting subtitle track", e)
+        }
+    }
 
     private suspend fun handleNetworkDegradation() {
         if (qualityDowngradeAttempts >= maxQualityDowngrades) {

@@ -24,35 +24,60 @@ fun MainScreen() {
 
     currentDemo?.let { demo ->
         when (demo) {
-            is Demo.VideoBasic -> BasicVideoPlayerDemo(demo.url) { currentDemo = null }
-            is Demo.VideoAdvanced -> AdvancedVideoPlayerDemo(demo.url) { currentDemo = null }
-            is Demo.VideoErrorRecovery -> NetworkRecoveryDemo(demo.url) { currentDemo = null }
-            is Demo.VideoQualityControl -> QualityControlDemo(demo.url) { currentDemo = null }
-            is Demo.ErrorComparison -> ErrorComparisonDemo(demo.url) { currentDemo = null }
-            is Demo.BufferVisualization -> BufferVisualizationDemo(demo.url) { currentDemo = null }
-            is Demo.NetworkSimulation -> NetworkSimulationDemo(demo.url) { currentDemo = null }
+            is Demo.VideoBasic -> {
+                BasicVideoPlayerDemo(demo.url) { currentDemo = null }
+            }
 
-            is Demo.AudioVisualization ->
+            is Demo.VideoAdvanced -> {
+                AdvancedVideoPlayerDemo(demo.url) { currentDemo = null }
+            }
+
+            is Demo.VideoErrorRecovery -> {
+                NetworkRecoveryDemo(demo.url) { currentDemo = null }
+            }
+
+            is Demo.VideoQualityControl -> {
+                QualityControlDemo(demo.url) { currentDemo = null }
+            }
+
+            is Demo.ErrorComparison -> {
+                ErrorComparisonDemo(demo.url) { currentDemo = null }
+            }
+
+            is Demo.BufferVisualization -> {
+                BufferVisualizationDemo(demo.url) { currentDemo = null }
+            }
+
+            is Demo.NetworkSimulation -> {
+                NetworkSimulationDemo(demo.url) { currentDemo = null }
+            }
+
+            is Demo.AudioVisualization -> {
                 AdvancedAudioVisualizationDemo(
                     demo.url,
                     demo.title,
                     demo.artist,
                 ) { currentDemo = null }
+            }
 
-            is Demo.AudioEqualizer ->
+            is Demo.AudioEqualizer -> {
                 AudioEqualizerDemo(
                     demo.url,
                     demo.title,
                     demo.artist,
                 ) { currentDemo = null }
+            }
 
-            is Demo.AudioPlaylist -> PlaylistDemo { currentDemo = null }
+            is Demo.AudioPlaylist -> {
+                PlaylistDemo { currentDemo = null }
+            }
 
-            is Demo.SmartHighlights ->
+            is Demo.SmartHighlights -> {
                 SmartHighlightsAutoDemo(
                     demo.url,
                     demo.config,
                 ) { currentDemo = null }
+            }
         }
     } ?: DemoList(onDemoSelected = { currentDemo = it })
 }

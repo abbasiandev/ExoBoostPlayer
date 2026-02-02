@@ -11,8 +11,10 @@ import dev.abbasian.exoboost.data.manager.ExoPlayerManager
 import dev.abbasian.exoboost.data.repository.MediaRepositoryImpl
 import dev.abbasian.exoboost.domain.repository.MediaRepository
 import dev.abbasian.exoboost.domain.usecase.ManageHighlightCacheUseCase
+import dev.abbasian.exoboost.domain.usecase.ManageSubtitleUseCase
 import dev.abbasian.exoboost.domain.usecase.PlayMediaUseCase
 import dev.abbasian.exoboost.domain.usecase.RetryMediaUseCase
+import dev.abbasian.exoboost.domain.usecase.SearchSubtitlesUseCase
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -40,6 +42,8 @@ val playerModule =
         factory { PlayMediaUseCase(get()) }
         factory { RetryMediaUseCase(get()) }
         factory { ManageHighlightCacheUseCase(get(), get()) }
+        factory { SearchSubtitlesUseCase(get(), get()) }
+        factory { ManageSubtitleUseCase(get(), get()) }
 
         viewModel {
             MediaPlayerViewModel(
@@ -47,6 +51,8 @@ val playerModule =
                 retryMediaUseCase = get(),
                 generateHighlightsUseCase = get(),
                 manageHighlightCacheUseCase = get(),
+                searchSubtitlesUseCase = get(),
+                manageSubtitleUseCase = get(),
                 errorClassifier = get(),
                 logger = get(),
             )

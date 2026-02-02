@@ -64,6 +64,14 @@ class MediaRepositoryImpl(
         playerManager.setVolume(volume)
     }
 
+    override fun setSubtitleEnabled(enabled: Boolean) {
+        playerManager.setSubtitleEnabled(enabled)
+    }
+
+    override fun selectSubtitleTrack(languageCode: String) {
+        playerManager.selectSubtitleTrack(languageCode)
+    }
+
     override suspend fun retry() {
         playerManager.retry()
     }

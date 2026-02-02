@@ -8,6 +8,7 @@ import dev.abbasian.exoboost.di.cacheModule
 import dev.abbasian.exoboost.di.dataModule
 import dev.abbasian.exoboost.di.networkModule
 import dev.abbasian.exoboost.di.playerModule
+import dev.abbasian.exoboost.di.subtitleModule
 import dev.abbasian.exoboost.domain.error.ErrorClassifier
 import dev.abbasian.exoboost.util.DefaultLogger
 import dev.abbasian.exoboost.util.ExoBoostLogger
@@ -48,6 +49,7 @@ object ExoBoost {
             dataModule,
             playerModule,
             aiModule,
+            subtitleModule,
         )
 
     @UnstableApi

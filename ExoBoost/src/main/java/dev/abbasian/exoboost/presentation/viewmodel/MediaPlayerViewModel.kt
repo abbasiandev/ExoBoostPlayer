@@ -10,12 +10,16 @@ import dev.abbasian.exoboost.domain.model.MediaInfo
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.PlayerError
+import dev.abbasian.exoboost.domain.model.SubtitleStyle
+import dev.abbasian.exoboost.domain.model.SubtitleTrack
 import dev.abbasian.exoboost.domain.model.VideoChapter
 import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.domain.usecase.GenerateVideoHighlightsUseCase
 import dev.abbasian.exoboost.domain.usecase.ManageHighlightCacheUseCase
+import dev.abbasian.exoboost.domain.usecase.ManageSubtitleUseCase
 import dev.abbasian.exoboost.domain.usecase.PlayMediaUseCase
 import dev.abbasian.exoboost.domain.usecase.RetryMediaUseCase
+import dev.abbasian.exoboost.domain.usecase.SearchSubtitlesUseCase
 import dev.abbasian.exoboost.presentation.state.HighlightsState
 import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.Job
@@ -33,6 +37,8 @@ class MediaPlayerViewModel(
     private val retryMediaUseCase: RetryMediaUseCase,
     private val generateHighlightsUseCase: GenerateVideoHighlightsUseCase,
     private val manageHighlightCacheUseCase: ManageHighlightCacheUseCase,
+    private val searchSubtitlesUseCase: SearchSubtitlesUseCase,
+    private val manageSubtitleUseCase: ManageSubtitleUseCase,
     private val errorClassifier: ErrorClassifier,
     private val logger: ExoBoostLogger,
 ) : ViewModel() {
@@ -55,11 +61,32 @@ class MediaPlayerViewModel(
     private val _showHighlightsBottomSheet = MutableStateFlow(false)
     val showHighlightsBottomSheet: StateFlow<Boolean> = _showHighlightsBottomSheet.asStateFlow()
 
+    private val _showSubtitleSheet = MutableStateFlow(false)
+    val showSubtitleSheet: StateFlow<Boolean> = _showSubtitleSheet.asStateFlow()
+
+    private val _availableSubtitles = MutableStateFlow<List<SubtitleTrack>>(emptyList())
+    val availableSubtitles: StateFlow<List<SubtitleTrack>> = _availableSubtitles.asStateFlow()
+
+    private val _currentSubtitle = MutableStateFlow<SubtitleTrack?>(null)
+    val currentSubtitle: StateFlow<SubtitleTrack?> = _currentSubtitle.asStateFlow()
+
+    private val _subtitleStyle = MutableStateFlow(SubtitleStyle())
+    val subtitleStyle: StateFlow<SubtitleStyle> = _subtitleStyle.asStateFlow()
+
     private var retryCount = 0
     private var maxRetryCount = 3
     private var currentJob: Job? = null
     private var highlightsJob: Job? = null
+    private var subtitleJob: Job? = null
     private var isMediaLoaded = false
+
+    init {
+        viewModelScope.launch {
+            manageSubtitleUseCase.getSubtitleStyle().collect { style ->
+                _subtitleStyle.value = style
+            }
+        }
+    }
 
     fun loadMedia(
         url: String,
@@ -233,7 +260,8 @@ class MediaPlayerViewModel(
                     _highlightsState.value = HighlightsState.Analyzing("Detecting scenes...", 75)
                     delay(800)
 
-                    _highlightsState.value = HighlightsState.Analyzing("Finalizing highlights...", 90)
+                    _highlightsState.value =
+                        HighlightsState.Analyzing("Finalizing highlights...", 90)
 
                     val uri = videoUrl.toUri()
                     val result = generateHighlightsUseCase.execute(uri, config)
@@ -253,13 +281,17 @@ class MediaPlayerViewModel(
                         logger.error(TAG, "Highlight generation failed", error)
                         val errorMessage =
                             when {
-                                error.message?.contains("Cannot access video") == true ->
+                                error.message?.contains("Cannot access video") == true -> {
                                     "Cannot access video. Please use a local video file."
+                                }
 
-                                error.message?.contains("Invalid video duration") == true ->
+                                error.message?.contains("Invalid video duration") == true -> {
                                     "Invalid video file or duration."
+                                }
 
-                                else -> error.message ?: "Failed to generate highlights"
+                                else -> {
+                                    error.message ?: "Failed to generate highlights"
+                                }
                             }
                         _highlightsState.value = HighlightsState.Error(errorMessage)
                     }
@@ -481,11 +513,113 @@ class MediaPlayerViewModel(
         }
     }
 
+    fun toggleSubtitleSheet(show: Boolean) {
+        _showSubtitleSheet.value = show
+        logger.debug(TAG, "Subtitle sheet: $show")
+    }
+
+    fun searchSubtitles(
+        videoUrl: String,
+        videoName: String? = null,
+    ) {
+        subtitleJob?.cancel()
+
+        subtitleJob =
+            viewModelScope.launch {
+                try {
+                    logger.debug(TAG, "Searching subtitles for: $videoUrl")
+                    val result = searchSubtitlesUseCase.autoSearch(videoUrl, videoName)
+                    result.onSuccess { subtitles ->
+                        _availableSubtitles.value = subtitles
+                        logger.debug(TAG, "Found ${subtitles.size} subtitles")
+                    }
+                    result.onFailure { error ->
+                        logger.error(TAG, "Error searching subtitles", error)
+                    }
+                } catch (e: Exception) {
+                    logger.error(TAG, "Error searching subtitles", e)
+                }
+            }
+    }
+
+    fun selectSubtitle(track: SubtitleTrack?) {
+        subtitleJob?.cancel()
+
+        if (track == null) {
+            _currentSubtitle.value = null
+            manageSubtitleUseCase.clearSubtitle()
+            playMediaUseCase.setSubtitleEnabled(false)
+            logger.debug(TAG, "Subtitles disabled")
+            return
+        }
+
+        subtitleJob =
+            viewModelScope.launch {
+                try {
+                    logger.debug(TAG, "Downloading subtitle: ${track.language}")
+                    val result = manageSubtitleUseCase.downloadSubtitle(track)
+
+                    result.onSuccess { downloadResult ->
+                        when (downloadResult) {
+                            is dev.abbasian.exoboost.domain.model.SubtitleDownloadResult.Success -> {
+                                _currentSubtitle.value = track
+                                playMediaUseCase.selectSubtitleTrack(track.languageCode)
+                                logger.debug(TAG, "Subtitle loaded: ${track.language}")
+                            }
+
+                            is dev.abbasian.exoboost.domain.model.SubtitleDownloadResult.Error -> {
+                                logger.error(
+                                    TAG,
+                                    "Failed to download subtitle: ${downloadResult.message}",
+                                )
+                            }
+
+                            else -> {}
+                        }
+                    }
+                    result.onFailure { error ->
+                        logger.error(TAG, "Error selecting subtitle", error)
+                    }
+                } catch (e: Exception) {
+                    logger.error(TAG, "Error selecting subtitle", e)
+                }
+            }
+    }
+
+    fun updateSubtitleStyle(style: SubtitleStyle) {
+        viewModelScope.launch {
+            try {
+                val result = manageSubtitleUseCase.saveSubtitleStyle(style)
+                result.onSuccess {
+                    _subtitleStyle.value = style
+                    logger.debug(TAG, "Subtitle style updated")
+                }
+                result.onFailure { error ->
+                    logger.error(TAG, "Error updating subtitle style", error)
+                }
+            } catch (e: Exception) {
+                logger.error(TAG, "Error updating subtitle style", e)
+            }
+        }
+    }
+
+    fun clearSubtitleCache() {
+        viewModelScope.launch {
+            try {
+                manageSubtitleUseCase.clearCache()
+                logger.debug(TAG, "Subtitle cache cleared")
+            } catch (e: Exception) {
+                logger.error(TAG, "Error clearing subtitle cache", e)
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         try {
             currentJob?.cancel()
             highlightsJob?.cancel()
+            subtitleJob?.cancel()
             playMediaUseCase.release()
             generateHighlightsUseCase.release()
             logger.debug(TAG, "ViewModel cleared")

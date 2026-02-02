@@ -50,6 +50,7 @@ import dev.abbasian.exoboost.presentation.state.HighlightsState
 import dev.abbasian.exoboost.presentation.ui.component.enhancedPlayerControls
 import dev.abbasian.exoboost.presentation.ui.component.gestureHandler
 import dev.abbasian.exoboost.presentation.ui.component.highlightsBottomSheet
+import dev.abbasian.exoboost.presentation.ui.component.subtitleBottomSheet
 import dev.abbasian.exoboost.presentation.viewmodel.MediaPlayerViewModel
 import dev.abbasian.exoboost.util.ExoBoostLogger
 import kotlinx.coroutines.delay
@@ -93,6 +94,10 @@ fun exoBoostPlayer(
     var isBound by remember { mutableStateOf(false) }
 
     val showHighlightsBottomSheet by viewModel.showHighlightsBottomSheet.collectAsState()
+    val showSubtitleSheet by viewModel.showSubtitleSheet.collectAsState()
+    val availableSubtitles by viewModel.availableSubtitles.collectAsState()
+    val currentSubtitle by viewModel.currentSubtitle.collectAsState()
+    val subtitleStyle by viewModel.subtitleStyle.collectAsState()
 
     val serviceConnection =
         remember {
@@ -221,6 +226,11 @@ fun exoBoostPlayer(
             try {
                 logger.debug(TAG, "Loading video: $videoUrl")
                 viewModel.loadMedia(videoUrl, mediaConfig)
+                
+                // Auto-search subtitles if enabled
+                if (mediaConfig.enableSubtitles) {
+                    viewModel.searchSubtitles(videoUrl)
+                }
             } catch (e: Exception) {
                 logger.error(TAG, "Error loading video", e)
                 onError?.invoke("Failed to load video: ${e.message}")
@@ -551,7 +561,51 @@ fun exoBoostPlayer(
                         null
                     },
                 highlightsState = highlightsState,
+                onSubtitleClick = if (mediaConfig.enableSubtitles) {
+                    {
+                        try {
+                            viewModel.toggleSubtitleSheet(true)
+                            controlsVisible = true
+                        } catch (e: Exception) {
+                            logger.error(TAG, "Error opening subtitle sheet", e)
+                        }
+                    }
+                } else {
+                    null
+                },
                 modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        if (showSubtitleSheet) {
+            subtitleBottomSheet(
+                availableSubtitles = availableSubtitles,
+                currentSubtitle = currentSubtitle,
+                currentStyle = subtitleStyle,
+                onSubtitleSelected = { track ->
+                    try {
+                        viewModel.selectSubtitle(track)
+                    } catch (e: Exception) {
+                        logger.error(TAG, "Error selecting subtitle", e)
+                    }
+                },
+                onStyleChanged = { style ->
+                    try {
+                        viewModel.updateSubtitleStyle(style)
+                    } catch (e: Exception) {
+                        logger.error(TAG, "Error updating subtitle style", e)
+                    }
+                },
+                onSearchSubtitles = {
+                    try {
+                        viewModel.searchSubtitles(videoUrl)
+                    } catch (e: Exception) {
+                        logger.error(TAG, "Error searching subtitles", e)
+                    }
+                },
+                onDismiss = {
+                    viewModel.toggleSubtitleSheet(false)
+                },
             )
         }
 

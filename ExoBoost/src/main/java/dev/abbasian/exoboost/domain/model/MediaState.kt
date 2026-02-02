@@ -29,4 +29,5 @@ data class MediaInfo(
     val hasAudio: Boolean = true,
     val availableQualities: List<VideoQuality> = emptyList(),
     val currentQuality: VideoQuality? = null,
+    val subtitleInfo: SubtitleInfo = SubtitleInfo(),
 )
