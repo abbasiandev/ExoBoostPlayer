@@ -1,5 +1,6 @@
 package dev.abbasian.exoboost.presentation.ui.component
 
+import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -10,18 +11,25 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Forward10
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,6 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,8 +49,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.abbasian.exoboost.R
 import dev.abbasian.exoboost.domain.model.MediaInfo
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
@@ -69,6 +81,8 @@ fun enhancedPlayerControls(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     val glassyConfig: MediaPlayerConfig.GlassyUIConfig = MediaPlayerConfig.GlassyUIConfig()
     var showSpeedDialog by remember { mutableStateOf(false) }
@@ -105,162 +119,185 @@ fun enhancedPlayerControls(
                 }
 
                 else -> {
-                    // main play/pause button
-                    Box(
-                        modifier =
-                            Modifier
-                                .align(Alignment.Center)
-                                .size(80.dp)
-                                .clip(RoundedCornerShape(40.dp))
-                                .background(
-                                    brush =
-                                        Brush.radialGradient(
-                                            colors =
-                                                listOf(
-                                                    Color.White.copy(alpha = 0.15f),
-                                                    Color.White.copy(alpha = 0.05f),
-                                                ),
-                                        ),
-                                ).border(
-                                    width = 1.dp,
-                                    brush =
-                                        Brush.linearGradient(
-                                            colors =
-                                                listOf(
-                                                    Color.White.copy(alpha = 0.3f),
-                                                    Color.White.copy(alpha = 0.1f),
-                                                ),
-                                        ),
-                                    shape = RoundedCornerShape(40.dp),
-                                ),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        IconButton(
-                            onClick = onPlayPause,
-                            modifier = Modifier.size(64.dp),
-                        ) {
-                            Icon(
-                                imageVector =
-                                    when {
-                                        mediaInfo.isPlaying -> Icons.Filled.Pause
-                                        mediaState is MediaState.Ended -> Icons.Filled.Replay
-                                        else -> Icons.Filled.PlayArrow
-                                    },
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp),
-                            )
-                        }
-                    }
-
-                    // top controls
-                    Row(
-                        modifier =
-                            Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(16.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(
-                                    brush =
-                                        Brush.linearGradient(
-                                            colors =
-                                                listOf(
-                                                    Color.White.copy(alpha = 0.1f),
-                                                    Color.White.copy(alpha = 0.05f),
-                                                ),
-                                        ),
-                                ).border(
-                                    width = 0.5.dp,
-                                    color = Color.White.copy(alpha = 0.2f),
-                                    shape = RoundedCornerShape(16.dp),
-                                ).padding(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        if (onGenerateHighlights != null && mediaConfig.enableSmartHighlights) {
-                            glassyIconButton(
-                                onClick = {
-                                    if (!isGenerating) {
-                                        onGenerateHighlights()
-                                    }
-                                },
-                                icon = Icons.Filled.AutoAwesome,
-                                contentDescription = context.getString(R.string.highlights_generate),
-                            )
-                        }
-
-                        if (mediaConfig.enableSpeedControl) {
-                            glassyIconButton(
-                                onClick = { showSpeedDialog = true },
-                                icon = Icons.Filled.Speed,
-                                contentDescription = context.getString(R.string.cd_speed_control),
-                            )
-                        }
-
-                        if (mediaConfig.enableQualitySelection && mediaInfo.availableQualities.isNotEmpty()) {
-                            glassyIconButton(
-                                onClick = { showQualityDialog = true },
-                                icon = Icons.Filled.HighQuality,
-                                contentDescription = context.getString(R.string.cd_quality_selection),
-                            )
-                        }
-
-                        onSettings?.let { settings ->
-                            glassyIconButton(
-                                onClick = settings,
-                                icon = Icons.Filled.Settings,
-                                contentDescription = context.getString(R.string.cd_setting),
-                            )
-                        }
-
-                        onFullscreen?.let { fullscreen ->
-                            glassyIconButton(
-                                onClick = fullscreen,
-                                icon = Icons.Filled.Fullscreen,
-                                contentDescription = context.getString(R.string.cd_fullscreen),
-                            )
-                        }
-                    }
-
-                    // bottom controls
-                    if (mediaInfo.duration > 0) {
+                    if (isLandscape) {
+                        landscapeControls(
+                            mediaInfo = mediaInfo,
+                            mediaState = mediaState,
+                            mediaConfig = mediaConfig,
+                            onPlayPause = onPlayPause,
+                            onSeek = onSeek,
+                            onSettings = onSettings,
+                            onFullscreen = onFullscreen,
+                            onGenerateHighlights = onGenerateHighlights,
+                            isGenerating = isGenerating,
+                            showSpeedDialog = showSpeedDialog,
+                            showQualityDialog = showQualityDialog,
+                            onShowSpeedDialog = { showSpeedDialog = true },
+                            onShowQualityDialog = { showQualityDialog = true },
+                            glassyConfig = glassyConfig,
+                        )
+                    } else {
                         Box(
                             modifier =
                                 Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                                    .clip(RoundedCornerShape(16.dp))
+                                    .align(Alignment.Center)
+                                    .size(80.dp)
+                                    .clip(RoundedCornerShape(40.dp))
                                     .background(
                                         brush =
                                             Brush.radialGradient(
                                                 colors =
                                                     listOf(
+                                                        Color.White.copy(alpha = 0.15f),
                                                         Color.White.copy(alpha = 0.05f),
-                                                        Color.Transparent,
                                                     ),
                                             ),
-                                    ).border(
+                                    )
+                                    .border(
                                         width = 1.dp,
                                         brush =
                                             Brush.linearGradient(
                                                 colors =
                                                     listOf(
-                                                        Color.White.copy(alpha = 0.2f),
+                                                        Color.White.copy(alpha = 0.3f),
                                                         Color.White.copy(alpha = 0.1f),
                                                     ),
                                             ),
-                                        shape = RoundedCornerShape(16.dp),
-                                    ).padding(16.dp),
+                                        shape = RoundedCornerShape(40.dp),
+                                    ),
+                            contentAlignment = Alignment.Center,
                         ) {
-                            glassySeekBar(
-                                currentPosition = mediaInfo.currentPosition,
-                                bufferedPosition = mediaInfo.bufferedPosition,
-                                duration = mediaInfo.duration,
-                                onSeek = onSeek,
+                            IconButton(
+                                onClick = onPlayPause,
+                                modifier = Modifier.size(64.dp),
+                            ) {
+                                Icon(
+                                    imageVector =
+                                        when {
+                                            mediaInfo.isPlaying -> Icons.Filled.Pause
+                                            mediaState is MediaState.Ended -> Icons.Filled.Replay
+                                            else -> Icons.Filled.PlayArrow
+                                        },
+                                    contentDescription = null,
+                                    modifier = Modifier.size(32.dp),
+                                )
+                            }
+                        }
+
+                        // top controls
+                        Row(
+                            modifier =
+                                Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(16.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(
+                                        brush =
+                                            Brush.linearGradient(
+                                                colors =
+                                                    listOf(
+                                                        Color.White.copy(alpha = 0.1f),
+                                                        Color.White.copy(alpha = 0.05f),
+                                                    ),
+                                            ),
+                                    )
+                                    .border(
+                                        width = 0.5.dp,
+                                        color = Color.White.copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(16.dp),
+                                    )
+                                    .padding(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            if (onGenerateHighlights != null && mediaConfig.enableSmartHighlights) {
+                                glassyIconButton(
+                                    onClick = {
+                                        if (!isGenerating) {
+                                            onGenerateHighlights()
+                                        }
+                                    },
+                                    icon = Icons.Filled.AutoAwesome,
+                                    contentDescription = context.getString(R.string.highlights_generate),
+                                )
+                            }
+
+                            if (mediaConfig.enableSpeedControl) {
+                                glassyIconButton(
+                                    onClick = { showSpeedDialog = true },
+                                    icon = Icons.Filled.Speed,
+                                    contentDescription = context.getString(R.string.cd_speed_control),
+                                )
+                            }
+
+                            if (mediaConfig.enableQualitySelection && mediaInfo.availableQualities.isNotEmpty()) {
+                                glassyIconButton(
+                                    onClick = { showQualityDialog = true },
+                                    icon = Icons.Filled.HighQuality,
+                                    contentDescription = context.getString(R.string.cd_quality_selection),
+                                )
+                            }
+
+                            onSettings?.let { settings ->
+                                glassyIconButton(
+                                    onClick = settings,
+                                    icon = Icons.Filled.Settings,
+                                    contentDescription = context.getString(R.string.cd_setting),
+                                )
+                            }
+
+                            onFullscreen?.let { fullscreen ->
+                                glassyIconButton(
+                                    onClick = fullscreen,
+                                    icon = Icons.Filled.Fullscreen,
+                                    contentDescription = context.getString(R.string.cd_fullscreen),
+                                )
+                            }
+                        }
+
+                        // bottom controls (portrait only)
+                        if (mediaInfo.duration > 0) {
+                            Box(
                                 modifier =
                                     Modifier
+                                        .align(Alignment.BottomCenter)
                                         .fillMaxWidth()
-                                        .padding(bottom = 16.dp),
-                            )
+                                        .padding(16.dp)
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(
+                                            brush =
+                                                Brush.radialGradient(
+                                                    colors =
+                                                        listOf(
+                                                            Color.White.copy(alpha = 0.05f),
+                                                            Color.Transparent,
+                                                        ),
+                                                ),
+                                        )
+                                        .border(
+                                            width = 1.dp,
+                                            brush =
+                                                Brush.linearGradient(
+                                                    colors =
+                                                        listOf(
+                                                            Color.White.copy(alpha = 0.2f),
+                                                            Color.White.copy(alpha = 0.1f),
+                                                        ),
+                                                ),
+                                            shape = RoundedCornerShape(16.dp),
+                                        )
+                                        .padding(16.dp),
+                            ) {
+                                glassySeekBar(
+                                    currentPosition = mediaInfo.currentPosition,
+                                    bufferedPosition = mediaInfo.bufferedPosition,
+                                    duration = mediaInfo.duration,
+                                    onSeek = onSeek,
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 16.dp),
+                                )
+                            }
                         }
                     }
 
@@ -295,6 +332,343 @@ fun enhancedPlayerControls(
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.landscapeControls(
+    mediaInfo: MediaInfo,
+    mediaState: MediaState,
+    mediaConfig: MediaPlayerConfig,
+    onPlayPause: () -> Unit,
+    onSeek: (Long) -> Unit,
+    onSettings: (() -> Unit)?,
+    onFullscreen: (() -> Unit)?,
+    onGenerateHighlights: (() -> Unit)?,
+    isGenerating: Boolean,
+    showSpeedDialog: Boolean,
+    showQualityDialog: Boolean,
+    onShowSpeedDialog: () -> Unit,
+    onShowQualityDialog: () -> Unit,
+    glassyConfig: MediaPlayerConfig.GlassyUIConfig,
+) {
+    val context = LocalContext.current
+
+    Row(
+        modifier =
+            Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "Video Title",
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f),
+        )
+
+        Row(
+            modifier =
+                Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        brush =
+                            Brush.linearGradient(
+                                colors =
+                                    listOf(
+                                        Color.White.copy(alpha = 0.1f),
+                                        Color.White.copy(alpha = 0.05f),
+                                    ),
+                            ),
+                    )
+                    .border(
+                        width = 0.5.dp,
+                        color = Color.White.copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(12.dp),
+                    )
+                    .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            glassyIconButton(
+                onClick = { /*  */ },
+                icon = Icons.Filled.Lock,
+                contentDescription = "Lock",
+            )
+
+            onSettings?.let { settings ->
+                glassyIconButton(
+                    onClick = settings,
+                    icon = Icons.Filled.Settings,
+                    contentDescription = context.getString(R.string.cd_setting),
+                )
+            }
+        }
+    }
+
+    Row(
+        modifier = Modifier.align(Alignment.Center),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(
+                        brush =
+                            Brush.radialGradient(
+                                colors =
+                                    listOf(
+                                        Color.White.copy(alpha = 0.12f),
+                                        Color.White.copy(alpha = 0.04f),
+                                    ),
+                            ),
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(28.dp),
+                    ),
+            contentAlignment = Alignment.Center,
+        ) {
+            IconButton(
+                onClick = {
+                    val newPosition = (mediaInfo.currentPosition - 10000).coerceAtLeast(0)
+                    onSeek(newPosition)
+                },
+                modifier = Modifier.size(48.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Replay10,
+                    contentDescription = "Rewind 10 seconds",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp),
+                )
+            }
+        }
+
+        Box(
+            modifier =
+                Modifier
+                    .size(72.dp)
+                    .clip(RoundedCornerShape(36.dp))
+                    .background(
+                        brush =
+                            Brush.radialGradient(
+                                colors =
+                                    listOf(
+                                        Color.White.copy(alpha = 0.18f),
+                                        Color.White.copy(alpha = 0.06f),
+                                    ),
+                            ),
+                    )
+                    .border(
+                        width = 1.5.dp,
+                        brush =
+                            Brush.linearGradient(
+                                colors =
+                                    listOf(
+                                        Color.White.copy(alpha = 0.35f),
+                                        Color.White.copy(alpha = 0.15f),
+                                    ),
+                            ),
+                        shape = RoundedCornerShape(36.dp),
+                    ),
+            contentAlignment = Alignment.Center,
+        ) {
+            IconButton(
+                onClick = onPlayPause,
+                modifier = Modifier.size(64.dp),
+            ) {
+                Icon(
+                    imageVector =
+                        when {
+                            mediaInfo.isPlaying -> Icons.Filled.Pause
+                            mediaState is MediaState.Ended -> Icons.Filled.Replay
+                            else -> Icons.Filled.PlayArrow
+                        },
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(36.dp),
+                )
+            }
+        }
+
+        Box(
+            modifier =
+                Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(
+                        brush =
+                            Brush.radialGradient(
+                                colors =
+                                    listOf(
+                                        Color.White.copy(alpha = 0.12f),
+                                        Color.White.copy(alpha = 0.04f),
+                                    ),
+                            ),
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(28.dp),
+                    ),
+            contentAlignment = Alignment.Center,
+        ) {
+            IconButton(
+                onClick = {
+                    val newPosition =
+                        (mediaInfo.currentPosition + 10000).coerceAtMost(mediaInfo.duration)
+                    onSeek(newPosition)
+                },
+                modifier = Modifier.size(48.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Forward10,
+                    contentDescription = "Forward 10 seconds",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp),
+                )
+            }
+        }
+    }
+
+    if (mediaInfo.duration > 0) {
+        Column(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(
+                            brush =
+                                Brush.radialGradient(
+                                    colors =
+                                        listOf(
+                                            Color.White.copy(alpha = 0.08f),
+                                            Color.Transparent,
+                                        ),
+                                ),
+                        )
+                        .border(
+                            width = 1.dp,
+                            brush =
+                                Brush.linearGradient(
+                                    colors =
+                                        listOf(
+                                            Color.White.copy(alpha = 0.2f),
+                                            Color.White.copy(alpha = 0.1f),
+                                        ),
+                                ),
+                            shape = RoundedCornerShape(14.dp),
+                        )
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                glassyIconButton(
+                    onClick = onPlayPause,
+                    icon =
+                        when {
+                            mediaInfo.isPlaying -> Icons.Filled.Pause
+                            else -> Icons.Filled.PlayArrow
+                        },
+                    contentDescription = "Play/Pause",
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // seek bar
+                Column(
+                    modifier = Modifier.weight(1f),
+                ) {
+                    glassySeekBar(
+                        currentPosition = mediaInfo.currentPosition,
+                        bufferedPosition = mediaInfo.bufferedPosition,
+                        duration = mediaInfo.duration,
+                        onSeek = onSeek,
+                        modifier = Modifier.fillMaxWidth(),
+                        config = glassyConfig,
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                if (mediaConfig.enableQualitySelection && mediaInfo.availableQualities.isNotEmpty()) {
+                    Box {
+                        glassyIconButton(
+                            onClick = onShowQualityDialog,
+                            icon = Icons.Filled.HighQuality,
+                            contentDescription = context.getString(R.string.cd_quality_selection),
+                        )
+                        // quality badge
+                        mediaInfo.currentQuality?.let { quality ->
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(Color(0xFFFF9800))
+                                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                            ) {
+                                Text(
+                                    text = "${quality.height}p",
+                                    color = Color.White,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (mediaConfig.enableSpeedControl) {
+                    Box {
+                        glassyIconButton(
+                            onClick = onShowSpeedDialog,
+                            icon = Icons.Filled.Speed,
+                            contentDescription = context.getString(R.string.cd_speed_control),
+                        )
+                        // speed badge
+                        Box(
+                            modifier =
+                                Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFFFF9800))
+                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                        ) {
+                            Text(
+                                text = "${mediaInfo.playbackSpeed}x",
+                                color = Color.White,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                }
+
+                onFullscreen?.let { fullscreen ->
+                    glassyIconButton(
+                        onClick = fullscreen,
+                        icon = Icons.Filled.Fullscreen,
+                        contentDescription = context.getString(R.string.cd_fullscreen),
+                    )
                 }
             }
         }
