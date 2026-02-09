@@ -129,7 +129,7 @@ mavenPublishing {
     publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
 
-    coordinates("dev.abbasian", "exoboost", "1.0.1-alpha09")
+    coordinates("dev.abbasian", "exoboost", "1.0.2")
 
     pom {
         name.set("ExoBoost")

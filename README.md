@@ -37,7 +37,7 @@ Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, 
 ## Installation
 
 ```toml
-exoboost = "1.0.1-alpha09"
+exoboost = "1.0.2"
 koin = "3.5.0" # same as library version needed
 
 [libraries]
@@ -257,6 +257,12 @@ ExoBoost automatically handles common media playback errors:
 - **Source problems**: Detailed error classification
 
 All errors are handled internally with user-friendly fallbacks and recovery mechanisms.
+
+### Community
+
+- Star ⭐ the project if you find it useful
+- Share with other developers
+- Follow for updates
 
 ## Support
 
