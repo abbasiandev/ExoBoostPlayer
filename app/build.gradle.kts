@@ -33,12 +33,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlin {
-        compilerOptions {
-            freeCompilerArgs.add("-Xopt-in=androidx.media3.common.util.UnstableApi")
-        }
-    }
-
     kotlinOptions {
         jvmTarget = "11"
     }
