@@ -51,6 +51,7 @@ fun subtitleBottomSheet(
     onSearchSubtitles: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    onLoadFromFile: (() -> Unit)? = null,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -119,24 +120,51 @@ fun subtitleBottomSheet(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            Button(
-                onClick = onSearchSubtitles,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                    ),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(
-                    Icons.Default.Search,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Search for Subtitles")
+                Button(
+                    onClick = onSearchSubtitles,
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .padding(vertical = 8.dp),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                        ),
+                ) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Search", style = MaterialTheme.typography.bodyMedium)
+                }
+
+                if (onLoadFromFile != null) {
+                    Button(
+                        onClick = onLoadFromFile,
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .padding(vertical = 8.dp),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+                            ),
+                    ) {
+                        Icon(
+                            Icons.Default.Download,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Load File", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
