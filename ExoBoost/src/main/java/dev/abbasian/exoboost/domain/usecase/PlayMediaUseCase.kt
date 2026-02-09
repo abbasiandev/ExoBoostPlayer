@@ -1,17 +1,30 @@
 package dev.abbasian.exoboost.domain.usecase
 
+import androidx.media3.common.MediaItem
+import dev.abbasian.exoboost.data.manager.SubtitleManager
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
+import dev.abbasian.exoboost.domain.model.SubtitleTrack
 import dev.abbasian.exoboost.domain.model.VideoQuality
 import dev.abbasian.exoboost.domain.repository.MediaRepository
 
 class PlayMediaUseCase(
     private val repository: MediaRepository,
+    private val subtitleManager: SubtitleManager,
 ) {
     suspend fun execute(
         url: String,
         config: MediaPlayerConfig,
+        subtitleTrack: SubtitleTrack? = null,
+        subtitleContent: String? = null,
     ) {
-        repository.loadMedia(url, config)
+        val subtitleConfigurations =
+            if (subtitleTrack != null && subtitleContent != null) {
+                listOf(subtitleManager.createSubtitleConfiguration(subtitleTrack, subtitleContent))
+            } else {
+                emptyList()
+            }
+
+        repository.loadMedia(url, config, subtitleConfigurations)
     }
 
     suspend fun applyEqualizerValues(values: List<Float>) {
@@ -39,6 +52,14 @@ class PlayMediaUseCase(
     fun setSubtitleEnabled(enabled: Boolean) = repository.setSubtitleEnabled(enabled)
 
     fun selectSubtitleTrack(languageCode: String) = repository.selectSubtitleTrack(languageCode)
+
+    suspend fun loadExternalSubtitle(
+        uri: android.net.Uri,
+        language: String = "Unknown",
+    ) = subtitleManager.loadExternalSubtitle(uri, language)
+
+    fun addSubtitleToCurrentMedia(subtitleConfiguration: MediaItem.SubtitleConfiguration) =
+        repository.addSubtitleToCurrentMedia(subtitleConfiguration)
 
     fun release() = repository.release()
 }
