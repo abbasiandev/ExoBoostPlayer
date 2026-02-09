@@ -3,7 +3,6 @@ package dev.abbasian.exoboost.presentation.viewmodel
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.util.UnstableApi
 import dev.abbasian.exoboost.domain.error.ErrorClassifier
 import dev.abbasian.exoboost.domain.model.HighlightConfig
 import dev.abbasian.exoboost.domain.model.MediaInfo
@@ -32,7 +31,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
-@UnstableApi
 class MediaPlayerViewModel(
     private val playMediaUseCase: PlayMediaUseCase,
     private val retryMediaUseCase: RetryMediaUseCase,

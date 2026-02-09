@@ -1,8 +1,6 @@
 package dev.abbasian.exoboost
 
 import android.content.Context
-import androidx.annotation.OptIn
-import androidx.media3.common.util.UnstableApi
 import dev.abbasian.exoboost.di.aiModule
 import dev.abbasian.exoboost.di.cacheModule
 import dev.abbasian.exoboost.di.dataModule
@@ -21,7 +19,6 @@ object ExoBoost {
     private var isInitialized = false
     private var customLogger: ExoBoostLogger? = null
 
-    @OptIn(UnstableApi::class)
     fun initialize(context: Context) {
         if (isInitialized) {
             customLogger?.warning(TAG, "Already initialized")
@@ -31,7 +28,6 @@ object ExoBoost {
         internalInitialize(context)
     }
 
-    @UnstableApi
     private fun internalInitialize(context: Context) {
         startKoin {
             androidContext(context)
@@ -40,7 +36,6 @@ object ExoBoost {
         isInitialized = true
     }
 
-    @UnstableApi
     private fun getModules() =
         listOf(
             createLoggingModule(),
@@ -52,7 +47,6 @@ object ExoBoost {
             subtitleModule,
         )
 
-    @UnstableApi
     private fun createLoggingModule() =
         module {
             single<ExoBoostLogger> {

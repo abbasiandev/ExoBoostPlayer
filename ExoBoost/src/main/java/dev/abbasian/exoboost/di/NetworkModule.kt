@@ -1,6 +1,5 @@
 package dev.abbasian.exoboost.di
 
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
 import dev.abbasian.exoboost.data.manager.NetworkManager
 import okhttp3.OkHttpClient
@@ -8,7 +7,6 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 import java.util.concurrent.TimeUnit
 
-@UnstableApi
 val networkModule =
     module {
         single {

@@ -1,6 +1,5 @@
 package dev.abbasian.exoboost.di
 
-import androidx.media3.common.util.UnstableApi
 import dev.abbasian.exoboost.data.ai.AudioAnalysisEngine
 import dev.abbasian.exoboost.data.ai.ChapterGenerator
 import dev.abbasian.exoboost.data.ai.HighlightScoringEngine
@@ -20,7 +19,6 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
-@UnstableApi
 val playerModule =
     module {
         single { AutoRecoveryManager(get()) }
