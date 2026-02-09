@@ -9,8 +9,11 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import dev.abbasian.exoboost.util.ExoBoostLogger
+import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import java.net.InetAddress
+import java.net.UnknownHostException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
@@ -31,6 +34,58 @@ class NetworkManager(
     private val writeTimeoutMs = 10000
 
     private var cachedClient: OkHttpClient? = null
+
+    private val customDns =
+        object : Dns {
+            override fun lookup(hostname: String): List<InetAddress> {
+                try {
+                    val systemAddresses = Dns.SYSTEM.lookup(hostname)
+                    return systemAddresses
+                } catch (systemException: UnknownHostException) {
+                    try {
+                        val publicDnsServers =
+                            listOf(
+                                "8.8.8.8",
+                                "8.8.4.4",
+                                "1.1.1.1",
+                                "1.0.0.1",
+                            )
+
+                        for (dnsServer in publicDnsServers) {
+                            try {
+                                val addresses = lookupWithCustomDns(hostname, dnsServer)
+                                if (addresses.isNotEmpty()) {
+                                    return addresses
+                                }
+                            } catch (e: Exception) {
+                                logger.debug(
+                                    TAG,
+                                    "DNS server $dnsServer failed for $hostname: ${e.message}",
+                                )
+                            }
+                        }
+
+                        logger.error(TAG, "All DNS resolution attempts failed for $hostname")
+                        throw systemException
+                    } catch (e: Exception) {
+                        logger.error(TAG, "Public DNS fallback failed for $hostname", e)
+                        throw systemException
+                    }
+                }
+            }
+        }
+
+    private fun lookupWithCustomDns(
+        hostname: String,
+        dnsServer: String,
+    ): List<InetAddress> =
+        try {
+            val addresses = InetAddress.getAllByName(hostname)
+            addresses.toList()
+        } catch (e: UnknownHostException) {
+            logger.debug(TAG, "Failed to resolve $hostname via $dnsServer")
+            emptyList()
+        }
 
     fun createHttpDataSourceFactory(allowUnsafeSSL: Boolean = false): HttpDataSource.Factory =
         try {
@@ -54,7 +109,7 @@ class NetworkManager(
                         .followSslRedirects(allowUnsafeSSL)
                         .protocols(listOf(Protocol.HTTP_1_1, Protocol.HTTP_2))
                         .connectionPool(okhttp3.ConnectionPool(5, 5, TimeUnit.MINUTES))
-                        .dns(okhttp3.Dns.SYSTEM)
+                        .dns(customDns)
 
                 if (allowUnsafeSSL) {
                     configureTrustAllSSL(clientBuilder)
@@ -193,7 +248,9 @@ class NetworkManager(
                     }
                 }
 
-                else -> ConnectionQuality.MEDIUM
+                else -> {
+                    ConnectionQuality.MEDIUM
+                }
             }
         } catch (e: Exception) {
             logger.error(TAG, "Error getting connection quality", e)
