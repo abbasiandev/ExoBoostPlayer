@@ -10,6 +10,7 @@ import dev.abbasian.exoboost.domain.model.MediaInfo
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
 import dev.abbasian.exoboost.domain.model.PlayerError
+import dev.abbasian.exoboost.domain.model.SubtitleDownloadResult
 import dev.abbasian.exoboost.domain.model.SubtitleStyle
 import dev.abbasian.exoboost.domain.model.SubtitleTrack
 import dev.abbasian.exoboost.domain.model.VideoChapter
@@ -556,22 +557,33 @@ class MediaPlayerViewModel(
         subtitleJob =
             viewModelScope.launch {
                 try {
-                    logger.debug(TAG, "Downloading subtitle: ${track.language}")
                     val result = manageSubtitleUseCase.downloadSubtitle(track)
 
                     result.onSuccess { downloadResult ->
                         when (downloadResult) {
-                            is dev.abbasian.exoboost.domain.model.SubtitleDownloadResult.Success -> {
-                                _currentSubtitle.value = track
-                                playMediaUseCase.selectSubtitleTrack(track.languageCode)
-                                logger.debug(TAG, "Subtitle loaded: ${track.language}")
+                            is SubtitleDownloadResult.Success -> {
+                                val currentUrl = _uiState.value.currentUrl
+
+                                if (currentUrl.isNotEmpty()) {
+                                    val subtitleConfig =
+                                        manageSubtitleUseCase
+                                            .createSubtitleConfiguration(
+                                                track,
+                                                downloadResult.content,
+                                            )
+
+                                    playMediaUseCase.addSubtitleToCurrentMedia(subtitleConfig)
+
+                                    _currentSubtitle.value = track
+                                    _availableSubtitles.value =
+                                        (_availableSubtitles.value + track).distinctBy { it.id }
+                                } else {
+                                    logger.warning(TAG, "Cannot load subtitle: no video loaded")
+                                }
                             }
 
-                            is dev.abbasian.exoboost.domain.model.SubtitleDownloadResult.Error -> {
-                                logger.error(
-                                    TAG,
-                                    "Failed to download subtitle: ${downloadResult.message}",
-                                )
+                            is SubtitleDownloadResult.Error -> {
+                                _currentSubtitle.value = null
                             }
 
                             else -> {}
@@ -579,9 +591,11 @@ class MediaPlayerViewModel(
                     }
                     result.onFailure { error ->
                         logger.error(TAG, "Error selecting subtitle", error)
+                        _currentSubtitle.value = null
                     }
                 } catch (e: Exception) {
                     logger.error(TAG, "Error selecting subtitle", e)
+                    _currentSubtitle.value = null
                 }
             }
     }
@@ -612,6 +626,55 @@ class MediaPlayerViewModel(
                 logger.error(TAG, "Error clearing subtitle cache", e)
             }
         }
+    }
+
+    fun loadExternalSubtitle(
+        uri: android.net.Uri,
+        language: String = "Unknown",
+    ) {
+        subtitleJob?.cancel()
+
+        subtitleJob =
+            viewModelScope.launch {
+                try {
+                    val result = playMediaUseCase.loadExternalSubtitle(uri, language)
+
+                    when (result) {
+                        is SubtitleDownloadResult.Success -> {
+                            val currentUrl = _uiState.value.currentUrl
+
+                            if (currentUrl.isNotEmpty()) {
+                                logger.debug(TAG, "Creating subtitle configuration...")
+
+                                val subtitleConfig =
+                                    manageSubtitleUseCase
+                                        .createSubtitleConfiguration(
+                                            result.subtitle,
+                                            result.content,
+                                        )
+
+                                playMediaUseCase.addSubtitleToCurrentMedia(subtitleConfig)
+
+                                _currentSubtitle.value = result.subtitle
+                                _availableSubtitles.value =
+                                    (_availableSubtitles.value + result.subtitle).distinctBy { it.id }
+                            } else {
+                                logger.warning(TAG, "Cannot load subtitle: no video loaded")
+                            }
+                        }
+
+                        is SubtitleDownloadResult.Error -> {
+                            logger.error(TAG, "Failed to load external subtitle: ${result.message}")
+                            _currentSubtitle.value = null
+                        }
+
+                        else -> {}
+                    }
+                } catch (e: Exception) {
+                    logger.error(TAG, "Error loading external subtitle", e)
+                    _currentSubtitle.value = null
+                }
+            }
     }
 
     override fun onCleared() {
