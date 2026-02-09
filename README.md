@@ -33,6 +33,7 @@ Enhanced ExoPlayer wrapper with intelligent error handling, automatic recovery, 
 - **Gesture Controls**: Touch gestures for seek, volume, and brightness
 - **Speed Control**: Multiple playback speed options
 - **Quality Selection**: Manual and automatic quality switching
+- **Subtitle Support**: VTT/SRT formats with internet search, storage browser, download, and auto-load from assets/subtitles folder
 
 ## Installation
 
