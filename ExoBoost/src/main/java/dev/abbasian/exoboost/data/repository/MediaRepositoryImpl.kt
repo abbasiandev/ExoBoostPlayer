@@ -1,6 +1,7 @@
 package dev.abbasian.exoboost.data.repository
 
 import androidx.annotation.OptIn
+import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import dev.abbasian.exoboost.data.manager.CacheManager
 import dev.abbasian.exoboost.data.manager.ExoPlayerManager
@@ -23,9 +24,10 @@ class MediaRepositoryImpl(
     override suspend fun loadMedia(
         url: String,
         config: MediaPlayerConfig,
+        subtitleConfigurations: List<MediaItem.SubtitleConfiguration>,
     ) {
         playerManager.initializePlayer(config)
-        playerManager.loadMedia(url)
+        playerManager.loadMedia(url, subtitleConfigurations)
     }
 
     override suspend fun applyEqualizerValues(values: List<Float>) {
@@ -70,6 +72,10 @@ class MediaRepositoryImpl(
 
     override fun selectSubtitleTrack(languageCode: String) {
         playerManager.selectSubtitleTrack(languageCode)
+    }
+
+    override fun addSubtitleToCurrentMedia(subtitleConfiguration: MediaItem.SubtitleConfiguration) {
+        playerManager.addSubtitleToCurrentMedia(subtitleConfiguration)
     }
 
     override suspend fun retry() {

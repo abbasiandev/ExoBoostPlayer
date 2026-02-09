@@ -1,5 +1,6 @@
 package dev.abbasian.exoboost.domain.repository
 
+import androidx.media3.common.MediaItem
 import dev.abbasian.exoboost.domain.model.MediaInfo
 import dev.abbasian.exoboost.domain.model.MediaPlayerConfig
 import dev.abbasian.exoboost.domain.model.MediaState
@@ -14,6 +15,7 @@ interface MediaRepository {
     suspend fun loadMedia(
         url: String,
         config: MediaPlayerConfig,
+        subtitleConfigurations: List<MediaItem.SubtitleConfiguration> = emptyList(),
     )
 
     suspend fun applyEqualizerValues(values: List<Float>)
@@ -41,6 +43,8 @@ interface MediaRepository {
     fun setSubtitleEnabled(enabled: Boolean)
 
     fun selectSubtitleTrack(languageCode: String)
+
+    fun addSubtitleToCurrentMedia(subtitleConfiguration: MediaItem.SubtitleConfiguration)
 
     suspend fun retry()
 
