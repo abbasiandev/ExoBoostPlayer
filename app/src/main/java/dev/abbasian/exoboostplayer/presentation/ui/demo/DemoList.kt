@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -52,6 +53,32 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
         remember {
             listOf(
                 DemoCategory(
+                    title = "Subtitle System",
+                    description = "Complete subtitle testing and configuration",
+                    icon = Icons.Filled.Subtitles,
+                    demos =
+                        listOf(
+                            DemoItem(
+                                title = "Subtitle System Test",
+                                description = "Comprehensive subtitle feature testing",
+                                features =
+                                    listOf(
+                                        "Search subtitles",
+                                        "Multiple sources (OpenSubtitles, YIFY, Podnapisi)",
+                                        "Format parsing (SRT, VTT, ASS, TTML)",
+                                        "Style customization",
+                                        "Language selection",
+                                        "Subtitle caching",
+                                        "External file loading",
+                                        "Auto-search & detection",
+                                        "Preferred languages",
+                                    ),
+                                difficulty = DemoDifficulty.ADVANCED,
+                                demo = Demo.SubtitleSystem,
+                            ),
+                        ),
+                ),
+                DemoCategory(
                     title = "Video Playback",
                     description = "Core video player capabilities",
                     icon = Icons.Filled.VideoLibrary,
@@ -70,7 +97,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.BEGINNER,
                                 demo =
                                     Demo.VideoBasic(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                                        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
                                     ),
                             ),
                             DemoItem(
@@ -88,7 +115,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.INTERMEDIATE,
                                 demo =
                                     Demo.VideoAdvanced(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                                        "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
                                     ),
                             ),
                         ),
@@ -112,7 +139,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.INTERMEDIATE,
                                 demo =
                                     Demo.SmartHighlights(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                                        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
                                         HighlightConfig.balanced(),
                                     ),
                             ),
@@ -129,7 +156,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.BEGINNER,
                                 demo =
                                     Demo.SmartHighlights(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                                        "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
                                         HighlightConfig.fast(),
                                     ),
                             ),
@@ -146,7 +173,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.ADVANCED,
                                 demo =
                                     Demo.SmartHighlights(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                                        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
                                         HighlightConfig.highQuality(),
                                     ),
                             ),
@@ -163,7 +190,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.INTERMEDIATE,
                                 demo =
                                     Demo.SmartHighlights(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                                        "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
                                         HighlightConfig.audioFocused(),
                                     ),
                             ),
@@ -180,7 +207,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.INTERMEDIATE,
                                 demo =
                                     Demo.SmartHighlights(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                                        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
                                         HighlightConfig.motionFocused(),
                                     ),
                             ),
@@ -197,7 +224,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.ADVANCED,
                                 demo =
                                     Demo.SmartHighlights(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                                        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
                                         HighlightConfig.peopleFocused(),
                                     ),
                             ),
@@ -214,7 +241,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.INTERMEDIATE,
                                 demo =
                                     Demo.SmartHighlights(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                                        "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
                                         HighlightConfig.sceneFocused(),
                                     ),
                             ),
@@ -231,7 +258,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.BEGINNER,
                                 demo =
                                     Demo.SmartHighlights(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                                        "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
                                         HighlightConfig.shortVideo(),
                                     ),
                             ),
@@ -248,7 +275,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.ADVANCED,
                                 demo =
                                     Demo.SmartHighlights(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                                        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
                                         HighlightConfig.longVideo(),
                                     ),
                             ),
@@ -368,7 +395,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.BEGINNER,
                                 demo =
                                     Demo.VideoQualityControl(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                                        "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
                                     ),
                             ),
                             DemoItem(
@@ -407,7 +434,7 @@ fun DemoList(onDemoSelected: (Demo) -> Unit) {
                                 difficulty = DemoDifficulty.ADVANCED,
                                 demo =
                                     Demo.NetworkSimulation(
-                                        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                                        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
                                     ),
                             ),
                         ),

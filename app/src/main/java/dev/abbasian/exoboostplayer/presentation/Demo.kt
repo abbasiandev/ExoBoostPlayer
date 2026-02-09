@@ -51,6 +51,8 @@ sealed class Demo {
         val url: String,
         val config: HighlightConfig = HighlightConfig.balanced(),
     ) : Demo()
+
+    object SubtitleSystem : Demo()
 }
 
 data class Track(

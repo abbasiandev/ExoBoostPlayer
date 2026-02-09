@@ -78,6 +78,10 @@ fun MainScreen() {
                     demo.config,
                 ) { currentDemo = null }
             }
+
+            is Demo.SubtitleSystem -> {
+                SubtitleDemo()
+            }
         }
     } ?: DemoList(onDemoSelected = { currentDemo = it })
 }
