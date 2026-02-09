@@ -39,11 +39,11 @@ val playerModule =
 
         single<MediaRepository> { MediaRepositoryImpl(get(), get()) }
 
-        factory { PlayMediaUseCase(get()) }
+        factory { PlayMediaUseCase(get(), get()) }
         factory { RetryMediaUseCase(get()) }
         factory { ManageHighlightCacheUseCase(get(), get()) }
-        factory { SearchSubtitlesUseCase(get(), get()) }
-        factory { ManageSubtitleUseCase(get(), get()) }
+        factory { SearchSubtitlesUseCase(get(), get(), get()) }
+        factory { ManageSubtitleUseCase(get(), get(), androidContext()) }
 
         viewModel {
             MediaPlayerViewModel(
