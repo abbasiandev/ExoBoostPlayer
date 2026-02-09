@@ -93,7 +93,14 @@ class SubtitleManager(
 
                 val content =
                     when (track.source) {
-                        SubtitleSource.EMBEDDED, SubtitleSource.EXTERNAL, SubtitleSource.CUSTOM -> {
+                        SubtitleSource.EXTERNAL -> {
+                            getCachedSubtitle(track)
+                                ?: return@withContext SubtitleDownloadResult.Error(
+                                    "External subtitle not found in cache. Please reload the file.",
+                                )
+                        }
+
+                        SubtitleSource.EMBEDDED, SubtitleSource.CUSTOM -> {
                             downloadFromUrl(track.url)
                         }
 
@@ -134,7 +141,13 @@ class SubtitleManager(
         content: String,
     ): MediaItem.SubtitleConfiguration {
         val subtitleFile = File(cacheDir, "${track.id}.${track.format.extension}")
-        subtitleFile.writeText(content)
+
+        if (!subtitleFile.exists()) {
+            subtitleFile.writeText(content)
+            logger.debug(TAG, "Cached new subtitle file: ${track.id}")
+        } else {
+            logger.debug(TAG, "Using existing cached subtitle: ${track.id}")
+        }
 
         return MediaItem.SubtitleConfiguration
             .Builder(Uri.fromFile(subtitleFile))
@@ -172,6 +185,11 @@ class SubtitleManager(
                         source = SubtitleSource.EXTERNAL,
                         isDefault = false,
                     )
+
+                if (config.cacheSubtitles) {
+                    cacheSubtitle(track, content)
+                    logger.debug(TAG, "External subtitle cached: ${track.id}")
+                }
 
                 _currentSubtitle.value = track
                 SubtitleDownloadResult.Success(track, content)
