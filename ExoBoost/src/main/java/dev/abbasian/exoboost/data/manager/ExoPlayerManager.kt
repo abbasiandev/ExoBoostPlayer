@@ -229,8 +229,8 @@ class ExoPlayerManager(
                     .Builder()
                     .setUri(Uri.parse(url))
 
-            subtitleConfigurations.forEach { subtitle ->
-                mediaItemBuilder.setSubtitleConfigurations(listOf(subtitle))
+            if (subtitleConfigurations.isNotEmpty()) {
+                mediaItemBuilder.setSubtitleConfigurations(subtitleConfigurations)
             }
 
             val mediaItem = mediaItemBuilder.build()
@@ -1056,6 +1056,67 @@ class ExoPlayerManager(
             logger.debug(TAG, "Selected subtitle track: $languageCode")
         } catch (e: Exception) {
             logger.error(TAG, "Error selecting subtitle track", e)
+        }
+    }
+
+    fun addSubtitleToCurrentMedia(subtitleConfiguration: MediaItem.SubtitleConfiguration) {
+        if (isReleased.get() || !isInitialized.get()) return
+
+        try {
+            exoPlayer?.let { player ->
+                val currentPosition = player.currentPosition
+                val wasPlaying = player.isPlaying
+
+                val currentMediaItem = player.currentMediaItem ?: return
+
+                val existingSubtitles =
+                    currentMediaItem.localConfiguration?.subtitleConfigurations ?: emptyList()
+
+                val existingUris = existingSubtitles.map { it.uri.toString() }.toSet()
+                val allSubtitleConfigurations =
+                    if (subtitleConfiguration.uri.toString() in existingUris) {
+                        existingSubtitles.filter { it.uri != subtitleConfiguration.uri } +
+                            listOf(
+                                subtitleConfiguration,
+                            )
+                    } else {
+                        existingSubtitles + listOf(subtitleConfiguration)
+                    }
+
+                player.stop()
+
+                val videoUri =
+                    currentMediaItem.localConfiguration?.uri ?: Uri.parse(currentMediaItem.mediaId)
+                logger.debug(TAG, "Video URI to use: $videoUri")
+
+                val newMediaItem =
+                    MediaItem
+                        .Builder()
+                        .setUri(videoUri)
+                        .setSubtitleConfigurations(allSubtitleConfigurations)
+                        .build()
+
+                player.clearMediaItems()
+                player.setMediaItem(newMediaItem, currentPosition)
+                player.prepare()
+
+                mainHandler.postDelayed({
+                    if (!isReleased.get() && player.playbackState == Player.STATE_READY) {
+                        if (wasPlaying) {
+                            player.playWhenReady = true
+                            player.play()
+                        }
+                    }
+                }, 500)
+
+                mainHandler.postDelayed({
+                    if (!isReleased.get()) {
+                        setSubtitleEnabled(true)
+                    }
+                }, 600)
+            }
+        } catch (e: Exception) {
+            logger.error(TAG, "Error adding subtitle to media", e)
         }
     }
 
