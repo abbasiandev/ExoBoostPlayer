@@ -7,6 +7,7 @@ import dev.abbasian.exoboost.util.ExoBoostLogger
 
 class SearchSubtitlesUseCase(
     private val subtitleRepository: SubtitleRepository,
+    private val manageSubtitleUseCase: ManageSubtitleUseCase,
     private val logger: ExoBoostLogger,
 ) {
     companion object {
@@ -27,14 +28,22 @@ class SearchSubtitlesUseCase(
     suspend fun autoSearch(
         videoUrl: String,
         videoName: String? = null,
-    ): Result<List<SubtitleTrack>> =
-        try {
-            logger.debug(TAG, "Auto-searching subtitles for: $videoUrl")
+    ): Result<List<SubtitleTrack>> {
+        return try {
+            val assetSubtitles =
+                manageSubtitleUseCase
+                    .loadSubtitlesFromAssets()
+                    .getOrNull() ?: emptyList()
+
+            if (assetSubtitles.isNotEmpty()) {
+                return Result.success(assetSubtitles)
+            }
+
             val subtitles = subtitleRepository.autoSearchSubtitles(videoUrl, videoName)
-            logger.info(TAG, "Found ${subtitles.size} subtitles")
             Result.success(subtitles)
         } catch (e: Exception) {
             logger.error(TAG, "Error auto-searching subtitles", e)
             Result.failure(e)
         }
+    }
 }
