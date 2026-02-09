@@ -1,5 +1,6 @@
 package dev.abbasian.exoboost.data.repository
 
+import androidx.media3.common.MediaItem
 import dev.abbasian.exoboost.data.local.store.SubtitlePreferencesManager
 import dev.abbasian.exoboost.data.manager.SubtitleManager
 import dev.abbasian.exoboost.domain.model.SubtitleDownloadResult
@@ -46,4 +47,9 @@ class SubtitleRepository(
     }
 
     fun getCacheSize(): Long = subtitleManager.getCacheSize()
+
+    fun createSubtitleConfiguration(
+        track: SubtitleTrack,
+        content: String,
+    ): MediaItem.SubtitleConfiguration = subtitleManager.createSubtitleConfiguration(track, content)
 }
