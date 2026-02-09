@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ComponentName
 import android.content.ServiceConnection
 import android.content.pm.ActivityInfo
+import android.graphics.Typeface
 import android.os.IBinder
 import android.view.View
 import android.view.ViewGroup
@@ -39,6 +40,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
 import dev.abbasian.exoboost.R
 import dev.abbasian.exoboost.data.manager.ExoPlayerManager
@@ -98,6 +100,8 @@ fun exoBoostPlayer(
     val availableSubtitles by viewModel.availableSubtitles.collectAsState()
     val currentSubtitle by viewModel.currentSubtitle.collectAsState()
     val subtitleStyle by viewModel.subtitleStyle.collectAsState()
+
+    var playerView by remember { mutableStateOf<PlayerView?>(null) }
 
     val serviceConnection =
         remember {
@@ -226,14 +230,65 @@ fun exoBoostPlayer(
             try {
                 logger.debug(TAG, "Loading video: $videoUrl")
                 viewModel.loadMedia(videoUrl, mediaConfig)
-                
-                // Auto-search subtitles if enabled
+
                 if (mediaConfig.enableSubtitles) {
+                    logger.debug(TAG, "Auto-searching subtitles for video")
                     viewModel.searchSubtitles(videoUrl)
                 }
             } catch (e: Exception) {
                 logger.error(TAG, "Error loading video", e)
                 onError?.invoke("Failed to load video: ${e.message}")
+            }
+        }
+    }
+
+    LaunchedEffect(availableSubtitles.size, mediaConfig.enableSubtitles) {
+        if (mediaConfig.enableSubtitles && availableSubtitles.isNotEmpty() && currentSubtitle == null) {
+            delay(1500)
+            val firstSubtitle = availableSubtitles.firstOrNull()
+            if (firstSubtitle != null && currentSubtitle == null) {
+                viewModel.selectSubtitle(firstSubtitle)
+            }
+        }
+    }
+
+    LaunchedEffect(subtitleStyle, playerView) {
+        playerView?.let { view ->
+            try {
+                val subtitleView = view.subtitleView
+                if (subtitleView != null) {
+                    val captionStyle =
+                        CaptionStyleCompat(
+                            subtitleStyle.textColor,
+                            subtitleStyle.backgroundColor,
+                            android.graphics.Color.TRANSPARENT,
+                            CaptionStyleCompat.EDGE_TYPE_OUTLINE,
+                            subtitleStyle.outlineColor,
+                            Typeface.create(
+                                subtitleStyle.fontFamily ?: Typeface.DEFAULT.toString(),
+                                when {
+                                    subtitleStyle.isBold && subtitleStyle.isItalic -> Typeface.BOLD_ITALIC
+                                    subtitleStyle.isBold -> Typeface.BOLD
+                                    subtitleStyle.isItalic -> Typeface.ITALIC
+                                    else -> Typeface.NORMAL
+                                },
+                            ),
+                        )
+
+                    subtitleView.setStyle(captionStyle)
+
+                    subtitleView.setFixedTextSize(
+                        android.util.TypedValue.COMPLEX_UNIT_SP,
+                        18f * subtitleStyle.textSize.scale,
+                    )
+
+                    subtitleView.setApplyEmbeddedStyles(false)
+                    subtitleView.setApplyEmbeddedFontSizes(false)
+                } else {
+                    logger.warning(TAG, "SubtitleView is null, cannot apply style")
+                }
+            } catch (e: Exception) {
+                logger.error(TAG, "Error applying subtitle style", e)
             }
         }
     }
@@ -388,6 +443,42 @@ fun exoBoostPlayer(
                                 playerManager.onSurfaceAvailable()
                             } else {
                                 logger.warning(TAG, "No player available for PlayerView")
+                            }
+
+                            playerView = this
+
+                            subtitleView?.let { subView ->
+                                try {
+                                    val captionStyle =
+                                        androidx.media3.ui.CaptionStyleCompat(
+                                            subtitleStyle.textColor,
+                                            subtitleStyle.backgroundColor,
+                                            android.graphics.Color.TRANSPARENT,
+                                            CaptionStyleCompat.EDGE_TYPE_OUTLINE,
+                                            subtitleStyle.outlineColor,
+                                            Typeface.create(
+                                                subtitleStyle.fontFamily
+                                                    ?: Typeface.DEFAULT
+                                                        .toString(),
+                                                when {
+                                                    subtitleStyle.isBold && subtitleStyle.isItalic -> Typeface.BOLD_ITALIC
+                                                    subtitleStyle.isBold -> Typeface.BOLD
+                                                    subtitleStyle.isItalic -> Typeface.ITALIC
+                                                    else -> Typeface.NORMAL
+                                                },
+                                            ),
+                                        )
+
+                                    subView.setStyle(captionStyle)
+                                    subView.setFixedTextSize(
+                                        android.util.TypedValue.COMPLEX_UNIT_SP,
+                                        18f * subtitleStyle.textSize.scale,
+                                    )
+                                    subView.setApplyEmbeddedStyles(false)
+                                    subView.setApplyEmbeddedFontSizes(false)
+                                } catch (e: Exception) {
+                                    logger.error(TAG, "Error applying initial subtitle style", e)
+                                }
                             }
                         } catch (e: Exception) {
                             logger.error(TAG, "Error setting up PlayerView", e)
@@ -561,18 +652,19 @@ fun exoBoostPlayer(
                         null
                     },
                 highlightsState = highlightsState,
-                onSubtitleClick = if (mediaConfig.enableSubtitles) {
-                    {
-                        try {
-                            viewModel.toggleSubtitleSheet(true)
-                            controlsVisible = true
-                        } catch (e: Exception) {
-                            logger.error(TAG, "Error opening subtitle sheet", e)
+                onSubtitleClick =
+                    if (mediaConfig.enableSubtitles) {
+                        {
+                            try {
+                                viewModel.toggleSubtitleSheet(true)
+                                controlsVisible = true
+                            } catch (e: Exception) {
+                                logger.error(TAG, "Error opening subtitle sheet", e)
+                            }
                         }
-                    }
-                } else {
-                    null
-                },
+                    } else {
+                        null
+                    },
                 modifier = Modifier.fillMaxSize(),
             )
         }
